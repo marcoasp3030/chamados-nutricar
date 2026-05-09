@@ -35,12 +35,20 @@ export interface CategoriaChamado {
   cor: string;
   workspace_id: string;
   criado_em: string;
+  sla_resposta_horas: number | null;
+  sla_resolucao_horas: number | null;
 }
+
+const slaSchema = z
+  .union([z.string().trim().length(0), z.coerce.number().int().min(0).max(8760)])
+  .optional();
 
 const categoriaSchema = z.object({
   nome: z.string().trim().min(2, "Mínimo de 2 caracteres").max(60, "Máximo de 60 caracteres"),
   descricao: z.string().trim().max(300).optional().or(z.literal("")),
   cor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
+  sla_resposta_horas: slaSchema,
+  sla_resolucao_horas: slaSchema,
 });
 
 export function useCategoriasChamado(workspaceId: string | undefined) {
@@ -50,7 +58,7 @@ export function useCategoriasChamado(workspaceId: string | undefined) {
     queryFn: async (): Promise<CategoriaChamado[]> => {
       const { data, error } = await supabase
         .from("categorias_chamado")
-        .select("id, nome, descricao, cor, workspace_id, criado_em")
+        .select("id, nome, descricao, cor, workspace_id, criado_em, sla_resposta_horas, sla_resolucao_horas")
         .eq("workspace_id", workspaceId!)
         .order("nome");
       if (error) throw error;
