@@ -294,6 +294,122 @@ export type Database = {
         }
         Relationships: []
       }
+      projetos: {
+        Row: {
+          atualizado_em: string
+          cor: string
+          criado_em: string
+          criado_por: string
+          descricao: string | null
+          fim_previsto: string | null
+          id: string
+          inicio_em: string | null
+          nome: string
+          responsavel_id: string | null
+          status: Database["public"]["Enums"]["status_projeto"]
+          workspace_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          cor?: string
+          criado_em?: string
+          criado_por: string
+          descricao?: string | null
+          fim_previsto?: string | null
+          id?: string
+          inicio_em?: string | null
+          nome: string
+          responsavel_id?: string | null
+          status?: Database["public"]["Enums"]["status_projeto"]
+          workspace_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          cor?: string
+          criado_em?: string
+          criado_por?: string
+          descricao?: string | null
+          fim_previsto?: string | null
+          id?: string
+          inicio_em?: string | null
+          nome?: string
+          responsavel_id?: string | null
+          status?: Database["public"]["Enums"]["status_projeto"]
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projetos_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarefas: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          criado_por: string
+          descricao: string | null
+          id: string
+          ordem: number
+          prazo: string | null
+          prioridade: Database["public"]["Enums"]["prioridade_chamado"]
+          projeto_id: string
+          responsavel_id: string | null
+          status: Database["public"]["Enums"]["status_tarefa"]
+          titulo: string
+          workspace_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por: string
+          descricao?: string | null
+          id?: string
+          ordem?: number
+          prazo?: string | null
+          prioridade?: Database["public"]["Enums"]["prioridade_chamado"]
+          projeto_id: string
+          responsavel_id?: string | null
+          status?: Database["public"]["Enums"]["status_tarefa"]
+          titulo: string
+          workspace_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          descricao?: string | null
+          id?: string
+          ordem?: number
+          prazo?: string | null
+          prioridade?: Database["public"]["Enums"]["prioridade_chamado"]
+          projeto_id?: string
+          responsavel_id?: string | null
+          status?: Database["public"]["Enums"]["status_tarefa"]
+          titulo?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_convites: {
         Row: {
           aceito: boolean
@@ -465,6 +581,13 @@ export type Database = {
         | "Resolvido"
         | "Fechado"
         | "Cancelado"
+      status_projeto:
+        | "Planejado"
+        | "Em andamento"
+        | "Pausado"
+        | "Concluido"
+        | "Arquivado"
+      status_tarefa: "A fazer" | "Em andamento" | "Em revisao" | "Concluido"
       status_workspace: "Ativo" | "Suspenso" | "Cancelado"
       tipo_chamado: "Incidente" | "Solicitacao" | "Duvida" | "Melhoria" | "Bug"
     }
@@ -612,6 +735,14 @@ export const Constants = {
         "Fechado",
         "Cancelado",
       ],
+      status_projeto: [
+        "Planejado",
+        "Em andamento",
+        "Pausado",
+        "Concluido",
+        "Arquivado",
+      ],
+      status_tarefa: ["A fazer", "Em andamento", "Em revisao", "Concluido"],
       status_workspace: ["Ativo", "Suspenso", "Cancelado"],
       tipo_chamado: ["Incidente", "Solicitacao", "Duvida", "Melhoria", "Bug"],
     },
