@@ -719,29 +719,41 @@ export function AbaUsuarios() {
                 <p className="text-xs text-destructive">{errosMembro.telefone}</p>
               )}
             </div>
-            <div className="space-y-1.5">
-              <Label>Departamento</Label>
-              <Select
-                value={formMembro.departamento_id ?? "__nenhum__"}
-                onValueChange={(v) =>
-                  setFormMembro((f) => ({
-                    ...f,
-                    departamento_id: v === "__nenhum__" ? null : v,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__nenhum__">Sem departamento</SelectItem>
-                  {(departamentos ?? []).map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>Departamentos</Label>
+              {(!departamentos || departamentos.length === 0) ? (
+                <p className="text-xs text-muted-foreground">
+                  Crie um departamento na aba "Departamentos" primeiro.
+                </p>
+              ) : (
+                <div className="max-h-44 space-y-1.5 overflow-y-auto rounded-md border border-border p-2">
+                  {departamentos.map((d) => {
+                    const marcado = formMembro.departamento_ids.includes(d.id);
+                    return (
+                      <label
+                        key={d.id}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-accent"
+                      >
+                        <Checkbox
+                          checked={marcado}
+                          onCheckedChange={(c) =>
+                            setFormMembro((f) => ({
+                              ...f,
+                              departamento_ids: c
+                                ? [...f.departamento_ids, d.id]
+                                : f.departamento_ids.filter((x) => x !== d.id),
+                            }))
+                          }
+                        />
+                        <span>{d.nome}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                O usuário pode pertencer a mais de um departamento.
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label>Cargo *</Label>
