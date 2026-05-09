@@ -37,6 +37,9 @@ export function PaginaConfiguracoes() {
           <TabsTrigger value="ia">
             <Sparkles className="h-4 w-4" /> Inteligência Artificial
           </TabsTrigger>
+          <TabsTrigger value="vmpay">
+            <CreditCard className="h-4 w-4" /> VMPay
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="geral" className="mt-6">
