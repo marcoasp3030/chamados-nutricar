@@ -33,20 +33,34 @@ export function useMembrosWorkspace(workspaceId: string | undefined) {
       const ids = (membros ?? []).map((m) => m.usuario_id);
       if (ids.length === 0) return [];
 
-      const { data: perfis, error: erroPerfis } = await supabase
-        .from("perfis")
-        .select("id, nome, email, telefone, avatar_url")
-        .in("id", ids);
+      const membroIds = (membros ?? []).map((m) => m.id);
 
-      if (erroPerfis) throw erroPerfis;
+      const [perfisRes, vinculosRes] = await Promise.all([
+        supabase.from("perfis").select("id, nome, email, telefone, avatar_url").in("id", ids),
+        supabase
+          .from("workspace_membro_departamentos")
+          .select("membro_id, departamento_id")
+          .in("membro_id", membroIds),
+      ]);
 
-      const mapa = new Map((perfis ?? []).map((p) => [p.id, p]));
+      if (perfisRes.error) throw perfisRes.error;
+      if (vinculosRes.error) throw vinculosRes.error;
+
+      const mapa = new Map((perfisRes.data ?? []).map((p) => [p.id, p]));
+      const mapaDeptos = new Map<string, string[]>();
+      for (const v of vinculosRes.data ?? []) {
+        const arr = mapaDeptos.get(v.membro_id) ?? [];
+        arr.push(v.departamento_id);
+        mapaDeptos.set(v.membro_id, arr);
+      }
+
       return (membros ?? []).map((m) => ({
         id: m.id,
         usuario_id: m.usuario_id,
         papel: m.papel,
         cargo: m.cargo,
         departamento_id: m.departamento_id,
+        departamento_ids: mapaDeptos.get(m.id) ?? (m.departamento_id ? [m.departamento_id] : []),
         perfil: mapa.get(m.usuario_id) ?? {
           id: m.usuario_id,
           nome: "Usuário",
