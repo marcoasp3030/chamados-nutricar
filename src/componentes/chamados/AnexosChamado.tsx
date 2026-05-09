@@ -175,8 +175,12 @@ export function AnexosChamado({ chamadoId, workspaceId, podeExcluirTodos = false
     }
   }
 
-  const itens = lista.data ?? [];
-  const usuarioId = (typeof window !== "undefined" && supabase.auth) ? null : null;
+  const usuarioAtual = useQuery({
+    queryKey: ["auth-user-id"],
+    queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null,
+    staleTime: 5 * 60 * 1000,
+  });
+  const usuarioId = usuarioAtual.data;
 
   return (
     <div className="space-y-4">
