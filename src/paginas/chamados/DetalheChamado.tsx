@@ -82,7 +82,7 @@ export function DetalheChamado({ numero }: Props) {
     workspaceAtual && ["Proprietario", "Administrador"].includes(workspaceAtual.papel);
 
   const atualizar = useMutation({
-    mutationFn: async (campos: Record<string, unknown>) => {
+    mutationFn: async (campos: { status?: StatusChamado; responsavel_id?: string | null }) => {
       if (!chamado) throw new Error("Chamado não carregado");
       const { error } = await supabase.from("chamados").update(campos).eq("id", chamado.id);
       if (error) throw error;
