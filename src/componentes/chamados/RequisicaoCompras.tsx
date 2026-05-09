@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import * as XLSX from "xlsx";
 import {
   Loader2,
   ShoppingCart,
@@ -11,6 +12,7 @@ import {
   Pencil,
   Check,
   X,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +40,8 @@ import type { PrioridadeChamado } from "@/tipos/chamado";
 
 interface Props {
   chamadoId: string;
+  codigoChamado?: string;
+  tituloChamado?: string;
 }
 
 type StatusCompra =
@@ -96,7 +100,7 @@ function ehLink(s: string) {
   return /^https?:\/\//i.test(s.trim());
 }
 
-export function RequisicaoCompras({ chamadoId }: Props) {
+export function RequisicaoCompras({ chamadoId, codigoChamado, tituloChamado }: Props) {
   const qc = useQueryClient();
   const [editando, setEditando] = useState<string | null>(null);
   const [obsTemp, setObsTemp] = useState("");
@@ -158,6 +162,70 @@ export function RequisicaoCompras({ chamadoId }: Props) {
   ).length;
   const progresso = itens.length > 0 ? Math.round((concluidos / itens.length) * 100) : 0;
 
+  function exportarExcel() {
+    if (itens.length === 0) {
+      toast.info("Nenhum item para exportar.");
+      return;
+    }
+    const linhas = itens.map((it, i) => ({
+      "#": i + 1,
+      Descrição: it.descricao,
+      Quantidade: Number(it.quantidade),
+      Unidade: it.unidade ?? "",
+      "Referência / Marca / Link": it.referencia ?? "",
+      "Data de necessidade": it.data_necessidade
+        ? format(new Date(it.data_necessidade), "dd/MM/yyyy", { locale: ptBR })
+        : "",
+      Prioridade: rotuloPrioridade[it.prioridade],
+      "Status compra": it.status_compra,
+      Observação: it.observacao_compra ?? "",
+      "Atualizado em": it.atualizado_compra_em
+        ? format(new Date(it.atualizado_compra_em), "dd/MM/yyyy HH:mm", { locale: ptBR })
+        : "",
+    }));
+
+    const wb = XLSX.utils.book_new();
+
+    // Cabeçalho informativo
+    const cabecalho: (string | number)[][] = [
+      ["Requisição de Compras"],
+      [`Chamado: ${codigoChamado ?? ""}`],
+      [`Título: ${tituloChamado ?? ""}`],
+      [`Exportado em: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`],
+      [`Total de itens: ${itens.length} | Concluídos: ${concluidos} (${progresso}%)`],
+      [],
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(cabecalho);
+    XLSX.utils.sheet_add_json(ws, linhas, { origin: "A7" });
+
+    // Larguras de coluna
+    ws["!cols"] = [
+      { wch: 5 },
+      { wch: 45 },
+      { wch: 11 },
+      { wch: 10 },
+      { wch: 35 },
+      { wch: 18 },
+      { wch: 12 },
+      { wch: 14 },
+      { wch: 40 },
+      { wch: 18 },
+    ];
+
+    // Mesclar título
+    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Requisição");
+
+    const nomeArq = `requisicao-${(codigoChamado ?? chamadoId).replace(/[^\w-]/g, "_")}-${format(
+      new Date(),
+      "yyyyMMdd-HHmm",
+    )}.xlsx`;
+    XLSX.writeFile(wb, nomeArq);
+    toast.success("Planilha exportada");
+  }
+
+
   return (
     <section className="rounded-2xl border border-border bg-card p-5">
       <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -171,22 +239,35 @@ export function RequisicaoCompras({ chamadoId }: Props) {
             </Badge>
           )}
         </div>
-        {totalCriticos > 0 && (
-          <div className="flex items-center gap-2">
-            {urgentes > 0 && (
-              <Badge className="bg-red-500/15 text-red-700 dark:text-red-300 border border-red-500/50 gap-1" variant="secondary">
-                <Flame className="h-3 w-3" />
-                {urgentes} urgente{urgentes > 1 ? "s" : ""}
-              </Badge>
-            )}
-            {altas > 0 && (
-              <Badge className="bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/40 gap-1" variant="secondary">
-                <AlertTriangle className="h-3 w-3" />
-                {altas} alta{altas > 1 ? "s" : ""}
-              </Badge>
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {totalCriticos > 0 && (
+            <>
+              {urgentes > 0 && (
+                <Badge className="bg-red-500/15 text-red-700 dark:text-red-300 border border-red-500/50 gap-1" variant="secondary">
+                  <Flame className="h-3 w-3" />
+                  {urgentes} urgente{urgentes > 1 ? "s" : ""}
+                </Badge>
+              )}
+              {altas > 0 && (
+                <Badge className="bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/40 gap-1" variant="secondary">
+                  <AlertTriangle className="h-3 w-3" />
+                  {altas} alta{altas > 1 ? "s" : ""}
+                </Badge>
+              )}
+            </>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={exportarExcel}
+            disabled={itens.length === 0}
+            className="gap-1.5"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Exportar Excel
+          </Button>
+        </div>
       </header>
 
       {itens.length > 0 && (
