@@ -79,11 +79,51 @@ export function FormularioChamado({
     if (chamadoPaiId) setDados((d) => ({ ...d, chamado_pai_id: chamadoPaiId }));
   }, [chamadoPaiId]);
 
+  const [classificando, setClassificando] = useState(false);
+
   function atualizar<K extends keyof DadosFormularioChamado>(
     chave: K,
     valor: DadosFormularioChamado[K],
   ) {
     setDados((d) => ({ ...d, [chave]: valor }));
+  }
+
+  async function classificarComIA() {
+    if (!dados.titulo.trim()) {
+      toast.error("Informe um título primeiro.");
+      return;
+    }
+    setClassificando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ia-chamado", {
+        body: {
+          workspace_id: workspaceId,
+          acao: "classificar",
+          titulo: dados.titulo,
+          descricao: dados.descricao,
+        },
+      });
+      if (error) throw error;
+      const resp = data as {
+        error?: string;
+        resultado?: { prioridade?: string; categoria?: string; justificativa?: string };
+      };
+      if (resp.error) throw new Error(resp.error);
+      const r = resp.resultado || {};
+      const prioridadesValidas = ["Baixa", "Media", "Alta", "Urgente"];
+      if (r.prioridade && prioridadesValidas.includes(r.prioridade)) {
+        atualizar("prioridade", r.prioridade as PrioridadeChamado);
+      }
+      if (r.categoria) atualizar("categoria", r.categoria);
+      toast.success("Classificado pela IA.", {
+        description: r.justificativa || undefined,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erro";
+      toast.error("Falha na classificação", { description: msg });
+    } finally {
+      setClassificando(false);
+    }
   }
 
   function submeter(e: React.FormEvent) {
