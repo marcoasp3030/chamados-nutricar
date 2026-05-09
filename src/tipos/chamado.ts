@@ -22,6 +22,8 @@ export interface Chamado {
   prioridade: PrioridadeChamado;
   tipo: TipoChamado;
   categoria: string | null;
+  loja: string | null;
+  departamento_id: string | null;
   tags: string[];
   solicitante_id: string;
   responsavel_id: string | null;
