@@ -158,6 +158,23 @@ export function FormularioChamado({
         />
       </div>
 
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={classificarComIA}
+          disabled={classificando || !dados.titulo.trim()}
+        >
+          {classificando ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Sparkles className="h-4 w-4" />
+          )}
+          Classificar com IA
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-2">
           <Label>Tipo</Label>
