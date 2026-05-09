@@ -419,7 +419,7 @@ export function ListaChamados() {
                           {atrasado ? (
                             <AlertTriangle className="h-3 w-3" />
                           ) : (
-                            <Calendar className="h-3 w-3" />
+                            <CalendarIcon className="h-3 w-3" />
                           )}
                           {format(prazo, "dd/MM/yyyy", { locale: ptBR })}
                         </span>
