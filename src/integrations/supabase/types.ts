@@ -251,6 +251,59 @@ export type Database = {
           },
         ]
       }
+      chamado_requisicao_itens: {
+        Row: {
+          atualizado_em: string
+          chamado_id: string
+          criado_em: string
+          criado_por: string
+          data_necessidade: string | null
+          descricao: string
+          id: string
+          ordem: number
+          quantidade: number
+          referencia: string | null
+          unidade: string | null
+          workspace_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          chamado_id: string
+          criado_em?: string
+          criado_por: string
+          data_necessidade?: string | null
+          descricao: string
+          id?: string
+          ordem?: number
+          quantidade?: number
+          referencia?: string | null
+          unidade?: string | null
+          workspace_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          chamado_id?: string
+          criado_em?: string
+          criado_por?: string
+          data_necessidade?: string | null
+          descricao?: string
+          id?: string
+          ordem?: number
+          quantidade?: number
+          referencia?: string | null
+          unidade?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chamado_requisicao_itens_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "chamados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chamados: {
         Row: {
           atualizado_em: string
@@ -267,6 +320,7 @@ export type Database = {
           prazo: string | null
           primeiro_resposta_em: string | null
           prioridade: Database["public"]["Enums"]["prioridade_chamado"]
+          requisicao_compras: boolean
           resolvido_em: string | null
           responsavel_id: string | null
           solicitante_id: string
@@ -291,6 +345,7 @@ export type Database = {
           prazo?: string | null
           primeiro_resposta_em?: string | null
           prioridade?: Database["public"]["Enums"]["prioridade_chamado"]
+          requisicao_compras?: boolean
           resolvido_em?: string | null
           responsavel_id?: string | null
           solicitante_id: string
@@ -315,6 +370,7 @@ export type Database = {
           prazo?: string | null
           primeiro_resposta_em?: string | null
           prioridade?: Database["public"]["Enums"]["prioridade_chamado"]
+          requisicao_compras?: boolean
           resolvido_em?: string | null
           responsavel_id?: string | null
           solicitante_id?: string

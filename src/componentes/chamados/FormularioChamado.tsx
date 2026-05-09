@@ -18,6 +18,12 @@ import { useCategoriasChamado } from "@/componentes/configuracoes/AbaCategorias"
 import { SeletorLoja } from "@/componentes/chamados/SeletorLoja";
 import { SeletorAnexos } from "@/componentes/chamados/SeletorAnexos";
 import {
+  ItensRequisicao,
+  itemRequisicaoVazio,
+  type ItemRequisicao,
+} from "@/componentes/chamados/ItensRequisicao";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
   PRIORIDADES_CHAMADO,
   STATUS_CHAMADO,
   TIPOS_CHAMADO,
@@ -44,6 +50,8 @@ export interface DadosFormularioChamado {
   prazo: string | null;
   chamado_pai_id: string | null;
   anexos: File[];
+  requisicao_compras: boolean;
+  itens_requisicao: ItemRequisicao[];
 }
 
 interface Props {
@@ -81,6 +89,8 @@ export function FormularioChamado({
     prazo: inicial?.prazo ?? null,
     chamado_pai_id: chamadoPaiId ?? inicial?.chamado_pai_id ?? null,
     anexos: [],
+    requisicao_compras: false,
+    itens_requisicao: [],
   });
 
   useEffect(() => {
@@ -164,6 +174,44 @@ export function FormularioChamado({
           value={dados.descricao}
           onChange={(e) => atualizar("descricao", e.target.value)}
         />
+      </div>
+
+      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="requisicao_compras"
+            checked={dados.requisicao_compras}
+            onCheckedChange={(v) => {
+              const ativo = v === true;
+              setDados((d) => ({
+                ...d,
+                requisicao_compras: ativo,
+                itens_requisicao:
+                  ativo && d.itens_requisicao.length === 0
+                    ? [itemRequisicaoVazio()]
+                    : d.itens_requisicao,
+              }));
+            }}
+          />
+          <div className="space-y-1">
+            <Label htmlFor="requisicao_compras" className="cursor-pointer">
+              Requisição de Compras
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Marque para informar uma lista de itens a serem comprados.
+            </p>
+          </div>
+        </div>
+
+        {dados.requisicao_compras && (
+          <div className="pt-2">
+            <ItensRequisicao
+              itens={dados.itens_requisicao}
+              aoMudar={(itens) => atualizar("itens_requisicao", itens)}
+              desabilitado={enviando}
+            />
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">
