@@ -1,7 +1,9 @@
-import { Settings, Sparkles } from "lucide-react";
+import { Building2, Settings, Sparkles, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { AbaIntegracaoIA } from "@/componentes/configuracoes/AbaIntegracaoIA";
+import { AbaDepartamentos } from "@/componentes/configuracoes/AbaDepartamentos";
+import { AbaUsuarios } from "@/componentes/configuracoes/AbaUsuarios";
 
 export function PaginaConfiguracoes() {
   const { workspaceAtual } = useWorkspaceStore();
@@ -20,6 +22,12 @@ export function PaginaConfiguracoes() {
         <TabsList>
           <TabsTrigger value="geral">
             <Settings className="h-4 w-4" /> Geral
+          </TabsTrigger>
+          <TabsTrigger value="usuarios">
+            <Users className="h-4 w-4" /> Usuários
+          </TabsTrigger>
+          <TabsTrigger value="departamentos">
+            <Building2 className="h-4 w-4" /> Departamentos
           </TabsTrigger>
           <TabsTrigger value="ia">
             <Sparkles className="h-4 w-4" /> Inteligência Artificial
@@ -48,6 +56,14 @@ export function PaginaConfiguracoes() {
               </div>
             </dl>
           </div>
+        </TabsContent>
+
+        <TabsContent value="usuarios" className="mt-6">
+          <AbaUsuarios />
+        </TabsContent>
+
+        <TabsContent value="departamentos" className="mt-6">
+          <AbaDepartamentos />
         </TabsContent>
 
         <TabsContent value="ia" className="mt-6">

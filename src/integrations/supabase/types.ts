@@ -302,6 +302,36 @@ export type Database = {
           },
         ]
       }
+      departamentos: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          criado_por: string
+          descricao: string | null
+          id: string
+          nome: string
+          workspace_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          workspace_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       perfis: {
         Row: {
           atualizado_em: string
@@ -457,38 +487,57 @@ export type Database = {
       workspace_convites: {
         Row: {
           aceito: boolean
+          cargo: Database["public"]["Enums"]["cargo_workspace"] | null
           convidado_por: string | null
           criado_em: string
+          departamento_id: string | null
           email: string
           expira_em: string
           id: string
+          nome: string | null
           papel: Database["public"]["Enums"]["papel_membro"]
+          telefone: string | null
           token: string
           workspace_id: string
         }
         Insert: {
           aceito?: boolean
+          cargo?: Database["public"]["Enums"]["cargo_workspace"] | null
           convidado_por?: string | null
           criado_em?: string
+          departamento_id?: string | null
           email: string
           expira_em?: string
           id?: string
+          nome?: string | null
           papel?: Database["public"]["Enums"]["papel_membro"]
+          telefone?: string | null
           token?: string
           workspace_id: string
         }
         Update: {
           aceito?: boolean
+          cargo?: Database["public"]["Enums"]["cargo_workspace"] | null
           convidado_por?: string | null
           criado_em?: string
+          departamento_id?: string | null
           email?: string
           expira_em?: string
           id?: string
+          nome?: string | null
           papel?: Database["public"]["Enums"]["papel_membro"]
+          telefone?: string | null
           token?: string
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workspace_convites_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "departamentos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workspace_convites_workspace_id_fkey"
             columns: ["workspace_id"]
@@ -540,8 +589,10 @@ export type Database = {
         Row: {
           aceito_em: string | null
           ativo: boolean
+          cargo: Database["public"]["Enums"]["cargo_workspace"] | null
           convidado_por: string | null
           criado_em: string
+          departamento_id: string | null
           id: string
           papel: Database["public"]["Enums"]["papel_membro"]
           usuario_id: string
@@ -550,8 +601,10 @@ export type Database = {
         Insert: {
           aceito_em?: string | null
           ativo?: boolean
+          cargo?: Database["public"]["Enums"]["cargo_workspace"] | null
           convidado_por?: string | null
           criado_em?: string
+          departamento_id?: string | null
           id?: string
           papel?: Database["public"]["Enums"]["papel_membro"]
           usuario_id: string
@@ -560,14 +613,23 @@ export type Database = {
         Update: {
           aceito_em?: string | null
           ativo?: boolean
+          cargo?: Database["public"]["Enums"]["cargo_workspace"] | null
           convidado_por?: string | null
           criado_em?: string
+          departamento_id?: string | null
           id?: string
           papel?: Database["public"]["Enums"]["papel_membro"]
           usuario_id?: string
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workspace_membros_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "departamentos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workspace_membros_workspace_id_fkey"
             columns: ["workspace_id"]
@@ -647,6 +709,7 @@ export type Database = {
       workspaces_do_usuario: { Args: never; Returns: string[] }
     }
     Enums: {
+      cargo_workspace: "Funcionario" | "Supervisor" | "Gestor" | "Gerente"
       papel_membro:
         | "Proprietario"
         | "Administrador"
@@ -799,6 +862,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      cargo_workspace: ["Funcionario", "Supervisor", "Gestor", "Gerente"],
       papel_membro: [
         "Proprietario",
         "Administrador",
