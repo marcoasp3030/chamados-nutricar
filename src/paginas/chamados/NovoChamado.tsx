@@ -40,6 +40,7 @@ export function NovoChamado({ chamadoPaiId }: Props) {
           categoria: dados.categoria || null,
           loja: dados.loja,
           responsavel_id: dados.responsavel_id,
+          departamento_id: dados.departamento_id,
           prazo: dados.prazo,
           chamado_pai_id: paiId,
           solicitante_id: u.user.id,
