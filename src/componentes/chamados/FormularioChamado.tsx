@@ -189,7 +189,7 @@ export function FormularioChamado({
     });
   }, [chamadoPai, chamadoPaiId, categorias]);
 
-  const [classificando, setClassificando] = useState(false);
+  const [corrigindo, setCorrigindo] = useState(false);
   const [tentouEnviar, setTentouEnviar] = useState(false);
 
   function atualizar<K extends keyof DadosFormularioChamado>(
@@ -199,41 +199,33 @@ export function FormularioChamado({
     setDados((d) => ({ ...d, [chave]: valor }));
   }
 
-  async function classificarComIA() {
-    if (!dados.titulo.trim()) {
-      toast.error("Informe um título primeiro.");
+  async function corrigirEscrita() {
+    const texto = dados.descricao.trim();
+    if (!texto) {
+      toast.error("Escreva uma descrição primeiro.");
       return;
     }
-    setClassificando(true);
+    setCorrigindo(true);
     try {
       const { data, error } = await supabase.functions.invoke("ia-chamado", {
         body: {
           workspace_id: workspaceId,
-          acao: "classificar",
-          titulo: dados.titulo,
-          descricao: dados.descricao,
+          acao: "corrigir_escrita",
+          texto,
         },
       });
       if (error) throw error;
-      const resp = data as {
-        error?: string;
-        resultado?: { prioridade?: string; categoria?: string; justificativa?: string };
-      };
+      const resp = data as { error?: string; resultado?: string };
       if (resp.error) throw new Error(resp.error);
-      const r = resp.resultado || {};
-      const prioridadesValidas = ["Baixa", "Media", "Alta", "Urgente"];
-      if (r.prioridade && prioridadesValidas.includes(r.prioridade)) {
-        atualizar("prioridade", r.prioridade as PrioridadeChamado);
-      }
-      if (r.categoria) atualizar("categoria", r.categoria);
-      toast.success("Classificado pela IA.", {
-        description: r.justificativa || undefined,
-      });
+      const corrigido = (resp.resultado ?? "").trim();
+      if (!corrigido) throw new Error("Não foi possível corrigir.");
+      atualizar("descricao", corrigido);
+      toast.success("Descrição corrigida pela IA.");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro";
-      toast.error("Falha na classificação", { description: msg });
+      toast.error("Falha ao corrigir", { description: msg });
     } finally {
-      setClassificando(false);
+      setCorrigindo(false);
     }
   }
 
@@ -285,13 +277,31 @@ export function FormularioChamado({
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <Label htmlFor="descricao" className="text-sm font-medium">
                   Descrição
                 </Label>
-                <span className="text-xs text-muted-foreground">
-                  {dados.descricao.length}/5000
-                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1.5 px-2 text-xs"
+                    onClick={corrigirEscrita}
+                    disabled={corrigindo || !dados.descricao.trim()}
+                    title="Corrigir ortografia, gramática e clareza com IA"
+                  >
+                    {corrigindo ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    )}
+                    Corrigir escrita
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {dados.descricao.length}/5000
+                  </span>
+                </div>
               </div>
               <Textarea
                 id="descricao"
@@ -301,40 +311,11 @@ export function FormularioChamado({
                 value={dados.descricao}
                 onChange={(e) => atualizar("descricao", e.target.value)}
                 className="resize-y"
+                disabled={corrigindo}
               />
               <p className="text-xs text-muted-foreground">
-                Quanto mais detalhes, mais rápido o atendimento.
+                Quanto mais detalhes, mais rápido o atendimento. Use “Corrigir escrita” para revisar com IA.
               </p>
-            </div>
-
-            <div className="rounded-lg border border-dashed border-border bg-muted/40 p-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex items-start gap-2">
-                  <Sparkles className="mt-0.5 h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Classificar com IA
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Sugere prioridade e categoria a partir do título e descrição.
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={classificarComIA}
-                  disabled={classificando || !dados.titulo.trim()}
-                >
-                  {classificando ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-4 w-4" />
-                  )}
-                  Sugerir
-                </Button>
-              </div>
             </div>
           </Cartao>
 
