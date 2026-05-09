@@ -503,6 +503,56 @@ function Painel() {
           </div>
 
           <h2 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Indicadores estratégicos
+          </h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <CartaoRanking
+              titulo="SLA estourado"
+              descricao="Chamados ativos com prazo expirado"
+              icone={ShieldAlert}
+              itens={data.slaEstouradoPorDepartamento}
+              corBarra="bg-red-500"
+              corIcone="bg-red-500/10 text-red-600 dark:text-red-400 ring-red-500/10"
+              corAtivos="bg-red-500/10 text-red-700 dark:text-red-400"
+              rotuloTotal="vencidos"
+              vazio="Nenhum SLA estourado"
+            />
+            <CartaoRanking
+              titulo="Sem interação"
+              descricao="Ativos sem resposta nem comentários"
+              icone={MessageSquareOff}
+              itens={data.semInteracaoPorDepartamento}
+              corBarra="bg-orange-500"
+              corIcone="bg-orange-500/10 text-orange-600 dark:text-orange-400 ring-orange-500/10"
+              corAtivos="bg-orange-500/10 text-orange-700 dark:text-orange-400"
+              rotuloTotal="parados"
+              vazio="Tudo com tratativa"
+            />
+            <CartaoRanking
+              titulo="Mais resolvem"
+              descricao="Departamentos com maior volume resolvido"
+              icone={Trophy}
+              itens={data.departamentosMaisResolvem}
+              corBarra="bg-emerald-500"
+              corIcone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-emerald-500/10"
+              corAtivos="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+              rotuloTotal="resolvidos"
+              vazio="Nenhuma resolução ainda"
+            />
+            <CartaoRanking
+              titulo="Pior índice de resolução"
+              descricao="Menor taxa de resolução (mín. 3 chamados)"
+              icone={TrendingDown}
+              itens={data.departamentosPiorIndiceResolucao}
+              corBarra="bg-rose-500"
+              corIcone="bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-rose-500/10"
+              corAtivos="bg-rose-500/10 text-rose-700 dark:text-rose-400"
+              sufixoTotal="chamados"
+              vazio="Sem dados suficientes"
+            />
+          </div>
+
+          <h2 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Visões por dimensão
           </h2>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
