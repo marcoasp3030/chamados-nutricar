@@ -238,6 +238,10 @@ export function DetalheChamado({ numero }: Props) {
             )}
           </section>
 
+          {(chamado as unknown as { requisicao_compras?: boolean }).requisicao_compras && (
+            <RequisicaoCompras chamadoId={chamado.id} />
+          )}
+
           <section className="rounded-2xl border border-border bg-card p-5">
             <ArvoreSubchamados
               chamadoPaiId={chamado.id}
