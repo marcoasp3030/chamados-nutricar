@@ -109,6 +109,7 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
         ultimos: lista.slice(0, 6).map((c) => ({
           id: c.id,
           numero: c.numero,
+          codigo: (c as { codigo?: string | null }).codigo ?? null,
           titulo: c.titulo,
           status: c.status as StatusChamado,
           prioridade: c.prioridade as PrioridadeChamado,
