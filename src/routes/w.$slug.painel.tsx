@@ -38,11 +38,13 @@ interface CartaoIndicadorProps {
   icone: typeof Inbox;
   cor?: string;
   rodape?: string;
+  search?: Record<string, unknown>;
+  slug?: string;
 }
 
-function CartaoIndicador({ rotulo, valor, icone: Icone, cor, rodape }: CartaoIndicadorProps) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+function CartaoIndicador({ rotulo, valor, icone: Icone, cor, rodape, search, slug }: CartaoIndicadorProps) {
+  const conteudo = (
+    <>
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">{rotulo}</span>
         <div
@@ -56,8 +58,29 @@ function CartaoIndicador({ rotulo, valor, icone: Icone, cor, rodape }: CartaoInd
       </div>
       <div className="mt-3 text-3xl font-bold text-foreground">{valor}</div>
       {rodape && <p className="mt-1 text-xs text-muted-foreground">{rodape}</p>}
-    </div>
+    </>
   );
+
+  const base =
+    "block rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] text-left";
+
+  if (slug) {
+    return (
+      <Link
+        to="/w/$slug/chamados"
+        params={{ slug }}
+        search={search ?? {}}
+        className={cn(
+          base,
+          "transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring",
+        )}
+      >
+        {conteudo}
+      </Link>
+    );
+  }
+
+  return <div className={base}>{conteudo}</div>;
 }
 
 function BarraProporcional({
