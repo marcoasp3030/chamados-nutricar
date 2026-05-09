@@ -37,9 +37,18 @@ export interface RankingItem {
   rotulo: string;
   total: number;
   ativos: number;
+  /** IDs dos chamados que compõem este item — usado para abrir lista filtrada. */
+  ids: string[];
   /** Texto secundário opcional (ex.: "32% resolvidos"). Quando presente, substitui o badge de ativos. */
   extra?: string;
 }
+
+interface AcumuladorEntry {
+  total: number;
+  ativos: number;
+  ids: string[];
+}
+type Acumulador = Map<string, AcumuladorEntry>;
 
 const STATUS_VAZIO: Record<StatusChamado, number> = {
   Aberto: 0,
@@ -105,25 +114,29 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
       let meusAtribuidos = 0;
       let totalMes = 0;
 
-      const acumLoja = new Map<string, { total: number; ativos: number }>();
-      const acumDep = new Map<string, { total: number; ativos: number }>();
-      const acumCat = new Map<string, { total: number; ativos: number }>();
-      const acumResp = new Map<string, { total: number; ativos: number }>();
+      const novoAcum = (): Acumulador => new Map();
 
-      const acumSla = new Map<string, { total: number; ativos: number }>();
-      const acumSem = new Map<string, { total: number; ativos: number }>();
-      const acumResolvidos = new Map<string, { total: number; ativos: number }>();
-      const acumStats = new Map<string, { total: number; resolvidos: number }>();
+      const acumLoja = novoAcum();
+      const acumDep = novoAcum();
+      const acumCat = novoAcum();
+      const acumResp = novoAcum();
+
+      const acumSla = novoAcum();
+      const acumSem = novoAcum();
+      const acumResolvidos = novoAcum();
+      const acumStats = new Map<string, { total: number; resolvidos: number; ids: string[] }>();
 
       const addAcum = (
-        mapa: Map<string, { total: number; ativos: number }>,
+        mapa: Acumulador,
         chave: string | null | undefined,
         ativo: boolean,
+        id: string,
       ) => {
         const k = chave && String(chave).trim() ? String(chave) : "__sem__";
-        const cur = mapa.get(k) ?? { total: 0, ativos: 0 };
+        const cur = mapa.get(k) ?? { total: 0, ativos: 0, ids: [] };
         cur.total++;
         if (ativo) cur.ativos++;
+        cur.ids.push(id);
         mapa.set(k, cur);
       };
 
@@ -149,38 +162,35 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
         if (c.resolvido_em && new Date(c.resolvido_em) >= inicioMes) resolvidosMes++;
         if (c.fechado_em && new Date(c.fechado_em) >= inicioMes) fechadosMes++;
 
-        addAcum(acumLoja, (c as { loja?: string | null }).loja, ativo);
-        addAcum(acumDep, (c as { departamento_id?: string | null }).departamento_id, ativo);
-        addAcum(acumCat, (c as { categoria?: string | null }).categoria, ativo);
-        addAcum(acumResp, c.responsavel_id, ativo);
+        addAcum(acumLoja, (c as { loja?: string | null }).loja, ativo, c.id);
+        addAcum(acumDep, (c as { departamento_id?: string | null }).departamento_id, ativo, c.id);
+        addAcum(acumCat, (c as { categoria?: string | null }).categoria, ativo, c.id);
+        addAcum(acumResp, c.responsavel_id, ativo, c.id);
 
-        // SLA estourado por departamento (apenas chamados ativos com prazo expirado)
         if (slaEstourado) {
-          addAcum(acumSla, c.departamento_id, true);
+          addAcum(acumSla, c.departamento_id, true, c.id);
         }
 
-        // Sem interação: chamados ativos sem primeira resposta e sem comentários
         const semInteracao =
           ativo &&
           !(c as { primeiro_resposta_em?: string | null }).primeiro_resposta_em &&
           !comSet.has(c.id);
         if (semInteracao) {
-          addAcum(acumSem, c.departamento_id, true);
+          addAcum(acumSem, c.departamento_id, true, c.id);
         }
 
-        // Departamentos que mais resolvem (volume absoluto de resolvidos/fechados)
         if (foiResolvido) {
-          addAcum(acumResolvidos, c.departamento_id, false);
+          addAcum(acumResolvidos, c.departamento_id, false, c.id);
         }
 
-        // Estatística por departamento para calcular índice de resolução
         const kdep =
           c.departamento_id && String(c.departamento_id).trim()
             ? String(c.departamento_id)
             : "__sem__";
-        const stat = acumStats.get(kdep) ?? { total: 0, resolvidos: 0 };
+        const stat = acumStats.get(kdep) ?? { total: 0, resolvidos: 0, ids: [] };
         stat.total++;
         if (foiResolvido) stat.resolvidos++;
+        stat.ids.push(c.id);
         acumStats.set(kdep, stat);
       }
 
@@ -218,7 +228,7 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
         k === "__sem__" ? "Sem departamento" : nomeDep.get(k) ?? "—";
 
       const construirRanking = (
-        mapa: Map<string, { total: number; ativos: number }>,
+        mapa: Acumulador,
         resolverNome: (k: string) => string,
       ): RankingItem[] =>
         Array.from(mapa.entries())
@@ -227,11 +237,11 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
             rotulo: chave === "__sem__" ? "Sem definição" : resolverNome(chave),
             total: v.total,
             ativos: v.ativos,
+            ids: v.ids,
           }))
           .sort((a, b) => b.total - a.total)
           .slice(0, 5);
 
-      // Pior índice de resolução: requer ao menos 3 chamados para ser representativo
       const departamentosPiorIndiceResolucao: RankingItem[] = Array.from(acumStats.entries())
         .filter(([, v]) => v.total >= 3)
         .map(([chave, v]) => {
@@ -242,6 +252,7 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
             rotulo: rotuloDepartamento(chave),
             total: v.total,
             ativos: v.total - v.resolvidos,
+            ids: v.ids,
             extra: `${pct}% resolvidos`,
             _taxa: taxa,
           };
@@ -254,7 +265,6 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
           return rest;
         });
 
-      // Top departamentos que mais resolvem (volume + taxa)
       const departamentosMaisResolvem: RankingItem[] = Array.from(acumResolvidos.entries())
         .map(([chave, v]) => {
           const stat = acumStats.get(chave);
@@ -264,6 +274,7 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
             rotulo: rotuloDepartamento(chave),
             total: v.total,
             ativos: 0,
+            ids: v.ids,
             extra: stat ? `${pct}% do total` : undefined,
           };
         })
