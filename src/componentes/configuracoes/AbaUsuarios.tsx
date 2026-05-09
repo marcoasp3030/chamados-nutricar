@@ -164,7 +164,7 @@ export function AbaUsuarios() {
         nome: z.string().trim().min(2, "Informe o nome").max(120),
         telefone: z.string().trim().max(30).optional().or(z.literal("")),
         cargo: z.enum(CARGOS as unknown as [string, ...string[]]),
-        departamento_id: z.string().uuid().nullable(),
+        departamento_ids: z.array(z.string().uuid()),
       });
       const parse = schema.safeParse(formMembro);
       if (!parse.success) {
@@ -185,14 +185,36 @@ export function AbaUsuarios() {
         .eq("id", editandoMembro.usuario_id);
       if (erroPerfil) throw erroPerfil;
 
+      const novosDeptos = parse.data.departamento_ids;
       const { error: erroMembro } = await supabase
         .from("workspace_membros")
         .update({
           cargo: parse.data.cargo as Cargo,
-          departamento_id: parse.data.departamento_id,
+          // mantém o campo legado apontando para o primeiro departamento (compatibilidade)
+          departamento_id: novosDeptos[0] ?? null,
         })
         .eq("id", editandoMembro.id);
       if (erroMembro) throw erroMembro;
+
+      // Sincroniza vínculos N:N
+      const { error: erroDel } = await supabase
+        .from("workspace_membro_departamentos")
+        .delete()
+        .eq("membro_id", editandoMembro.id);
+      if (erroDel) throw erroDel;
+
+      if (novosDeptos.length > 0 && workspaceAtual) {
+        const { error: erroIns } = await supabase
+          .from("workspace_membro_departamentos")
+          .insert(
+            novosDeptos.map((d) => ({
+              membro_id: editandoMembro.id,
+              departamento_id: d,
+              workspace_id: workspaceAtual.id,
+            })),
+          );
+        if (erroIns) throw erroIns;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["membros-workspace"] });
