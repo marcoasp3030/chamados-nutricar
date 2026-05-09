@@ -16,6 +16,7 @@ import { Route as WSlugRouteImport } from './routes/w.$slug'
 import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
 import { Route as WSlugIndexRouteImport } from './routes/w.$slug.index'
 import { Route as WSlugPainelRouteImport } from './routes/w.$slug.painel'
+import { Route as WSlugChamadosRouteImport } from './routes/w.$slug.chamados'
 
 const SelecionarEmpresaRoute = SelecionarEmpresaRouteImport.update({
   id: '/selecionar-empresa',
@@ -52,6 +53,11 @@ const WSlugPainelRoute = WSlugPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => WSlugRoute,
 } as any)
+const WSlugChamadosRoute = WSlugChamadosRouteImport.update({
+  id: '/chamados',
+  path: '/chamados',
+  getParentRoute: () => WSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug': typeof WSlugRouteWithChildren
+  '/w/$slug/chamados': typeof WSlugChamadosRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug/': typeof WSlugIndexRoute
 }
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/w/$slug/chamados': typeof WSlugChamadosRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug': typeof WSlugIndexRoute
 }
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug': typeof WSlugRouteWithChildren
+  '/w/$slug/chamados': typeof WSlugChamadosRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug/': typeof WSlugIndexRoute
 }
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/selecionar-empresa'
     | '/convite/$token'
     | '/w/$slug'
+    | '/w/$slug/chamados'
     | '/w/$slug/painel'
     | '/w/$slug/'
   fileRoutesByTo: FileRoutesByTo
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/selecionar-empresa'
     | '/convite/$token'
+    | '/w/$slug/chamados'
     | '/w/$slug/painel'
     | '/w/$slug'
   id:
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/selecionar-empresa'
     | '/convite/$token'
     | '/w/$slug'
+    | '/w/$slug/chamados'
     | '/w/$slug/painel'
     | '/w/$slug/'
   fileRoutesById: FileRoutesById
@@ -168,15 +180,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WSlugPainelRouteImport
       parentRoute: typeof WSlugRoute
     }
+    '/w/$slug/chamados': {
+      id: '/w/$slug/chamados'
+      path: '/chamados'
+      fullPath: '/w/$slug/chamados'
+      preLoaderRoute: typeof WSlugChamadosRouteImport
+      parentRoute: typeof WSlugRoute
+    }
   }
 }
 
 interface WSlugRouteChildren {
+  WSlugChamadosRoute: typeof WSlugChamadosRoute
   WSlugPainelRoute: typeof WSlugPainelRoute
   WSlugIndexRoute: typeof WSlugIndexRoute
 }
 
 const WSlugRouteChildren: WSlugRouteChildren = {
+  WSlugChamadosRoute: WSlugChamadosRoute,
   WSlugPainelRoute: WSlugPainelRoute,
   WSlugIndexRoute: WSlugIndexRoute,
 }
@@ -193,3 +214,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
