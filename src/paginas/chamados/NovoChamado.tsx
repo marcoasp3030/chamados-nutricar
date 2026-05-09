@@ -15,8 +15,11 @@ interface Props {
 export function NovoChamado({ chamadoPaiId }: Props) {
   const { workspaceAtual } = useWorkspaceStore();
   const navigate = useNavigate();
-  const search = useSearch({ strict: false }) as { pai?: string };
+  const search = useSearch({ strict: false }) as { pai?: string; status?: string };
   const paiId = chamadoPaiId ?? search?.pai ?? null;
+  const statusInicial = search?.status as
+    | import("@/tipos/chamado").StatusChamado
+    | undefined;
 
   const criar = useMutation({
     mutationFn: async (dados: DadosFormularioChamado) => {
@@ -31,7 +34,7 @@ export function NovoChamado({ chamadoPaiId }: Props) {
           descricao: dados.descricao || null,
           tipo: dados.tipo,
           prioridade: dados.prioridade,
-          status: "Aberto",
+          status: dados.status || "Aberto",
           categoria: dados.categoria || null,
           responsavel_id: dados.responsavel_id,
           prazo: dados.prazo,
@@ -74,6 +77,8 @@ export function NovoChamado({ chamadoPaiId }: Props) {
         <FormularioChamado
           workspaceId={workspaceAtual.id}
           chamadoPaiId={paiId}
+          inicial={statusInicial ? { status: statusInicial } : undefined}
+          permiteEditarStatus={!!statusInicial}
           enviando={criar.isPending}
           rotuloEnvio={paiId ? "Criar subchamado" : "Criar chamado"}
           aoCancelar={() =>
