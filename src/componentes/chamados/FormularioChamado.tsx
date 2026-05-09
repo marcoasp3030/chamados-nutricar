@@ -272,6 +272,18 @@ export function FormularioChamado({
           )}
         </div>
 
+        <div className="space-y-2 sm:col-span-2 lg:col-span-3">
+          <Label>Loja</Label>
+          <SeletorLoja
+            workspaceId={workspaceId}
+            valor={dados.loja}
+            aoMudar={(v) => atualizar("loja", v)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Lojas sincronizadas da VMPay. Configure a chave em Configurações → VMPay.
+          </p>
+        </div>
+
         <div className="space-y-2">
           <Label>Responsável</Label>
           <Select
