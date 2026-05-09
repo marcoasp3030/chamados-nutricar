@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/select";
 import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";
 import { useCategoriasChamado } from "@/componentes/configuracoes/AbaCategorias";
+import { useDepartamentos } from "@/componentes/configuracoes/AbaDepartamentos";
+import { Building2 } from "lucide-react";
 import { SeletorLoja } from "@/componentes/chamados/SeletorLoja";
 import { SeletorAnexos } from "@/componentes/chamados/SeletorAnexos";
 import {
@@ -60,6 +62,7 @@ export interface DadosFormularioChamado {
   categoria: string;
   loja: string | null;
   responsavel_id: string | null;
+  departamento_id: string | null;
   prazo: string | null;
   chamado_pai_id: string | null;
   anexos: File[];
@@ -129,6 +132,7 @@ export function FormularioChamado({
 }: Props) {
   const { data: membros } = useMembrosWorkspace(workspaceId);
   const { data: categorias } = useCategoriasChamado(workspaceId);
+  const { data: departamentos } = useDepartamentos(workspaceId);
   const [dados, setDados] = useState<DadosFormularioChamado>({
     titulo: inicial?.titulo ?? "",
     descricao: inicial?.descricao ?? "",
@@ -138,6 +142,7 @@ export function FormularioChamado({
     categoria: inicial?.categoria ?? "",
     loja: (inicial as { loja?: string | null } | undefined)?.loja ?? null,
     responsavel_id: inicial?.responsavel_id ?? null,
+    departamento_id: (inicial as { departamento_id?: string | null } | undefined)?.departamento_id ?? null,
     prazo: inicial?.prazo ?? null,
     chamado_pai_id: chamadoPaiId ?? inicial?.chamado_pai_id ?? null,
     anexos: [],
@@ -454,6 +459,42 @@ export function FormularioChamado({
 
           <Cartao titulo="Atribuição e prazo" icone={UserCircle2}>
             <div className="space-y-2">
+              <Label className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <Building2 className="h-3 w-3" /> Departamento
+              </Label>
+              <Select
+                value={dados.departamento_id ?? "__nenhum__"}
+                onValueChange={(v) => {
+                  const novo = v === "__nenhum__" ? null : v;
+                  setDados((d) => ({
+                    ...d,
+                    departamento_id: novo,
+                    // Ao escolher um departamento, limpamos o responsável individual:
+                    // todos os membros do departamento ficam vinculados.
+                    responsavel_id: novo ? null : d.responsavel_id,
+                  }));
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar departamento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__nenhum__">Sem departamento</SelectItem>
+                  {(departamentos ?? []).map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {(!departamentos || departamentos.length === 0) && (
+                <p className="text-xs text-muted-foreground">
+                  Cadastre departamentos em Configurações → Departamentos.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Responsável
               </Label>
@@ -462,6 +503,7 @@ export function FormularioChamado({
                 onValueChange={(v) =>
                   atualizar("responsavel_id", v === "__nenhum__" ? null : v)
                 }
+                disabled={!!dados.departamento_id}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecionar" />
@@ -475,6 +517,11 @@ export function FormularioChamado({
                   ))}
                 </SelectContent>
               </Select>
+              {dados.departamento_id && (
+                <p className="text-xs text-muted-foreground">
+                  Todos os membros do departamento selecionado ficam vinculados automaticamente.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
