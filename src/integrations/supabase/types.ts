@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      categorias_chamado: {
+        Row: {
+          atualizado_em: string
+          cor: string
+          criado_em: string
+          criado_por: string
+          descricao: string | null
+          id: string
+          nome: string
+          workspace_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          cor?: string
+          criado_em?: string
+          criado_por: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          workspace_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          cor?: string
+          criado_em?: string
+          criado_por?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       chamado_anexos: {
         Row: {
           caminho_storage: string
