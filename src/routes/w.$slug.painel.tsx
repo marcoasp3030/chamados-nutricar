@@ -53,24 +53,35 @@ interface CartaoIndicadorProps {
 function CartaoIndicador({ rotulo, valor, icone: Icone, cor, rodape, onClick }: CartaoIndicadorProps) {
   const conteudo = (
     <>
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">{rotulo}</span>
+      <div className="flex items-start justify-between gap-3">
         <div
           className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary",
+            "flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/10",
             cor,
           )}
         >
-          <Icone className="h-4 w-4" />
+          <Icone className="h-5 w-5" />
         </div>
+        {onClick && (
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70 opacity-0 transition-opacity group-hover:opacity-100">
+            ver
+          </span>
+        )}
       </div>
-      <div className="mt-3 text-3xl font-bold text-foreground">{valor}</div>
-      {rodape && <p className="mt-1 text-xs text-muted-foreground">{rodape}</p>}
+      <div className="mt-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {rotulo}
+        </p>
+        <div className="mt-1 text-3xl font-bold leading-none tracking-tight text-foreground">
+          {valor}
+        </div>
+        {rodape && <p className="mt-2 text-xs text-muted-foreground">{rodape}</p>}
+      </div>
     </>
   );
 
   const base =
-    "block w-full rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] text-left";
+    "group relative block w-full overflow-hidden rounded-2xl border border-border bg-card p-5 text-left shadow-[var(--shadow-card)]";
 
   if (onClick) {
     return (
@@ -79,7 +90,7 @@ function CartaoIndicador({ rotulo, valor, icone: Icone, cor, rodape, onClick }: 
         onClick={onClick}
         className={cn(
           base,
-          "transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring",
+          "transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring",
         )}
       >
         {conteudo}
