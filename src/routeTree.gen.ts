@@ -17,6 +17,7 @@ import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
 import { Route as WSlugIndexRouteImport } from './routes/w.$slug.index'
 import { Route as WSlugPainelRouteImport } from './routes/w.$slug.painel'
 import { Route as WSlugChamadosRouteImport } from './routes/w.$slug.chamados'
+import { Route as WSlugChamadosIndexRouteImport } from './routes/w.$slug.chamados.index'
 
 const SelecionarEmpresaRoute = SelecionarEmpresaRouteImport.update({
   id: '/selecionar-empresa',
@@ -58,6 +59,11 @@ const WSlugChamadosRoute = WSlugChamadosRouteImport.update({
   path: '/chamados',
   getParentRoute: () => WSlugRoute,
 } as any)
+const WSlugChamadosIndexRoute = WSlugChamadosIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WSlugChamadosRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -65,18 +71,19 @@ export interface FileRoutesByFullPath {
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug': typeof WSlugRouteWithChildren
-  '/w/$slug/chamados': typeof WSlugChamadosRoute
+  '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug/': typeof WSlugIndexRoute
+  '/w/$slug/chamados/': typeof WSlugChamadosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
   '/convite/$token': typeof ConviteTokenRoute
-  '/w/$slug/chamados': typeof WSlugChamadosRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug': typeof WSlugIndexRoute
+  '/w/$slug/chamados': typeof WSlugChamadosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -85,9 +92,10 @@ export interface FileRoutesById {
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug': typeof WSlugRouteWithChildren
-  '/w/$slug/chamados': typeof WSlugChamadosRoute
+  '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug/': typeof WSlugIndexRoute
+  '/w/$slug/chamados/': typeof WSlugChamadosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -100,15 +108,16 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados'
     | '/w/$slug/painel'
     | '/w/$slug/'
+    | '/w/$slug/chamados/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/selecionar-empresa'
     | '/convite/$token'
-    | '/w/$slug/chamados'
     | '/w/$slug/painel'
     | '/w/$slug'
+    | '/w/$slug/chamados'
   id:
     | '__root__'
     | '/'
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados'
     | '/w/$slug/painel'
     | '/w/$slug/'
+    | '/w/$slug/chamados/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -187,17 +197,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WSlugChamadosRouteImport
       parentRoute: typeof WSlugRoute
     }
+    '/w/$slug/chamados/': {
+      id: '/w/$slug/chamados/'
+      path: '/'
+      fullPath: '/w/$slug/chamados/'
+      preLoaderRoute: typeof WSlugChamadosIndexRouteImport
+      parentRoute: typeof WSlugChamadosRoute
+    }
   }
 }
 
+interface WSlugChamadosRouteChildren {
+  WSlugChamadosIndexRoute: typeof WSlugChamadosIndexRoute
+}
+
+const WSlugChamadosRouteChildren: WSlugChamadosRouteChildren = {
+  WSlugChamadosIndexRoute: WSlugChamadosIndexRoute,
+}
+
+const WSlugChamadosRouteWithChildren = WSlugChamadosRoute._addFileChildren(
+  WSlugChamadosRouteChildren,
+)
+
 interface WSlugRouteChildren {
-  WSlugChamadosRoute: typeof WSlugChamadosRoute
+  WSlugChamadosRoute: typeof WSlugChamadosRouteWithChildren
   WSlugPainelRoute: typeof WSlugPainelRoute
   WSlugIndexRoute: typeof WSlugIndexRoute
 }
 
 const WSlugRouteChildren: WSlugRouteChildren = {
-  WSlugChamadosRoute: WSlugChamadosRoute,
+  WSlugChamadosRoute: WSlugChamadosRouteWithChildren,
   WSlugPainelRoute: WSlugPainelRoute,
   WSlugIndexRoute: WSlugIndexRoute,
 }
