@@ -8,6 +8,9 @@ export interface FiltrosChamados {
   busca?: string;
   responsavel_id?: string | "Todos" | "MEUS";
   somenteRaiz?: boolean;
+  dataInicio?: string; // ISO
+  dataFim?: string; // ISO
+  campoData?: "criado_em" | "atualizado_em" | "prazo" | "fechado_em";
 }
 
 async function buscarPerfisPorIds(ids: string[]) {
