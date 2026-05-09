@@ -25,7 +25,7 @@ interface Props {
 
 export function SeletorLoja({ workspaceId, valor, aoMudar }: Props) {
   const [aberto, setAberto] = useState(false);
-  const { data: lojas, isLoading, error } = useLojasVMPay(workspaceId);
+  const { data: lojas, isLoading, error, refetch, isFetching } = useLojasVMPay(workspaceId);
 
   const ordenadas = useMemo(
     () => [...(lojas ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
