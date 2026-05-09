@@ -62,6 +62,7 @@ export interface DadosFormularioChamado {
   categoria: string;
   loja: string | null;
   responsavel_id: string | null;
+  departamento_id: string | null;
   prazo: string | null;
   chamado_pai_id: string | null;
   anexos: File[];
