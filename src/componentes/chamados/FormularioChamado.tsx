@@ -38,6 +38,7 @@ export interface DadosFormularioChamado {
   prioridade: PrioridadeChamado;
   status: StatusChamado;
   categoria: string;
+  loja: string | null;
   responsavel_id: string | null;
   prazo: string | null;
   chamado_pai_id: string | null;
