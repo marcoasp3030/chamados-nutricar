@@ -543,7 +543,7 @@ export function FormularioChamado({
 
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Responsável
+                Observador
               </Label>
               <Select
                 value={dados.responsavel_id ?? "__nenhum__"}
@@ -553,20 +553,32 @@ export function FormularioChamado({
                 disabled={!!dados.departamento_id}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecionar" />
+                  <SelectValue placeholder="Selecionar observador" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__nenhum__">Sem responsável</SelectItem>
-                  {(membros ?? []).map((m) => (
-                    <SelectItem key={m.usuario_id} value={m.usuario_id}>
-                      {m.perfil.nome}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="__nenhum__">Sem observador</SelectItem>
+                  {(membros ?? []).map((m) => {
+                    const dep = (departamentos ?? []).find((d) => d.id === m.departamento_id);
+                    return (
+                      <SelectItem key={m.usuario_id} value={m.usuario_id}>
+                        <span className="flex flex-col">
+                          <span className="text-sm">{m.perfil.nome}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {dep?.nome ?? "Sem departamento"}
+                          </span>
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
-              {dados.departamento_id && (
+              {dados.departamento_id ? (
                 <p className="text-xs text-muted-foreground">
                   Todos os membros do departamento selecionado ficam vinculados automaticamente.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  O observador acompanha o chamado e enxerga toda a interação.
                 </p>
               )}
             </div>
