@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { Copy, Loader2, Mail, Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
@@ -140,6 +140,11 @@ export function AbaUsuarios() {
 
   const podeAdministrar =
     workspaceAtual?.papel === "Proprietario" || workspaceAtual?.papel === "Administrador";
+
+  const [usuarioAtualId, setUsuarioAtualId] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUsuarioAtualId(data.user?.id ?? null));
+  }, []);
 
   function abrirEdicaoMembro(m: MembroAtivo) {
     setErrosMembro({});
