@@ -273,16 +273,18 @@ export function PreviaIndicador({
           <Button variant="outline" onClick={aoFechar}>
             Fechar
           </Button>
-          <Button asChild>
-            <Link
-              to="/w/$slug/chamados"
-              params={{ slug }}
-              search={search as never}
-              onClick={aoFechar}
-            >
-              Ver lista completa <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
+          {!filtros.chamadoIds && (
+            <Button asChild>
+              <Link
+                to="/w/$slug/chamados"
+                params={{ slug }}
+                search={search as never}
+                onClick={aoFechar}
+              >
+                Ver lista completa <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
