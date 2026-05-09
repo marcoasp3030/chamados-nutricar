@@ -277,13 +277,31 @@ export function FormularioChamado({
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <Label htmlFor="descricao" className="text-sm font-medium">
                   Descrição
                 </Label>
-                <span className="text-xs text-muted-foreground">
-                  {dados.descricao.length}/5000
-                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1.5 px-2 text-xs"
+                    onClick={corrigirEscrita}
+                    disabled={corrigindo || !dados.descricao.trim()}
+                    title="Corrigir ortografia, gramática e clareza com IA"
+                  >
+                    {corrigindo ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    )}
+                    Corrigir escrita
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {dados.descricao.length}/5000
+                  </span>
+                </div>
               </div>
               <Textarea
                 id="descricao"
@@ -293,40 +311,11 @@ export function FormularioChamado({
                 value={dados.descricao}
                 onChange={(e) => atualizar("descricao", e.target.value)}
                 className="resize-y"
+                disabled={corrigindo}
               />
               <p className="text-xs text-muted-foreground">
-                Quanto mais detalhes, mais rápido o atendimento.
+                Quanto mais detalhes, mais rápido o atendimento. Use “Corrigir escrita” para revisar com IA.
               </p>
-            </div>
-
-            <div className="rounded-lg border border-dashed border-border bg-muted/40 p-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex items-start gap-2">
-                  <Sparkles className="mt-0.5 h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Classificar com IA
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Sugere prioridade e categoria a partir do título e descrição.
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={classificarComIA}
-                  disabled={classificando || !dados.titulo.trim()}
-                >
-                  {classificando ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Sparkles className="h-4 w-4" />
-                  )}
-                  Sugerir
-                </Button>
-              </div>
             </div>
           </Cartao>
 
