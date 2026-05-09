@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { Eye, EyeOff, Lock, Mail, Loader2 } from "lucide-react";
 import logo from "@/assets/nutricar-logo.png";
@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -24,12 +26,19 @@ const loginSchema = z.object({
 });
 
 function LoginPage() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) navigate({ to: "/dashboard" });
+    });
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,14 +54,25 @@ function LoginPage() {
       return;
     }
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 900));
+    const { error } = await supabase.auth.signInWithPassword({
+      email: parsed.data.email,
+      password: parsed.data.password,
+    });
     setLoading(false);
-    setErrors({ form: "Autenticação ainda não conectada. Em breve." });
+    if (error) {
+      const msg =
+        error.message === "Invalid login credentials"
+          ? "E-mail ou senha incorretos."
+          : error.message;
+      setErrors({ form: msg });
+      return;
+    }
+    toast.success("Bem-vindo!");
+    navigate({ to: "/dashboard" });
   };
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-background">
-      {/* Decorative background */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -71,7 +91,6 @@ function LoginPage() {
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-10">
         <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-border bg-card/80 shadow-[var(--shadow-elegant)] backdrop-blur-xl md:grid-cols-2">
-          {/* Brand panel */}
           <aside
             className="relative hidden flex-col justify-between p-10 text-primary-foreground md:flex"
             style={{ background: "var(--gradient-primary)" }}
@@ -98,7 +117,6 @@ function LoginPage() {
             </div>
           </aside>
 
-          {/* Form panel */}
           <section className="flex flex-col justify-center p-8 sm:p-12">
             <div className="mb-8 flex items-center gap-3 md:hidden">
               <img src={logo} alt="Nutricar" className="h-10 w-auto" />
@@ -127,18 +145,13 @@ function LoginPage() {
                     aria-invalid={!!errors.email}
                   />
                 </div>
-                {errors.email && (
-                  <p className="text-xs text-destructive">{errors.email}</p>
-                )}
+                {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Senha</Label>
-                  <Link
-                    to="/login"
-                    className="text-xs font-medium text-primary-deep hover:underline"
-                  >
+                  <Link to="/login" className="text-xs font-medium text-primary-deep hover:underline">
                     Esqueci minha senha
                   </Link>
                 </div>
@@ -163,17 +176,11 @@ function LoginPage() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                {errors.password && (
-                  <p className="text-xs text-destructive">{errors.password}</p>
-                )}
+                {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
               </div>
 
               <div className="flex items-center gap-2">
-                <Checkbox
-                  id="remember"
-                  checked={remember}
-                  onCheckedChange={(v) => setRemember(!!v)}
-                />
+                <Checkbox id="remember" checked={remember} onCheckedChange={(v) => setRemember(!!v)} />
                 <Label htmlFor="remember" className="text-sm font-normal text-muted-foreground">
                   Manter-me conectado
                 </Label>
