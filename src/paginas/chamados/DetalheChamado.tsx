@@ -52,6 +52,7 @@ import { ComentariosChamado } from "@/componentes/chamados/ComentariosChamado";
 import { HistoricoChamado } from "@/componentes/chamados/HistoricoChamado";
 import { ArvoreSubchamados } from "@/componentes/chamados/ArvoreSubchamados";
 import { AcoesIAChamado } from "@/componentes/chamados/AcoesIAChamado";
+import { HistoricoIAChamado } from "@/componentes/chamados/HistoricoIAChamado";
 import {
   FormularioChamado,
   type DadosFormularioChamado,
