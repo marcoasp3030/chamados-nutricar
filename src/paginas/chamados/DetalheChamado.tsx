@@ -239,7 +239,11 @@ export function DetalheChamado({ numero }: Props) {
           </section>
 
           {(chamado as unknown as { requisicao_compras?: boolean }).requisicao_compras && (
-            <RequisicaoCompras chamadoId={chamado.id} />
+            <RequisicaoCompras
+              chamadoId={chamado.id}
+              codigoChamado={chamado.codigo ?? `#${chamado.numero}`}
+              tituloChamado={chamado.titulo}
+            />
           )}
 
           <section className="rounded-2xl border border-border bg-card p-5">
