@@ -613,110 +613,156 @@ export function ListaChamados() {
             </Button>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/30 hover:bg-muted/30">
-                <TableHead className="w-[80px]">Nº</TableHead>
-                <TableHead>Chamado</TableHead>
-                <TableHead className="w-[170px]">Status</TableHead>
-                <TableHead className="w-[110px]">Prioridade</TableHead>
-                <TableHead className="w-[200px]">Responsável</TableHead>
-                <TableHead className="w-[130px]">Prazo</TableHead>
-                <TableHead className="w-[110px]">Criado</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((c) => {
-                const prazo = c.prazo ? new Date(c.prazo) : null;
-                const ativo =
-                  c.status !== "Fechado" && c.status !== "Cancelado" && c.status !== "Resolvido";
-                const atrasado = prazo && ativo && isPast(prazo);
-                const proximo =
-                  prazo && ativo && !atrasado && differenceInDays(prazo, new Date()) <= 2;
+          <TooltipProvider delayDuration={150}>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30 hover:bg-muted/30">
+                  <TableHead className="w-[80px]">Nº</TableHead>
+                  <TableHead>Chamado</TableHead>
+                  <TableHead className="w-[140px]">Categoria</TableHead>
+                  <TableHead className="w-[170px]">Status</TableHead>
+                  <TableHead className="w-[110px]">Prioridade</TableHead>
+                  <TableHead className="w-[200px]">Responsável</TableHead>
+                  <TableHead className="w-[130px]">Prazo</TableHead>
+                  <TableHead className="w-[110px]">Criado</TableHead>
+                  <TableHead className="w-[60px] text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.map((c) => {
+                  const prazo = c.prazo ? new Date(c.prazo) : null;
+                  const ativo =
+                    c.status !== "Fechado" && c.status !== "Cancelado" && c.status !== "Resolvido";
+                  const atrasado = prazo && ativo && isPast(prazo);
+                  const proximo =
+                    prazo && ativo && !atrasado && differenceInDays(prazo, new Date()) <= 2;
+                  const temSubs = idsComSubchamados?.has(c.id);
 
-                return (
-                  <TableRow key={c.id} className="group transition-colors hover:bg-muted/40">
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      <Link
-                        to="/w/$slug/chamados/$numero"
-                        params={{ slug: workspaceAtual.slug, numero: String(c.numero) }}
-                        className="hover:text-primary hover:underline"
-                      >
-                        {c.codigo ?? `#${c.numero}`}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <Link
-                        to="/w/$slug/chamados/$numero"
-                        params={{ slug: workspaceAtual.slug, numero: String(c.numero) }}
-                        className="block"
-                      >
-                        <div className="font-medium text-foreground transition-colors group-hover:text-primary">
-                          {c.titulo}
-                        </div>
-                        {c.solicitante && (
-                          <div className="mt-0.5 text-xs text-muted-foreground">
-                            por {c.solicitante.nome}
-                            {c.tipo && <> · {c.tipo}</>}
-                          </div>
-                        )}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <BadgeStatus status={c.status} />
-                    </TableCell>
-                    <TableCell>
-                      <BadgePrioridade prioridade={c.prioridade} />
-                    </TableCell>
-                    <TableCell>
-                      {c.responsavel ? (
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
-                              {iniciais(c.responsavel.nome)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="truncate text-sm">{c.responsavel.nome}</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm italic text-muted-foreground">
-                          Sem responsável
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {prazo ? (
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium",
-                            atrasado
-                              ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
-                              : proximo
-                                ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"
-                                : "bg-muted text-muted-foreground",
-                          )}
+                  return (
+                    <TableRow key={c.id} className="group transition-colors hover:bg-muted/40">
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        <Link
+                          to="/w/$slug/chamados/$numero"
+                          params={{ slug: workspaceAtual.slug, numero: String(c.numero) }}
+                          className="hover:text-primary hover:underline"
                         >
-                          {atrasado ? (
-                            <AlertTriangle className="h-3 w-3" />
-                          ) : (
-                            <CalendarIcon className="h-3 w-3" />
+                          {c.codigo ?? `#${c.numero}`}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          to="/w/$slug/chamados/$numero"
+                          params={{ slug: workspaceAtual.slug, numero: String(c.numero) }}
+                          className="block"
+                        >
+                          <div className="flex items-center gap-1.5 font-medium text-foreground transition-colors group-hover:text-primary">
+                            <span className="truncate">{c.titulo}</span>
+                            {temSubs && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                                    <GitBranch className="h-3 w-3" />
+                                    sub
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>Possui subchamados</TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
+                          {c.solicitante && (
+                            <div className="mt-0.5 text-xs text-muted-foreground">
+                              por {c.solicitante.nome}
+                              {c.tipo && <> · {c.tipo}</>}
+                            </div>
                           )}
-                          {format(prazo, "dd/MM/yyyy", { locale: ptBR })}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {format(new Date(c.criado_em), "dd/MM/yyyy", { locale: ptBR })}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        {c.categoria ? (
+                          <span className="inline-flex max-w-full items-center truncate rounded-md bg-muted px-2 py-0.5 text-xs text-foreground">
+                            {c.categoria}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <BadgeStatus status={c.status} />
+                      </TableCell>
+                      <TableCell>
+                        <BadgePrioridade prioridade={c.prioridade} />
+                      </TableCell>
+                      <TableCell>
+                        {c.responsavel ? (
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
+                                {iniciais(c.responsavel.nome)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="truncate text-sm">{c.responsavel.nome}</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm italic text-muted-foreground">
+                            Sem responsável
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {prazo ? (
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium",
+                              atrasado
+                                ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
+                                : proximo
+                                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"
+                                  : "bg-muted text-muted-foreground",
+                            )}
+                          >
+                            {atrasado ? (
+                              <AlertTriangle className="h-3 w-3" />
+                            ) : (
+                              <CalendarIcon className="h-3 w-3" />
+                            )}
+                            {format(prazo, "dd/MM/yyyy", { locale: ptBR })}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {format(new Date(c.criado_em), "dd/MM/yyyy", { locale: ptBR })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8"
+                              onClick={() => setChamadoDetalhe(c)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Ver detalhes</TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TooltipProvider>
         )}
       </div>
+
+      <ChamadoDetalheRapido
+        chamado={chamadoDetalhe}
+        slug={workspaceAtual.slug}
+        aoFechar={() => setChamadoDetalhe(null)}
+      />
     </div>
   );
 }
