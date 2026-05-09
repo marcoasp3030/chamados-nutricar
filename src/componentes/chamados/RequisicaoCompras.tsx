@@ -162,6 +162,70 @@ export function RequisicaoCompras({ chamadoId, codigoChamado, tituloChamado }: P
   ).length;
   const progresso = itens.length > 0 ? Math.round((concluidos / itens.length) * 100) : 0;
 
+  function exportarExcel() {
+    if (itens.length === 0) {
+      toast.info("Nenhum item para exportar.");
+      return;
+    }
+    const linhas = itens.map((it, i) => ({
+      "#": i + 1,
+      Descrição: it.descricao,
+      Quantidade: Number(it.quantidade),
+      Unidade: it.unidade ?? "",
+      "Referência / Marca / Link": it.referencia ?? "",
+      "Data de necessidade": it.data_necessidade
+        ? format(new Date(it.data_necessidade), "dd/MM/yyyy", { locale: ptBR })
+        : "",
+      Prioridade: rotuloPrioridade[it.prioridade],
+      "Status compra": it.status_compra,
+      Observação: it.observacao_compra ?? "",
+      "Atualizado em": it.atualizado_compra_em
+        ? format(new Date(it.atualizado_compra_em), "dd/MM/yyyy HH:mm", { locale: ptBR })
+        : "",
+    }));
+
+    const wb = XLSX.utils.book_new();
+
+    // Cabeçalho informativo
+    const cabecalho: (string | number)[][] = [
+      ["Requisição de Compras"],
+      [`Chamado: ${codigoChamado ?? ""}`],
+      [`Título: ${tituloChamado ?? ""}`],
+      [`Exportado em: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`],
+      [`Total de itens: ${itens.length} | Concluídos: ${concluidos} (${progresso}%)`],
+      [],
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(cabecalho);
+    XLSX.utils.sheet_add_json(ws, linhas, { origin: "A7" });
+
+    // Larguras de coluna
+    ws["!cols"] = [
+      { wch: 5 },
+      { wch: 45 },
+      { wch: 11 },
+      { wch: 10 },
+      { wch: 35 },
+      { wch: 18 },
+      { wch: 12 },
+      { wch: 14 },
+      { wch: 40 },
+      { wch: 18 },
+    ];
+
+    // Mesclar título
+    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Requisição");
+
+    const nomeArq = `requisicao-${(codigoChamado ?? chamadoId).replace(/[^\w-]/g, "_")}-${format(
+      new Date(),
+      "yyyyMMdd-HHmm",
+    )}.xlsx`;
+    XLSX.writeFile(wb, nomeArq);
+    toast.success("Planilha exportada");
+  }
+
+
   return (
     <section className="rounded-2xl border border-border bg-card p-5">
       <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
