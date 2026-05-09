@@ -1,10 +1,11 @@
-import { Building2, Settings, Sparkles, Tag, Users } from "lucide-react";
+import { Building2, CreditCard, Settings, Sparkles, Tag, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { AbaIntegracaoIA } from "@/componentes/configuracoes/AbaIntegracaoIA";
 import { AbaDepartamentos } from "@/componentes/configuracoes/AbaDepartamentos";
 import { AbaUsuarios } from "@/componentes/configuracoes/AbaUsuarios";
 import { AbaCategorias } from "@/componentes/configuracoes/AbaCategorias";
+import { AbaVMPay } from "@/componentes/configuracoes/AbaVMPay";
 
 export function PaginaConfiguracoes() {
   const { workspaceAtual } = useWorkspaceStore();
