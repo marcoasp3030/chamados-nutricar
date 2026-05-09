@@ -709,7 +709,28 @@ export function ListaChamados() {
                       )}
                     </button>
                   </TableHead>
-                  <TableHead className="w-[110px]">Criado</TableHead>
+                  <TableHead className="w-[110px]">
+                    <button
+                      type="button"
+                      onClick={() => alternarOrdenacao("criado")}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded transition-colors hover:text-foreground",
+                        ordenacao.campo === "criado" && "text-foreground",
+                      )}
+                      title="Ordenar por data de criação"
+                    >
+                      Criado
+                      {ordenacao.campo === "criado" ? (
+                        ordenacao.direcao === "desc" ? (
+                          <ArrowDown className="h-3 w-3" />
+                        ) : (
+                          <ArrowUp className="h-3 w-3" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-50" />
+                      )}
+                    </button>
+                  </TableHead>
                   <TableHead className="w-[60px] text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
