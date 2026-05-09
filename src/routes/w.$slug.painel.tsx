@@ -359,6 +359,36 @@ function Painel() {
               )}
             </section>
           </div>
+
+          <h2 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Visões por dimensão
+          </h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <CartaoRanking
+              titulo="Lojas com mais chamados"
+              icone={Store}
+              itens={data.topLojas}
+              corBarra="bg-blue-500"
+            />
+            <CartaoRanking
+              titulo="Departamentos"
+              icone={Building2}
+              itens={data.topDepartamentos}
+              corBarra="bg-amber-500"
+            />
+            <CartaoRanking
+              titulo="Categorias"
+              icone={FolderTree}
+              itens={data.topCategorias}
+              corBarra="bg-emerald-500"
+            />
+            <CartaoRanking
+              titulo="Responsáveis"
+              icone={Users}
+              itens={data.topResponsaveis}
+              corBarra="bg-purple-500"
+            />
+          </div>
         </>
       )}
 
