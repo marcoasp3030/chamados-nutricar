@@ -660,9 +660,50 @@ export function ListaChamados() {
                   <TableHead>Chamado</TableHead>
                   <TableHead className="w-[140px]">Categoria</TableHead>
                   <TableHead className="w-[170px]">Status</TableHead>
-                  <TableHead className="w-[110px]">Prioridade</TableHead>
+                  <TableHead className="w-[110px]">
+                    <button
+                      type="button"
+                      onClick={() => alternarOrdenacao("prioridade")}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded transition-colors hover:text-foreground",
+                        ordenacao.campo === "prioridade" && "text-foreground",
+                      )}
+                    >
+                      Prioridade
+                      {ordenacao.campo === "prioridade" ? (
+                        ordenacao.direcao === "desc" ? (
+                          <ArrowDown className="h-3 w-3" />
+                        ) : (
+                          <ArrowUp className="h-3 w-3" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-50" />
+                      )}
+                    </button>
+                  </TableHead>
                   <TableHead className="w-[200px]">Responsável</TableHead>
-                  <TableHead className="w-[130px]">Prazo</TableHead>
+                  <TableHead className="w-[130px]">
+                    <button
+                      type="button"
+                      onClick={() => alternarOrdenacao("sla")}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded transition-colors hover:text-foreground",
+                        ordenacao.campo === "sla" && "text-foreground",
+                      )}
+                      title="Ordenar por SLA — vencidos primeiro"
+                    >
+                      Prazo / SLA
+                      {ordenacao.campo === "sla" ? (
+                        ordenacao.direcao === "desc" ? (
+                          <ArrowDown className="h-3 w-3" />
+                        ) : (
+                          <ArrowUp className="h-3 w-3" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-50" />
+                      )}
+                    </button>
+                  </TableHead>
                   <TableHead className="w-[110px]">Criado</TableHead>
                   <TableHead className="w-[60px] text-right">Ações</TableHead>
                 </TableRow>
