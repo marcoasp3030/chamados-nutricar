@@ -31,6 +31,8 @@ export interface FiltrosPrevia {
   responsavel?: "Todos" | "MEUS";
   periodo?: "todos" | "mes";
   vencidos?: boolean;
+  /** Restringe a lista a um conjunto fixo de IDs (usado por rankings do painel). */
+  chamadoIds?: string[];
 }
 
 interface Props {
