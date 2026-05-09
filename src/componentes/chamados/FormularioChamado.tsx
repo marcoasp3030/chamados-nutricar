@@ -189,7 +189,7 @@ export function FormularioChamado({
     });
   }, [chamadoPai, chamadoPaiId, categorias]);
 
-  const [classificando, setClassificando] = useState(false);
+  const [corrigindo, setCorrigindo] = useState(false);
   const [tentouEnviar, setTentouEnviar] = useState(false);
 
   function atualizar<K extends keyof DadosFormularioChamado>(
@@ -199,41 +199,33 @@ export function FormularioChamado({
     setDados((d) => ({ ...d, [chave]: valor }));
   }
 
-  async function classificarComIA() {
-    if (!dados.titulo.trim()) {
-      toast.error("Informe um título primeiro.");
+  async function corrigirEscrita() {
+    const texto = dados.descricao.trim();
+    if (!texto) {
+      toast.error("Escreva uma descrição primeiro.");
       return;
     }
-    setClassificando(true);
+    setCorrigindo(true);
     try {
       const { data, error } = await supabase.functions.invoke("ia-chamado", {
         body: {
           workspace_id: workspaceId,
-          acao: "classificar",
-          titulo: dados.titulo,
-          descricao: dados.descricao,
+          acao: "corrigir_escrita",
+          texto,
         },
       });
       if (error) throw error;
-      const resp = data as {
-        error?: string;
-        resultado?: { prioridade?: string; categoria?: string; justificativa?: string };
-      };
+      const resp = data as { error?: string; resultado?: string };
       if (resp.error) throw new Error(resp.error);
-      const r = resp.resultado || {};
-      const prioridadesValidas = ["Baixa", "Media", "Alta", "Urgente"];
-      if (r.prioridade && prioridadesValidas.includes(r.prioridade)) {
-        atualizar("prioridade", r.prioridade as PrioridadeChamado);
-      }
-      if (r.categoria) atualizar("categoria", r.categoria);
-      toast.success("Classificado pela IA.", {
-        description: r.justificativa || undefined,
-      });
+      const corrigido = (resp.resultado ?? "").trim();
+      if (!corrigido) throw new Error("Não foi possível corrigir.");
+      atualizar("descricao", corrigido);
+      toast.success("Descrição corrigida pela IA.");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro";
-      toast.error("Falha na classificação", { description: msg });
+      toast.error("Falha ao corrigir", { description: msg });
     } finally {
-      setClassificando(false);
+      setCorrigindo(false);
     }
   }
 
