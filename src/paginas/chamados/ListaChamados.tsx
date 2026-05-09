@@ -478,6 +478,14 @@ export function ListaChamados() {
           </PopoverContent>
         </Popover>
 
+        <label className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-3 text-sm text-muted-foreground transition-colors hover:bg-muted">
+          <Checkbox
+            checked={incluirEncerrados}
+            onCheckedChange={(v) => setIncluirEncerrados(!!v)}
+          />
+          Incluir encerrados
+        </label>
+
         {temFiltro && (
           <Button
             variant="ghost"
