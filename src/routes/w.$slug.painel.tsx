@@ -172,17 +172,20 @@ interface PreviaState {
   filtros: FiltrosPrevia;
 }
 
+interface CartaoRankingItem {
+  chave: string;
+  rotulo: string;
+  total: number;
+  ativos: number;
+  ids: string[];
+  extra?: string;
+}
+
 interface CartaoRankingProps {
   titulo: string;
   descricao?: string;
   icone: typeof Inbox;
-  itens: Array<{
-    chave: string;
-    rotulo: string;
-    total: number;
-    ativos: number;
-    extra?: string;
-  }>;
+  itens: CartaoRankingItem[];
   corBarra: string;
   corIcone?: string;
   /** Rótulo do contador no header (ex: "total", "vencidos"). Padrão: total geral. */
@@ -192,6 +195,7 @@ interface CartaoRankingProps {
   /** Sufixo após o número total de cada item (ex: "vencidos", "sem ação"). */
   sufixoTotal?: string;
   vazio?: string;
+  aoClicarItem?: (item: CartaoRankingItem) => void;
 }
 
 function CartaoRanking({
