@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Save, CreditCard, Eye, EyeOff, Trash2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Loader2, Save, CreditCard, Eye, EyeOff, Trash2, PlugZap, Store } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
+import { testarVMPay } from "@/lib/vmpay.functions";
 
 interface ConfigVMPay {
   workspace_id: string;
@@ -104,6 +106,19 @@ export function AbaVMPay() {
 
   const temChaveSalva = !!config?.api_key;
 
+  const testar = useServerFn(testarVMPay);
+  const teste = useMutation({
+    mutationFn: async () => {
+      if (!workspaceAtual) throw new Error("Workspace inválido.");
+      return testar({ data: { workspaceId: workspaceAtual.id } });
+    },
+    onSuccess: (r) => {
+      if (r.ok) toast.success(`Conexão OK — ${r.clientes.length} loja(s) encontrada(s).`);
+      else toast.error("Falha ao testar VMPay", { description: r.erro ?? undefined });
+    },
+    onError: (e: Error) => toast.error("Falha ao testar VMPay", { description: e.message }),
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-start gap-3 rounded-2xl border border-border bg-muted/40 p-5">
@@ -183,6 +198,45 @@ export function AbaVMPay() {
           </Button>
         </div>
       </div>
+
+      {temChaveSalva && (
+        <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="font-semibold">Testar integração</h3>
+              <p className="text-sm text-muted-foreground">
+                Faz uma chamada à API VMPay e lista as lojas (clientes) vinculadas à sua chave.
+              </p>
+            </div>
+            <Button onClick={() => teste.mutate()} disabled={teste.isPending} variant="outline">
+              {teste.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlugZap className="h-4 w-4" />}
+              Testar agora
+            </Button>
+          </div>
+
+          {teste.data?.ok && (
+            <div className="rounded-lg border border-border divide-y divide-border">
+              {teste.data.clientes.length === 0 ? (
+                <p className="p-4 text-sm text-muted-foreground">Nenhuma loja retornada.</p>
+              ) : (
+                teste.data.clientes.map((c) => (
+                  <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                    <Store className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{c.name}</span>
+                    <span className="ml-auto text-xs text-muted-foreground">#{c.id}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {teste.data && !teste.data.ok && (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              {teste.data.erro}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
