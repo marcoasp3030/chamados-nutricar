@@ -239,22 +239,35 @@ export function RequisicaoCompras({ chamadoId, codigoChamado, tituloChamado }: P
             </Badge>
           )}
         </div>
-        {totalCriticos > 0 && (
-          <div className="flex items-center gap-2">
-            {urgentes > 0 && (
-              <Badge className="bg-red-500/15 text-red-700 dark:text-red-300 border border-red-500/50 gap-1" variant="secondary">
-                <Flame className="h-3 w-3" />
-                {urgentes} urgente{urgentes > 1 ? "s" : ""}
-              </Badge>
-            )}
-            {altas > 0 && (
-              <Badge className="bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/40 gap-1" variant="secondary">
-                <AlertTriangle className="h-3 w-3" />
-                {altas} alta{altas > 1 ? "s" : ""}
-              </Badge>
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {totalCriticos > 0 && (
+            <>
+              {urgentes > 0 && (
+                <Badge className="bg-red-500/15 text-red-700 dark:text-red-300 border border-red-500/50 gap-1" variant="secondary">
+                  <Flame className="h-3 w-3" />
+                  {urgentes} urgente{urgentes > 1 ? "s" : ""}
+                </Badge>
+              )}
+              {altas > 0 && (
+                <Badge className="bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/40 gap-1" variant="secondary">
+                  <AlertTriangle className="h-3 w-3" />
+                  {altas} alta{altas > 1 ? "s" : ""}
+                </Badge>
+              )}
+            </>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={exportarExcel}
+            disabled={itens.length === 0}
+            className="gap-1.5"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Exportar Excel
+          </Button>
+        </div>
       </header>
 
       {itens.length > 0 && (
