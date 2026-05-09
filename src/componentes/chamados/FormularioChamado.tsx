@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";
+import { useCategoriasChamado } from "@/componentes/configuracoes/AbaCategorias";
 import {
   PRIORIDADES_CHAMADO,
   STATUS_CHAMADO,
