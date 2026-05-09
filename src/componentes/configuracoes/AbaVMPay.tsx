@@ -198,6 +198,45 @@ export function AbaVMPay() {
           </Button>
         </div>
       </div>
+
+      {temChaveSalva && (
+        <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="font-semibold">Testar integração</h3>
+              <p className="text-sm text-muted-foreground">
+                Faz uma chamada à API VMPay e lista as lojas (clientes) vinculadas à sua chave.
+              </p>
+            </div>
+            <Button onClick={() => teste.mutate()} disabled={teste.isPending} variant="outline">
+              {teste.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlugZap className="h-4 w-4" />}
+              Testar agora
+            </Button>
+          </div>
+
+          {teste.data?.ok && (
+            <div className="rounded-lg border border-border divide-y divide-border">
+              {teste.data.clientes.length === 0 ? (
+                <p className="p-4 text-sm text-muted-foreground">Nenhuma loja retornada.</p>
+              ) : (
+                teste.data.clientes.map((c) => (
+                  <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                    <Store className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{c.name}</span>
+                    <span className="ml-auto text-xs text-muted-foreground">#{c.id}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {teste.data && !teste.data.ok && (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+              {teste.data.erro}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
