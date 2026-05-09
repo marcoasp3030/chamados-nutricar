@@ -183,6 +183,20 @@ export function ListaChamados() {
   const [somenteVencidos, setSomenteVencidos] = useState<boolean>(() => !!search?.vencidos);
   const [incluirEncerrados, setIncluirEncerrados] = useState(false);
   const [chamadoDetalhe, setChamadoDetalhe] = useState<ChamadoComPessoas | null>(null);
+  const [ordenacao, setOrdenacao] = useState<{
+    campo: "prioridade" | "sla" | null;
+    direcao: "asc" | "desc";
+  }>({ campo: null, direcao: "desc" });
+
+  function alternarOrdenacao(campo: "prioridade" | "sla") {
+    setOrdenacao((atual) => {
+      if (atual.campo !== campo) {
+        return { campo, direcao: "desc" };
+      }
+      if (atual.direcao === "desc") return { campo, direcao: "asc" };
+      return { campo: null, direcao: "desc" };
+    });
+  }
 
   // Sincroniza quando o usuário muda apenas a URL (navegação posterior)
   useEffect(() => {
