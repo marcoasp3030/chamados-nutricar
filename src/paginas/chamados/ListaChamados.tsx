@@ -399,6 +399,88 @@ export function ListaChamados() {
         </div>
       </div>
 
+      {/* Chips de filtros ativos */}
+      {(() => {
+        const chips: { key: string; label: string; onRemove: () => void }[] = [];
+        if (filtros.busca && filtros.busca.length > 0) {
+          chips.push({
+            key: "busca",
+            label: `Busca: "${filtros.busca}"`,
+            onRemove: () => setFiltros((f) => ({ ...f, busca: "" })),
+          });
+        }
+        if (filtros.status && filtros.status !== "Todos") {
+          chips.push({
+            key: "status",
+            label: `Status: ${rotuloStatusChamado[filtros.status as StatusChamado]}`,
+            onRemove: () => setFiltros((f) => ({ ...f, status: "Todos" })),
+          });
+        }
+        if (filtros.prioridade && filtros.prioridade !== "Todas") {
+          chips.push({
+            key: "prioridade",
+            label: `Prioridade: ${rotuloPrioridade[filtros.prioridade as PrioridadeChamado]}`,
+            onRemove: () => setFiltros((f) => ({ ...f, prioridade: "Todas" })),
+          });
+        }
+        if (filtros.responsavel_id && filtros.responsavel_id !== "Todos") {
+          chips.push({
+            key: "responsavel",
+            label:
+              filtros.responsavel_id === "MEUS"
+                ? "Responsável: Atribuídos a mim"
+                : "Responsável definido",
+            onRemove: () => setFiltros((f) => ({ ...f, responsavel_id: "Todos" })),
+          });
+        }
+        if (periodo !== "todos") {
+          const campoLabel = ROTULO_CAMPO_DATA[filtros.campoData ?? "criado_em"];
+          let label = `${campoLabel}: ${ROTULO_PERIODO[periodo]}`;
+          if (periodo === "personalizado" && (filtros.dataInicio || filtros.dataFim)) {
+            const ini = filtros.dataInicio
+              ? format(new Date(filtros.dataInicio), "dd/MM/yy", { locale: ptBR })
+              : "…";
+            const fim = filtros.dataFim
+              ? format(new Date(filtros.dataFim), "dd/MM/yy", { locale: ptBR })
+              : "…";
+            label = `${campoLabel}: ${ini} – ${fim}`;
+          }
+          chips.push({
+            key: "periodo",
+            label,
+            onRemove: () => {
+              setPeriodo("todos");
+              setIntervaloCustom({});
+              setFiltros((f) => ({ ...f, dataInicio: undefined, dataFim: undefined }));
+            },
+          });
+        }
+        if (chips.length === 0) return null;
+        return (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Filtros ativos:</span>
+            {chips.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                onClick={c.onRemove}
+                className="group inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-primary/5"
+              >
+                {c.label}
+                <X className="h-3 w-3 text-muted-foreground transition-colors group-hover:text-primary" />
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={limparTudo}
+              className="text-xs font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            >
+              Limpar tudo
+            </button>
+          </div>
+        );
+      })()}
+
       {/* Tabela */}
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         {isLoading ? (
