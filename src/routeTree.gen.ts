@@ -18,6 +18,7 @@ import { Route as WSlugIndexRouteImport } from './routes/w.$slug.index'
 import { Route as WSlugPainelRouteImport } from './routes/w.$slug.painel'
 import { Route as WSlugChamadosRouteImport } from './routes/w.$slug.chamados'
 import { Route as WSlugChamadosIndexRouteImport } from './routes/w.$slug.chamados.index'
+import { Route as WSlugChamadosQuadroRouteImport } from './routes/w.$slug.chamados.quadro'
 
 const SelecionarEmpresaRoute = SelecionarEmpresaRouteImport.update({
   id: '/selecionar-empresa',
@@ -64,6 +65,11 @@ const WSlugChamadosIndexRoute = WSlugChamadosIndexRouteImport.update({
   path: '/',
   getParentRoute: () => WSlugChamadosRoute,
 } as any)
+const WSlugChamadosQuadroRoute = WSlugChamadosQuadroRouteImport.update({
+  id: '/quadro',
+  path: '/quadro',
+  getParentRoute: () => WSlugChamadosRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug/': typeof WSlugIndexRoute
+  '/w/$slug/chamados/quadro': typeof WSlugChamadosQuadroRoute
   '/w/$slug/chamados/': typeof WSlugChamadosIndexRoute
 }
 export interface FileRoutesByTo {
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug': typeof WSlugIndexRoute
+  '/w/$slug/chamados/quadro': typeof WSlugChamadosQuadroRoute
   '/w/$slug/chamados': typeof WSlugChamadosIndexRoute
 }
 export interface FileRoutesById {
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug/': typeof WSlugIndexRoute
+  '/w/$slug/chamados/quadro': typeof WSlugChamadosQuadroRoute
   '/w/$slug/chamados/': typeof WSlugChamadosIndexRoute
 }
 export interface FileRouteTypes {
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados'
     | '/w/$slug/painel'
     | '/w/$slug/'
+    | '/w/$slug/chamados/quadro'
     | '/w/$slug/chamados/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/convite/$token'
     | '/w/$slug/painel'
     | '/w/$slug'
+    | '/w/$slug/chamados/quadro'
     | '/w/$slug/chamados'
   id:
     | '__root__'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados'
     | '/w/$slug/painel'
     | '/w/$slug/'
+    | '/w/$slug/chamados/quadro'
     | '/w/$slug/chamados/'
   fileRoutesById: FileRoutesById
 }
@@ -204,14 +216,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WSlugChamadosIndexRouteImport
       parentRoute: typeof WSlugChamadosRoute
     }
+    '/w/$slug/chamados/quadro': {
+      id: '/w/$slug/chamados/quadro'
+      path: '/quadro'
+      fullPath: '/w/$slug/chamados/quadro'
+      preLoaderRoute: typeof WSlugChamadosQuadroRouteImport
+      parentRoute: typeof WSlugChamadosRoute
+    }
   }
 }
 
 interface WSlugChamadosRouteChildren {
+  WSlugChamadosQuadroRoute: typeof WSlugChamadosQuadroRoute
   WSlugChamadosIndexRoute: typeof WSlugChamadosIndexRoute
 }
 
 const WSlugChamadosRouteChildren: WSlugChamadosRouteChildren = {
+  WSlugChamadosQuadroRoute: WSlugChamadosQuadroRoute,
   WSlugChamadosIndexRoute: WSlugChamadosIndexRoute,
 }
 
