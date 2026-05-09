@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Bell, LogOut, Menu, User as UserIcon } from "lucide-react";
+import { Bell, LogOut, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,27 +9,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 import { TrocadorWorkspace } from "./TrocadorWorkspace";
-import { MenuNavegacao } from "./MenuNavegacao";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { rotuloPapel } from "@/utilitarios/traducoes";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
-import logo from "@/assets/nutricar-logo.png";
 
 export function Cabecalho() {
   const navigate = useNavigate();
   const { workspaceAtual, limpar } = useWorkspaceStore();
   const [email, setEmail] = useState<string>("");
-  const [menuAberto, setMenuAberto] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
@@ -43,39 +35,11 @@ export function Cabecalho() {
   };
 
   return (
-    <header className="flex h-16 items-center gap-2 border-b border-border bg-card px-3 md:gap-4 md:px-6">
-      {/* Mobile: hamburger + logo */}
-      <Sheet open={menuAberto} onOpenChange={setMenuAberto}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden" aria-label="Abrir menu">
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-72 p-0 flex flex-col">
-          <SheetHeader className="h-16 flex-row items-center border-b border-border px-5 space-y-0">
-            <SheetTitle className="flex items-center">
-              <img src={logo} alt="Nutricar" className="h-8 w-auto" />
-            </SheetTitle>
-          </SheetHeader>
-          <div className="px-3 pt-3">
-            <TrocadorWorkspace />
-          </div>
-          <MenuNavegacao aoNavegar={() => setMenuAberto(false)} />
-          {workspaceAtual && (
-            <div className="border-t border-border p-4 text-xs text-muted-foreground">
-              <span
-                className="mr-2 inline-block h-2 w-2 rounded-full"
-                style={{ background: workspaceAtual.cor_primaria }}
-              />
-              {workspaceAtual.plano}
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-card/95 px-3 backdrop-blur md:gap-3 md:px-6">
+      <SidebarTrigger className="-ml-1" />
+      <Separator orientation="vertical" className="mr-1 h-6" />
 
-      <img src={logo} alt="Nutricar" className="h-7 w-auto md:hidden" />
-
-      <div className="hidden md:block">
+      <div className="min-w-0">
         <TrocadorWorkspace />
       </div>
 
