@@ -208,8 +208,7 @@ function CartaoRanking({ titulo, icone: Icone, itens, corBarra }: CartaoRankingP
   );
 }
 
-
-  const { workspaceAtual } = useWorkspaceStore();
+function Painel() {
   const { data, isLoading } = useIndicadoresPainel(workspaceAtual?.id);
   const [previa, setPrevia] = useState<PreviaState | null>(null);
 
