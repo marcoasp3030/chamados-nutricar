@@ -81,6 +81,10 @@ export function PaginaConfiguracoes() {
         <TabsContent value="ia" className="mt-6">
           <AbaIntegracaoIA />
         </TabsContent>
+
+        <TabsContent value="vmpay" className="mt-6">
+          <AbaVMPay />
+        </TabsContent>
       </Tabs>
     </div>
   );
