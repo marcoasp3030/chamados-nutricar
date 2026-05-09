@@ -69,7 +69,6 @@ import {
   rotuloStatusChamado,
   rotuloTipoChamado,
 } from "@/utilitarios/traducoes";
-import { cn } from "@/lib/utils";
 
 export interface DadosFormularioChamado {
   titulo: string;
