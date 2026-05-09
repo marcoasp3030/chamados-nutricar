@@ -150,19 +150,36 @@ ${linhasComentarios}`;
     if (!respostaOpenAI.ok) {
       const erroTxt = await respostaOpenAI.text();
       console.error("Erro OpenAI:", respostaOpenAI.status, erroTxt);
-      return json(
-        {
-          error: `Falha na OpenAI (${respostaOpenAI.status}). Verifique a chave e o modelo (${modelo}).`,
-        },
-        502,
-      );
+      const msgErro = `Falha na OpenAI (${respostaOpenAI.status}). Verifique a chave e o modelo (${modelo}).`;
+      if (corpo.chamado_id) {
+        await supaAdmin.from("chamado_ia_execucoes").insert({
+          chamado_id: corpo.chamado_id,
+          workspace_id: corpo.workspace_id,
+          usuario_id: userData.user.id,
+          acao: corpo.acao,
+          modelo,
+          erro: `${msgErro}\n${erroTxt.slice(0, 1000)}`,
+        });
+      }
+      return json({ error: msgErro }, 502);
     }
 
     const dados = await respostaOpenAI.json();
     const conteudo: string = dados.choices?.[0]?.message?.content ?? "";
 
+    // Registrar histórico (apenas quando há chamado_id)
+    if (corpo.chamado_id) {
+      await supaAdmin.from("chamado_ia_execucoes").insert({
+        chamado_id: corpo.chamado_id,
+        workspace_id: corpo.workspace_id,
+        usuario_id: userData.user.id,
+        acao: corpo.acao,
+        modelo,
+        resultado: conteudo,
+      });
+    }
+
     if (corpo.acao === "classificar") {
-      // Tentar extrair JSON
       let parsed: { prioridade?: string; categoria?: string; justificativa?: string } = {};
       try {
         const match = conteudo.match(/\{[\s\S]*\}/);
