@@ -36,7 +36,7 @@ function LoginPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+      if (data.session) navigate({ to: "/" });
     });
   }, [navigate]);
 
@@ -68,7 +68,7 @@ function LoginPage() {
       return;
     }
     toast.success("Bem-vindo!");
-    navigate({ to: "/dashboard" });
+    navigate({ to: "/" });
   };
 
   return (

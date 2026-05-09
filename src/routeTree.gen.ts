@@ -9,18 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SelecionarEmpresaRouteImport } from './routes/selecionar-empresa'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WSlugRouteImport } from './routes/w.$slug'
+import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
+import { Route as WSlugIndexRouteImport } from './routes/w.$slug.index'
+import { Route as WSlugPainelRouteImport } from './routes/w.$slug.painel'
 
+const SelecionarEmpresaRoute = SelecionarEmpresaRouteImport.update({
+  id: '/selecionar-empresa',
+  path: '/selecionar-empresa',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -28,51 +32,105 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WSlugRoute = WSlugRouteImport.update({
+  id: '/w/$slug',
+  path: '/w/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConviteTokenRoute = ConviteTokenRouteImport.update({
+  id: '/convite/$token',
+  path: '/convite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WSlugIndexRoute = WSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WSlugRoute,
+} as any)
+const WSlugPainelRoute = WSlugPainelRouteImport.update({
+  id: '/painel',
+  path: '/painel',
+  getParentRoute: () => WSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/selecionar-empresa': typeof SelecionarEmpresaRoute
+  '/convite/$token': typeof ConviteTokenRoute
+  '/w/$slug': typeof WSlugRouteWithChildren
+  '/w/$slug/painel': typeof WSlugPainelRoute
+  '/w/$slug/': typeof WSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/selecionar-empresa': typeof SelecionarEmpresaRoute
+  '/convite/$token': typeof ConviteTokenRoute
+  '/w/$slug/painel': typeof WSlugPainelRoute
+  '/w/$slug': typeof WSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/selecionar-empresa': typeof SelecionarEmpresaRoute
+  '/convite/$token': typeof ConviteTokenRoute
+  '/w/$slug': typeof WSlugRouteWithChildren
+  '/w/$slug/painel': typeof WSlugPainelRoute
+  '/w/$slug/': typeof WSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/selecionar-empresa'
+    | '/convite/$token'
+    | '/w/$slug'
+    | '/w/$slug/painel'
+    | '/w/$slug/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login'
-  id: '__root__' | '/' | '/dashboard' | '/login'
+  to:
+    | '/'
+    | '/login'
+    | '/selecionar-empresa'
+    | '/convite/$token'
+    | '/w/$slug/painel'
+    | '/w/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/selecionar-empresa'
+    | '/convite/$token'
+    | '/w/$slug'
+    | '/w/$slug/painel'
+    | '/w/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  SelecionarEmpresaRoute: typeof SelecionarEmpresaRoute
+  ConviteTokenRoute: typeof ConviteTokenRoute
+  WSlugRoute: typeof WSlugRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/selecionar-empresa': {
+      id: '/selecionar-empresa'
+      path: '/selecionar-empresa'
+      fullPath: '/selecionar-empresa'
+      preLoaderRoute: typeof SelecionarEmpresaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -82,14 +140,66 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/w/$slug': {
+      id: '/w/$slug'
+      path: '/w/$slug'
+      fullPath: '/w/$slug'
+      preLoaderRoute: typeof WSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/convite/$token': {
+      id: '/convite/$token'
+      path: '/convite/$token'
+      fullPath: '/convite/$token'
+      preLoaderRoute: typeof ConviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/w/$slug/': {
+      id: '/w/$slug/'
+      path: '/'
+      fullPath: '/w/$slug/'
+      preLoaderRoute: typeof WSlugIndexRouteImport
+      parentRoute: typeof WSlugRoute
+    }
+    '/w/$slug/painel': {
+      id: '/w/$slug/painel'
+      path: '/painel'
+      fullPath: '/w/$slug/painel'
+      preLoaderRoute: typeof WSlugPainelRouteImport
+      parentRoute: typeof WSlugRoute
+    }
   }
 }
 
+interface WSlugRouteChildren {
+  WSlugPainelRoute: typeof WSlugPainelRoute
+  WSlugIndexRoute: typeof WSlugIndexRoute
+}
+
+const WSlugRouteChildren: WSlugRouteChildren = {
+  WSlugPainelRoute: WSlugPainelRoute,
+  WSlugIndexRoute: WSlugIndexRoute,
+}
+
+const WSlugRouteWithChildren = WSlugRoute._addFileChildren(WSlugRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  SelecionarEmpresaRoute: SelecionarEmpresaRoute,
+  ConviteTokenRoute: ConviteTokenRoute,
+  WSlugRoute: WSlugRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
