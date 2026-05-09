@@ -38,11 +38,13 @@ interface CartaoIndicadorProps {
   icone: typeof Inbox;
   cor?: string;
   rodape?: string;
+  search?: Record<string, unknown>;
+  slug?: string;
 }
 
-function CartaoIndicador({ rotulo, valor, icone: Icone, cor, rodape }: CartaoIndicadorProps) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+function CartaoIndicador({ rotulo, valor, icone: Icone, cor, rodape, search, slug }: CartaoIndicadorProps) {
+  const conteudo = (
+    <>
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">{rotulo}</span>
         <div
@@ -56,8 +58,29 @@ function CartaoIndicador({ rotulo, valor, icone: Icone, cor, rodape }: CartaoInd
       </div>
       <div className="mt-3 text-3xl font-bold text-foreground">{valor}</div>
       {rodape && <p className="mt-1 text-xs text-muted-foreground">{rodape}</p>}
-    </div>
+    </>
   );
+
+  const base =
+    "block rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] text-left";
+
+  if (slug) {
+    return (
+      <Link
+        to="/w/$slug/chamados"
+        params={{ slug }}
+        search={(search ?? {}) as never}
+        className={cn(
+          base,
+          "transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring",
+        )}
+      >
+        {conteudo}
+      </Link>
+    );
+  }
+
+  return <div className={base}>{conteudo}</div>;
 }
 
 function BarraProporcional({
@@ -65,15 +88,21 @@ function BarraProporcional({
   valor,
   total,
   corClasse,
+  to,
+  search,
+  slug,
 }: {
   rotulo: string;
   valor: number;
   total: number;
   corClasse: string;
+  to?: string;
+  search?: Record<string, unknown>;
+  slug?: string;
 }) {
   const pct = total > 0 ? Math.round((valor / total) * 100) : 0;
-  return (
-    <div>
+  const conteudo = (
+    <>
       <div className="mb-1 flex items-center justify-between text-sm">
         <span className="text-foreground">{rotulo}</span>
         <span className="text-muted-foreground">
@@ -86,8 +115,22 @@ function BarraProporcional({
           style={{ width: `${pct}%` }}
         />
       </div>
-    </div>
+    </>
   );
+
+  if (slug && to) {
+    return (
+      <Link
+        to="/w/$slug/chamados"
+        params={{ slug }}
+        search={(search ?? {}) as never}
+        className="block rounded-md p-1 -m-1 transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        {conteudo}
+      </Link>
+    );
+  }
+  return <div>{conteudo}</div>;
 }
 
 const CORES_STATUS: Record<StatusChamado, string> = {
@@ -143,12 +186,16 @@ function Painel() {
               valor={data.abertos}
               icone={Inbox}
               cor="bg-blue-500/10 text-blue-600 dark:text-blue-400"
+              slug={workspaceAtual.slug}
+              search={{ status: "Aberto" }}
             />
             <CartaoIndicador
               rotulo="Em andamento"
               valor={data.emAndamento}
               icone={PlayCircle}
               cor="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+              slug={workspaceAtual.slug}
+              search={{ status: "Em andamento" }}
             />
             <CartaoIndicador
               rotulo="Aguardando"
@@ -156,12 +203,16 @@ function Painel() {
               icone={Clock}
               cor="bg-purple-500/10 text-purple-600 dark:text-purple-400"
               rodape="Solicitante ou terceiros"
+              slug={workspaceAtual.slug}
+              search={{ status: "Aguardando solicitante" }}
             />
             <CartaoIndicador
               rotulo="Resolvidos no mês"
               valor={data.resolvidosMes}
               icone={CheckCircle2}
               cor="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              slug={workspaceAtual.slug}
+              search={{ status: "Resolvido", periodo: "mes" }}
             />
           </section>
 
@@ -172,24 +223,32 @@ function Painel() {
               icone={AlertTriangle}
               cor="bg-red-500/10 text-red-600 dark:text-red-400"
               rodape="Prazo expirado e ainda ativos"
+              slug={workspaceAtual.slug}
+              search={{ vencidos: true }}
             />
             <CartaoIndicador
               rotulo="Atribuídos a mim"
               valor={data.meusAtribuidos}
               icone={UserCheck}
               cor="bg-primary/10 text-primary"
+              slug={workspaceAtual.slug}
+              search={{ responsavel: "MEUS" }}
             />
             <CartaoIndicador
               rotulo="Abertos no mês"
               valor={data.totalMes}
               icone={TrendingUp}
               cor="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+              slug={workspaceAtual.slug}
+              search={{ periodo: "mes" }}
             />
             <CartaoIndicador
               rotulo="Fechados no mês"
               valor={data.fechadosMes}
               icone={CheckCircle2}
               cor="bg-slate-500/10 text-slate-600 dark:text-slate-300"
+              slug={workspaceAtual.slug}
+              search={{ status: "Fechado", periodo: "mes" }}
             />
           </section>
 
@@ -204,6 +263,9 @@ function Painel() {
                     valor={data.porStatus[s] ?? 0}
                     total={Object.values(data.porStatus).reduce((a, b) => a + b, 0)}
                     corClasse={CORES_STATUS[s]}
+                    to="/w/$slug/chamados"
+                    slug={workspaceAtual.slug}
+                    search={{ status: s }}
                   />
                 ))}
               </div>
@@ -219,6 +281,9 @@ function Painel() {
                     valor={data.porPrioridade[p] ?? 0}
                     total={Object.values(data.porPrioridade).reduce((a, b) => a + b, 0)}
                     corClasse={CORES_PRIO[p]}
+                    to="/w/$slug/chamados"
+                    slug={workspaceAtual.slug}
+                    search={{ prioridade: p }}
                   />
                 ))}
               </div>
