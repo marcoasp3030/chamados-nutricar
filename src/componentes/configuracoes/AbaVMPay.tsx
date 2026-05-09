@@ -106,6 +106,19 @@ export function AbaVMPay() {
 
   const temChaveSalva = !!config?.api_key;
 
+  const testar = useServerFn(testarVMPay);
+  const teste = useMutation({
+    mutationFn: async () => {
+      if (!workspaceAtual) throw new Error("Workspace inválido.");
+      return testar({ data: { workspaceId: workspaceAtual.id } });
+    },
+    onSuccess: (r) => {
+      if (r.ok) toast.success(`Conexão OK — ${r.clientes.length} loja(s) encontrada(s).`);
+      else toast.error("Falha ao testar VMPay", { description: r.erro ?? undefined });
+    },
+    onError: (e: Error) => toast.error("Falha ao testar VMPay", { description: e.message }),
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-start gap-3 rounded-2xl border border-border bg-muted/40 p-5">
