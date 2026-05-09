@@ -17,6 +17,7 @@ import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
 import { Route as WSlugIndexRouteImport } from './routes/w.$slug.index'
 import { Route as WSlugProjetosRouteImport } from './routes/w.$slug.projetos'
 import { Route as WSlugPainelRouteImport } from './routes/w.$slug.painel'
+import { Route as WSlugConfiguracoesRouteImport } from './routes/w.$slug.configuracoes'
 import { Route as WSlugChamadosRouteImport } from './routes/w.$slug.chamados'
 import { Route as WSlugProjetosIndexRouteImport } from './routes/w.$slug.projetos.index'
 import { Route as WSlugChamadosIndexRouteImport } from './routes/w.$slug.chamados.index'
@@ -65,6 +66,11 @@ const WSlugPainelRoute = WSlugPainelRouteImport.update({
   path: '/painel',
   getParentRoute: () => WSlugRoute,
 } as any)
+const WSlugConfiguracoesRoute = WSlugConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => WSlugRoute,
+} as any)
 const WSlugChamadosRoute = WSlugChamadosRouteImport.update({
   id: '/chamados',
   path: '/chamados',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug': typeof WSlugRouteWithChildren
   '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
+  '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug/projetos': typeof WSlugProjetosRouteWithChildren
   '/w/$slug/': typeof WSlugIndexRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug': typeof WSlugIndexRoute
   '/w/$slug/chamados/$numero': typeof WSlugChamadosNumeroRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug': typeof WSlugRouteWithChildren
   '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
+  '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug/projetos': typeof WSlugProjetosRouteWithChildren
   '/w/$slug/': typeof WSlugIndexRoute
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/convite/$token'
     | '/w/$slug'
     | '/w/$slug/chamados'
+    | '/w/$slug/configuracoes'
     | '/w/$slug/painel'
     | '/w/$slug/projetos'
     | '/w/$slug/'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/selecionar-empresa'
     | '/convite/$token'
+    | '/w/$slug/configuracoes'
     | '/w/$slug/painel'
     | '/w/$slug'
     | '/w/$slug/chamados/$numero'
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '/convite/$token'
     | '/w/$slug'
     | '/w/$slug/chamados'
+    | '/w/$slug/configuracoes'
     | '/w/$slug/painel'
     | '/w/$slug/projetos'
     | '/w/$slug/'
@@ -265,6 +277,13 @@ declare module '@tanstack/react-router' {
       path: '/painel'
       fullPath: '/w/$slug/painel'
       preLoaderRoute: typeof WSlugPainelRouteImport
+      parentRoute: typeof WSlugRoute
+    }
+    '/w/$slug/configuracoes': {
+      id: '/w/$slug/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/w/$slug/configuracoes'
+      preLoaderRoute: typeof WSlugConfiguracoesRouteImport
       parentRoute: typeof WSlugRoute
     }
     '/w/$slug/chamados': {
@@ -353,6 +372,7 @@ const WSlugProjetosRouteWithChildren = WSlugProjetosRoute._addFileChildren(
 
 interface WSlugRouteChildren {
   WSlugChamadosRoute: typeof WSlugChamadosRouteWithChildren
+  WSlugConfiguracoesRoute: typeof WSlugConfiguracoesRoute
   WSlugPainelRoute: typeof WSlugPainelRoute
   WSlugProjetosRoute: typeof WSlugProjetosRouteWithChildren
   WSlugIndexRoute: typeof WSlugIndexRoute
@@ -360,6 +380,7 @@ interface WSlugRouteChildren {
 
 const WSlugRouteChildren: WSlugRouteChildren = {
   WSlugChamadosRoute: WSlugChamadosRouteWithChildren,
+  WSlugConfiguracoesRoute: WSlugConfiguracoesRoute,
   WSlugPainelRoute: WSlugPainelRoute,
   WSlugProjetosRoute: WSlugProjetosRouteWithChildren,
   WSlugIndexRoute: WSlugIndexRoute,

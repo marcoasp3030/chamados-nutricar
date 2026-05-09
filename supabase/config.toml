@@ -1,1 +1,4 @@
 project_id = "aqsohuerdaxojevvrumj"
+
+[functions.ia-chamado]
+verify_jwt = true

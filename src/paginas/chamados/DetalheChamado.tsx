@@ -51,6 +51,7 @@ import { BadgePrioridade } from "@/componentes/chamados/BadgePrioridade";
 import { ComentariosChamado } from "@/componentes/chamados/ComentariosChamado";
 import { HistoricoChamado } from "@/componentes/chamados/HistoricoChamado";
 import { ArvoreSubchamados } from "@/componentes/chamados/ArvoreSubchamados";
+import { AcoesIAChamado } from "@/componentes/chamados/AcoesIAChamado";
 import {
   FormularioChamado,
   type DadosFormularioChamado,
@@ -202,6 +203,9 @@ export function DetalheChamado({ numero }: Props) {
                 ))}
               </SelectContent>
             </Select>
+          )}
+          {podeAtender && (
+            <AcoesIAChamado workspaceId={chamado.workspace_id} chamadoId={chamado.id} />
           )}
           <Button variant="outline" onClick={() => setEditando(true)}>
             <Pencil className="h-4 w-4" /> Editar

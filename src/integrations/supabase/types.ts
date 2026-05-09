@@ -454,6 +454,44 @@ export type Database = {
           },
         ]
       }
+      workspace_ia_config: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          atualizado_por: string | null
+          criado_em: string
+          modelo: string
+          openai_api_key: string | null
+          workspace_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          atualizado_por?: string | null
+          criado_em?: string
+          modelo?: string
+          openai_api_key?: string | null
+          workspace_id: string
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          atualizado_por?: string | null
+          criado_em?: string
+          modelo?: string
+          openai_api_key?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_ia_config_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: true
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_membros: {
         Row: {
           aceito_em: string | null
