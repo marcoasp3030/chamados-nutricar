@@ -89,6 +89,8 @@ export function FormularioChamado({
     prazo: inicial?.prazo ?? null,
     chamado_pai_id: chamadoPaiId ?? inicial?.chamado_pai_id ?? null,
     anexos: [],
+    requisicao_compras: false,
+    itens_requisicao: [],
   });
 
   useEffect(() => {
