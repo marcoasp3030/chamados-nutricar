@@ -204,7 +204,8 @@ function Painel() {
         </div>
       ) : (
         <>
-          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Operação atual</h2>
+          <section className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
             <CartaoIndicador
               rotulo="Chamados abertos"
               valor={data.abertos}
@@ -240,7 +241,8 @@ function Painel() {
             />
           </section>
 
-          <section className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 className="mb-3 mt-6 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Resultados do mês</h2>
+          <section className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
             <CartaoIndicador
               rotulo="Vencidos"
               valor={data.vencidos}
