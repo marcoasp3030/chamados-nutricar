@@ -70,6 +70,10 @@ export function PaginaConfiguracoes() {
           <AbaDepartamentos />
         </TabsContent>
 
+        <TabsContent value="categorias" className="mt-6">
+          <AbaCategorias />
+        </TabsContent>
+
         <TabsContent value="ia" className="mt-6">
           <AbaIntegracaoIA />
         </TabsContent>
