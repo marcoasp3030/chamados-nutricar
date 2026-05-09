@@ -40,7 +40,7 @@ export function ArvoreSubchamados({ chamadoPaiId, slug, aoCriarSubchamado }: Pro
                 params={{ slug, numero: String(c.numero) }}
                 className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-3 text-sm transition-colors hover:bg-muted/50"
               >
-                <span className="font-mono text-xs text-muted-foreground">#{c.numero}</span>
+                <span className="font-mono text-xs text-muted-foreground">{c.codigo ?? `#${c.numero}`}</span>
                 <span className="flex-1 truncate font-medium">{c.titulo}</span>
                 <BadgePrioridade prioridade={c.prioridade} />
                 <BadgeStatus status={c.status} />

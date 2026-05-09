@@ -248,7 +248,7 @@ function Painel() {
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-mono text-xs text-muted-foreground">
-                            #{c.numero}
+                            {c.codigo ?? `#${c.numero}`}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {format(new Date(c.criado_em), "dd/MM HH:mm", { locale: ptBR })}
