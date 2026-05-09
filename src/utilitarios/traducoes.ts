@@ -1,5 +1,6 @@
 import type { PapelMembro, PlanoWorkspace, StatusWorkspace } from "@/tipos/workspace";
 import type { PrioridadeChamado, StatusChamado, TipoChamado } from "@/tipos/chamado";
+import type { StatusProjeto, StatusTarefa } from "@/tipos/projeto";
 
 export const rotuloPapel: Record<PapelMembro, string> = {
   Proprietario: "Proprietário",
