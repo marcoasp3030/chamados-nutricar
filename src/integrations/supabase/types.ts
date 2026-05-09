@@ -253,6 +253,8 @@ export type Database = {
       }
       chamado_requisicao_itens: {
         Row: {
+          atualizado_compra_em: string | null
+          atualizado_compra_por: string | null
           atualizado_em: string
           chamado_id: string
           criado_em: string
@@ -260,14 +262,18 @@ export type Database = {
           data_necessidade: string | null
           descricao: string
           id: string
+          observacao_compra: string | null
           ordem: number
           prioridade: Database["public"]["Enums"]["prioridade_chamado"]
           quantidade: number
           referencia: string | null
+          status_compra: Database["public"]["Enums"]["status_item_compra"]
           unidade: string | null
           workspace_id: string
         }
         Insert: {
+          atualizado_compra_em?: string | null
+          atualizado_compra_por?: string | null
           atualizado_em?: string
           chamado_id: string
           criado_em?: string
@@ -275,14 +281,18 @@ export type Database = {
           data_necessidade?: string | null
           descricao: string
           id?: string
+          observacao_compra?: string | null
           ordem?: number
           prioridade?: Database["public"]["Enums"]["prioridade_chamado"]
           quantidade?: number
           referencia?: string | null
+          status_compra?: Database["public"]["Enums"]["status_item_compra"]
           unidade?: string | null
           workspace_id: string
         }
         Update: {
+          atualizado_compra_em?: string | null
+          atualizado_compra_por?: string | null
           atualizado_em?: string
           chamado_id?: string
           criado_em?: string
@@ -290,10 +300,12 @@ export type Database = {
           data_necessidade?: string | null
           descricao?: string
           id?: string
+          observacao_compra?: string | null
           ordem?: number
           prioridade?: Database["public"]["Enums"]["prioridade_chamado"]
           quantidade?: number
           referencia?: string | null
+          status_compra?: Database["public"]["Enums"]["status_item_compra"]
           unidade?: string | null
           workspace_id?: string
         }
@@ -852,6 +864,13 @@ export type Database = {
         | "Resolvido"
         | "Fechado"
         | "Cancelado"
+      status_item_compra:
+        | "Pendente"
+        | "Cotando"
+        | "Aprovado"
+        | "Comprado"
+        | "Recebido"
+        | "Cancelado"
       status_projeto:
         | "Planejado"
         | "Em andamento"
@@ -1005,6 +1024,14 @@ export const Constants = {
         "Aguardando terceiros",
         "Resolvido",
         "Fechado",
+        "Cancelado",
+      ],
+      status_item_compra: [
+        "Pendente",
+        "Cotando",
+        "Aprovado",
+        "Comprado",
+        "Recebido",
         "Cancelado",
       ],
       status_projeto: [
