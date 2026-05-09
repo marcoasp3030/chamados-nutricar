@@ -18,6 +18,12 @@ import { useCategoriasChamado } from "@/componentes/configuracoes/AbaCategorias"
 import { SeletorLoja } from "@/componentes/chamados/SeletorLoja";
 import { SeletorAnexos } from "@/componentes/chamados/SeletorAnexos";
 import {
+  ItensRequisicao,
+  itemRequisicaoVazio,
+  type ItemRequisicao,
+} from "@/componentes/chamados/ItensRequisicao";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
   PRIORIDADES_CHAMADO,
   STATUS_CHAMADO,
   TIPOS_CHAMADO,
