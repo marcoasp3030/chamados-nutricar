@@ -219,6 +219,16 @@ export function AbaCategorias() {
                     {c.descricao && (
                       <p className="truncate text-xs text-muted-foreground">{c.descricao}</p>
                     )}
+                    {(c.sla_resposta_horas != null || c.sla_resolucao_horas != null) && (
+                      <p className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                        {c.sla_resposta_horas != null && (
+                          <span>SLA resposta: <strong className="text-foreground">{c.sla_resposta_horas}h</strong></span>
+                        )}
+                        {c.sla_resolucao_horas != null && (
+                          <span>SLA resolução: <strong className="text-foreground">{c.sla_resolucao_horas}h</strong></span>
+                        )}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-1">
