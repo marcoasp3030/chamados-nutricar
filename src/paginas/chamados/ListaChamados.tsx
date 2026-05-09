@@ -17,6 +17,9 @@ import {
 import { ptBR } from "date-fns/locale";
 import {
   AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   Calendar as CalendarIcon,
   CircleDot,
   Eye,
@@ -180,6 +183,20 @@ export function ListaChamados() {
   const [somenteVencidos, setSomenteVencidos] = useState<boolean>(() => !!search?.vencidos);
   const [incluirEncerrados, setIncluirEncerrados] = useState(false);
   const [chamadoDetalhe, setChamadoDetalhe] = useState<ChamadoComPessoas | null>(null);
+  const [ordenacao, setOrdenacao] = useState<{
+    campo: "prioridade" | "sla" | null;
+    direcao: "asc" | "desc";
+  }>({ campo: null, direcao: "desc" });
+
+  function alternarOrdenacao(campo: "prioridade" | "sla") {
+    setOrdenacao((atual) => {
+      if (atual.campo !== campo) {
+        return { campo, direcao: "desc" };
+      }
+      if (atual.direcao === "desc") return { campo, direcao: "asc" };
+      return { campo: null, direcao: "desc" };
+    });
+  }
 
   // Sincroniza quando o usuário muda apenas a URL (navegação posterior)
   useEffect(() => {
@@ -242,8 +259,30 @@ export function ListaChamados() {
           c.status !== "Resolvido",
       );
     }
+    if (ordenacao.campo) {
+      const pesoPrioridade: Record<PrioridadeChamado, number> = {
+        Urgente: 4,
+        Alta: 3,
+        Media: 2,
+        Baixa: 1,
+      };
+      const sinal = ordenacao.direcao === "desc" ? -1 : 1;
+      lista = [...lista].sort((a, b) => {
+        if (ordenacao.campo === "prioridade") {
+          return sinal * (pesoPrioridade[a.prioridade] - pesoPrioridade[b.prioridade]);
+        }
+        // SLA: vencidos primeiro (desc) — quanto mais vencido, mais ao topo.
+        // Sem prazo vai para o fim em ambas direções.
+        const ta = a.prazo ? new Date(a.prazo).getTime() : null;
+        const tb = b.prazo ? new Date(b.prazo).getTime() : null;
+        if (ta === null && tb === null) return 0;
+        if (ta === null) return 1;
+        if (tb === null) return -1;
+        return sinal === -1 ? ta - tb : tb - ta;
+      });
+    }
     return lista;
-  }, [dadosBrutos, somenteVencidos, incluirEncerrados, filtros.status]);
+  }, [dadosBrutos, somenteVencidos, incluirEncerrados, filtros.status, ordenacao]);
 
   function aplicarPeriodo(p: Periodo) {
     setPeriodo(p);
@@ -621,9 +660,50 @@ export function ListaChamados() {
                   <TableHead>Chamado</TableHead>
                   <TableHead className="w-[140px]">Categoria</TableHead>
                   <TableHead className="w-[170px]">Status</TableHead>
-                  <TableHead className="w-[110px]">Prioridade</TableHead>
+                  <TableHead className="w-[110px]">
+                    <button
+                      type="button"
+                      onClick={() => alternarOrdenacao("prioridade")}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded transition-colors hover:text-foreground",
+                        ordenacao.campo === "prioridade" && "text-foreground",
+                      )}
+                    >
+                      Prioridade
+                      {ordenacao.campo === "prioridade" ? (
+                        ordenacao.direcao === "desc" ? (
+                          <ArrowDown className="h-3 w-3" />
+                        ) : (
+                          <ArrowUp className="h-3 w-3" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-50" />
+                      )}
+                    </button>
+                  </TableHead>
                   <TableHead className="w-[200px]">Responsável</TableHead>
-                  <TableHead className="w-[130px]">Prazo</TableHead>
+                  <TableHead className="w-[130px]">
+                    <button
+                      type="button"
+                      onClick={() => alternarOrdenacao("sla")}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded transition-colors hover:text-foreground",
+                        ordenacao.campo === "sla" && "text-foreground",
+                      )}
+                      title="Ordenar por SLA — vencidos primeiro"
+                    >
+                      Prazo / SLA
+                      {ordenacao.campo === "sla" ? (
+                        ordenacao.direcao === "desc" ? (
+                          <ArrowDown className="h-3 w-3" />
+                        ) : (
+                          <ArrowUp className="h-3 w-3" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-50" />
+                      )}
+                    </button>
+                  </TableHead>
                   <TableHead className="w-[110px]">Criado</TableHead>
                   <TableHead className="w-[60px] text-right">Ações</TableHead>
                 </TableRow>
