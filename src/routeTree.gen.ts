@@ -20,6 +20,7 @@ import { Route as WSlugPainelRouteImport } from './routes/w.$slug.painel'
 import { Route as WSlugChamadosRouteImport } from './routes/w.$slug.chamados'
 import { Route as WSlugProjetosIndexRouteImport } from './routes/w.$slug.projetos.index'
 import { Route as WSlugChamadosIndexRouteImport } from './routes/w.$slug.chamados.index'
+import { Route as WSlugProjetosProjetoIdRouteImport } from './routes/w.$slug.projetos.$projetoId'
 import { Route as WSlugChamadosQuadroRouteImport } from './routes/w.$slug.chamados.quadro'
 import { Route as WSlugChamadosNovoRouteImport } from './routes/w.$slug.chamados.novo'
 import { Route as WSlugChamadosNumeroRouteImport } from './routes/w.$slug.chamados.$numero'
@@ -79,6 +80,11 @@ const WSlugChamadosIndexRoute = WSlugChamadosIndexRouteImport.update({
   path: '/',
   getParentRoute: () => WSlugChamadosRoute,
 } as any)
+const WSlugProjetosProjetoIdRoute = WSlugProjetosProjetoIdRouteImport.update({
+  id: '/$projetoId',
+  path: '/$projetoId',
+  getParentRoute: () => WSlugProjetosRoute,
+} as any)
 const WSlugChamadosQuadroRoute = WSlugChamadosQuadroRouteImport.update({
   id: '/quadro',
   path: '/quadro',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/w/$slug/chamados/$numero': typeof WSlugChamadosNumeroRoute
   '/w/$slug/chamados/novo': typeof WSlugChamadosNovoRoute
   '/w/$slug/chamados/quadro': typeof WSlugChamadosQuadroRoute
+  '/w/$slug/projetos/$projetoId': typeof WSlugProjetosProjetoIdRoute
   '/w/$slug/chamados/': typeof WSlugChamadosIndexRoute
   '/w/$slug/projetos/': typeof WSlugProjetosIndexRoute
 }
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/w/$slug/chamados/$numero': typeof WSlugChamadosNumeroRoute
   '/w/$slug/chamados/novo': typeof WSlugChamadosNovoRoute
   '/w/$slug/chamados/quadro': typeof WSlugChamadosQuadroRoute
+  '/w/$slug/projetos/$projetoId': typeof WSlugProjetosProjetoIdRoute
   '/w/$slug/chamados': typeof WSlugChamadosIndexRoute
   '/w/$slug/projetos': typeof WSlugProjetosIndexRoute
 }
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/w/$slug/chamados/$numero': typeof WSlugChamadosNumeroRoute
   '/w/$slug/chamados/novo': typeof WSlugChamadosNovoRoute
   '/w/$slug/chamados/quadro': typeof WSlugChamadosQuadroRoute
+  '/w/$slug/projetos/$projetoId': typeof WSlugProjetosProjetoIdRoute
   '/w/$slug/chamados/': typeof WSlugChamadosIndexRoute
   '/w/$slug/projetos/': typeof WSlugProjetosIndexRoute
 }
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados/$numero'
     | '/w/$slug/chamados/novo'
     | '/w/$slug/chamados/quadro'
+    | '/w/$slug/projetos/$projetoId'
     | '/w/$slug/chamados/'
     | '/w/$slug/projetos/'
   fileRoutesByTo: FileRoutesByTo
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados/$numero'
     | '/w/$slug/chamados/novo'
     | '/w/$slug/chamados/quadro'
+    | '/w/$slug/projetos/$projetoId'
     | '/w/$slug/chamados'
     | '/w/$slug/projetos'
   id:
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados/$numero'
     | '/w/$slug/chamados/novo'
     | '/w/$slug/chamados/quadro'
+    | '/w/$slug/projetos/$projetoId'
     | '/w/$slug/chamados/'
     | '/w/$slug/projetos/'
   fileRoutesById: FileRoutesById
@@ -276,6 +288,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WSlugChamadosIndexRouteImport
       parentRoute: typeof WSlugChamadosRoute
     }
+    '/w/$slug/projetos/$projetoId': {
+      id: '/w/$slug/projetos/$projetoId'
+      path: '/$projetoId'
+      fullPath: '/w/$slug/projetos/$projetoId'
+      preLoaderRoute: typeof WSlugProjetosProjetoIdRouteImport
+      parentRoute: typeof WSlugProjetosRoute
+    }
     '/w/$slug/chamados/quadro': {
       id: '/w/$slug/chamados/quadro'
       path: '/quadro'
@@ -319,10 +338,12 @@ const WSlugChamadosRouteWithChildren = WSlugChamadosRoute._addFileChildren(
 )
 
 interface WSlugProjetosRouteChildren {
+  WSlugProjetosProjetoIdRoute: typeof WSlugProjetosProjetoIdRoute
   WSlugProjetosIndexRoute: typeof WSlugProjetosIndexRoute
 }
 
 const WSlugProjetosRouteChildren: WSlugProjetosRouteChildren = {
+  WSlugProjetosProjetoIdRoute: WSlugProjetosProjetoIdRoute,
   WSlugProjetosIndexRoute: WSlugProjetosIndexRoute,
 }
 
