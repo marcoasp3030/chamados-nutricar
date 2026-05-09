@@ -32,6 +32,9 @@ export function PaginaConfiguracoes() {
           <TabsTrigger value="departamentos">
             <Building2 className="h-4 w-4" /> Departamentos
           </TabsTrigger>
+          <TabsTrigger value="usuarios-departamentos">
+            <Network className="h-4 w-4" /> Usuários × Departamentos
+          </TabsTrigger>
           <TabsTrigger value="categorias">
             <Tag className="h-4 w-4" /> Categorias
           </TabsTrigger>
