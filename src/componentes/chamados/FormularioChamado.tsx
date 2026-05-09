@@ -207,6 +207,7 @@ export function FormularioChamado({
 
   const [corrigindo, setCorrigindo] = useState(false);
   const [tentouEnviar, setTentouEnviar] = useState(false);
+  const [observadorAberto, setObservadorAberto] = useState(false);
 
   function atualizar<K extends keyof DadosFormularioChamado>(
     chave: K,
