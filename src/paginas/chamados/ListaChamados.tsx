@@ -19,6 +19,8 @@ import {
   AlertTriangle,
   Calendar as CalendarIcon,
   CircleDot,
+  Eye,
+  GitBranch,
   Loader2,
   Plus,
   Search,
@@ -28,6 +30,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -45,13 +48,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { useChamados, type FiltrosChamados } from "@/hooks/useChamados";
 import { BadgeStatus } from "@/componentes/chamados/BadgeStatus";
 import { BadgePrioridade } from "@/componentes/chamados/BadgePrioridade";
+import { ChamadoDetalheRapido } from "@/componentes/chamados/ChamadoDetalheRapido";
 import {
   PRIORIDADES_CHAMADO,
   STATUS_CHAMADO,
+  type ChamadoComPessoas,
   type PrioridadeChamado,
   type StatusChamado,
 } from "@/tipos/chamado";
