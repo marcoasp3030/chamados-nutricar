@@ -26,6 +26,8 @@ export function useChamados(workspaceId: string | undefined, filtros: FiltrosCha
   return useQuery({
     queryKey: ["chamados", workspaceId, filtros],
     enabled: !!workspaceId,
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
     queryFn: async (): Promise<ChamadoComPessoas[]> => {
       let q = supabase
         .from("chamados")
