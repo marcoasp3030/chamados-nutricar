@@ -51,6 +51,7 @@ import { BadgePrioridade } from "@/componentes/chamados/BadgePrioridade";
 import { ComentariosChamado } from "@/componentes/chamados/ComentariosChamado";
 import { HistoricoChamado } from "@/componentes/chamados/HistoricoChamado";
 import { LinhaTempoChamado } from "@/componentes/chamados/LinhaTempoChamado";
+import { AnexosChamado } from "@/componentes/chamados/AnexosChamado";
 import { ArvoreSubchamados } from "@/componentes/chamados/ArvoreSubchamados";
 import { AcoesIAChamado } from "@/componentes/chamados/AcoesIAChamado";
 import { HistoricoIAChamado } from "@/componentes/chamados/HistoricoIAChamado";
@@ -249,6 +250,7 @@ export function DetalheChamado({ numero }: Props) {
               <TabsList>
                 <TabsTrigger value="linha-tempo">Linha do tempo</TabsTrigger>
                 <TabsTrigger value="comentarios">Comentários</TabsTrigger>
+                <TabsTrigger value="anexos">Anexos</TabsTrigger>
                 <TabsTrigger value="historico">Histórico</TabsTrigger>
                 <TabsTrigger value="ia">IA</TabsTrigger>
               </TabsList>
@@ -260,6 +262,13 @@ export function DetalheChamado({ numero }: Props) {
                   chamadoId={chamado.id}
                   workspaceId={chamado.workspace_id}
                   podeUsarInterno={!!podeAtender}
+                />
+              </TabsContent>
+              <TabsContent value="anexos" className="pt-4">
+                <AnexosChamado
+                  chamadoId={chamado.id}
+                  workspaceId={chamado.workspace_id}
+                  podeExcluirTodos={!!podeExcluir}
                 />
               </TabsContent>
               <TabsContent value="historico" className="pt-4">
