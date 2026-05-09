@@ -14,6 +14,250 @@ export type Database = {
   }
   public: {
     Tables: {
+      chamado_anexos: {
+        Row: {
+          caminho_storage: string
+          chamado_id: string
+          comentario_id: string | null
+          criado_em: string
+          enviado_por: string
+          id: string
+          nome_arquivo: string
+          tamanho_bytes: number
+          tipo_mime: string | null
+          workspace_id: string
+        }
+        Insert: {
+          caminho_storage: string
+          chamado_id: string
+          comentario_id?: string | null
+          criado_em?: string
+          enviado_por: string
+          id?: string
+          nome_arquivo: string
+          tamanho_bytes?: number
+          tipo_mime?: string | null
+          workspace_id: string
+        }
+        Update: {
+          caminho_storage?: string
+          chamado_id?: string
+          comentario_id?: string | null
+          criado_em?: string
+          enviado_por?: string
+          id?: string
+          nome_arquivo?: string
+          tamanho_bytes?: number
+          tipo_mime?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chamado_anexos_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "chamados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamado_anexos_comentario_id_fkey"
+            columns: ["comentario_id"]
+            isOneToOne: false
+            referencedRelation: "chamado_comentarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamado_anexos_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chamado_comentarios: {
+        Row: {
+          atualizado_em: string
+          autor_id: string
+          chamado_id: string
+          conteudo: string
+          criado_em: string
+          id: string
+          interno: boolean
+          workspace_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          autor_id: string
+          chamado_id: string
+          conteudo: string
+          criado_em?: string
+          id?: string
+          interno?: boolean
+          workspace_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          autor_id?: string
+          chamado_id?: string
+          conteudo?: string
+          criado_em?: string
+          id?: string
+          interno?: boolean
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chamado_comentarios_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "chamados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamado_comentarios_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chamado_historico: {
+        Row: {
+          acao: string
+          campo: string | null
+          chamado_id: string
+          criado_em: string
+          id: string
+          usuario_id: string | null
+          valor_anterior: string | null
+          valor_novo: string | null
+          workspace_id: string
+        }
+        Insert: {
+          acao: string
+          campo?: string | null
+          chamado_id: string
+          criado_em?: string
+          id?: string
+          usuario_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+          workspace_id: string
+        }
+        Update: {
+          acao?: string
+          campo?: string | null
+          chamado_id?: string
+          criado_em?: string
+          id?: string
+          usuario_id?: string | null
+          valor_anterior?: string | null
+          valor_novo?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chamado_historico_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "chamados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamado_historico_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chamados: {
+        Row: {
+          atualizado_em: string
+          categoria: string | null
+          chamado_pai_id: string | null
+          criado_em: string
+          criado_por: string
+          descricao: string | null
+          fechado_em: string | null
+          id: string
+          numero: number
+          prazo: string | null
+          primeiro_resposta_em: string | null
+          prioridade: Database["public"]["Enums"]["prioridade_chamado"]
+          resolvido_em: string | null
+          responsavel_id: string | null
+          solicitante_id: string
+          status: Database["public"]["Enums"]["status_chamado"]
+          tags: string[]
+          tipo: Database["public"]["Enums"]["tipo_chamado"]
+          titulo: string
+          workspace_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          categoria?: string | null
+          chamado_pai_id?: string | null
+          criado_em?: string
+          criado_por: string
+          descricao?: string | null
+          fechado_em?: string | null
+          id?: string
+          numero: number
+          prazo?: string | null
+          primeiro_resposta_em?: string | null
+          prioridade?: Database["public"]["Enums"]["prioridade_chamado"]
+          resolvido_em?: string | null
+          responsavel_id?: string | null
+          solicitante_id: string
+          status?: Database["public"]["Enums"]["status_chamado"]
+          tags?: string[]
+          tipo?: Database["public"]["Enums"]["tipo_chamado"]
+          titulo: string
+          workspace_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          categoria?: string | null
+          chamado_pai_id?: string | null
+          criado_em?: string
+          criado_por?: string
+          descricao?: string | null
+          fechado_em?: string | null
+          id?: string
+          numero?: number
+          prazo?: string | null
+          primeiro_resposta_em?: string | null
+          prioridade?: Database["public"]["Enums"]["prioridade_chamado"]
+          resolvido_em?: string | null
+          responsavel_id?: string | null
+          solicitante_id?: string
+          status?: Database["public"]["Enums"]["status_chamado"]
+          tags?: string[]
+          tipo?: Database["public"]["Enums"]["tipo_chamado"]
+          titulo?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chamados_chamado_pai_id_fkey"
+            columns: ["chamado_pai_id"]
+            isOneToOne: false
+            referencedRelation: "chamados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamados_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfis: {
         Row: {
           atualizado_em: string
@@ -191,6 +435,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      pode_ver_todos_chamados: {
+        Args: { _workspace_id: string }
+        Returns: boolean
+      }
       tem_papel_workspace: {
         Args: {
           _papeis: Database["public"]["Enums"]["papel_membro"][]
@@ -208,7 +456,17 @@ export type Database = {
         | "Atendente"
         | "Solicitante"
       plano_workspace: "Gratuito" | "Inicial" | "Profissional" | "Empresarial"
+      prioridade_chamado: "Baixa" | "Media" | "Alta" | "Urgente"
+      status_chamado:
+        | "Aberto"
+        | "Em andamento"
+        | "Aguardando solicitante"
+        | "Aguardando terceiros"
+        | "Resolvido"
+        | "Fechado"
+        | "Cancelado"
       status_workspace: "Ativo" | "Suspenso" | "Cancelado"
+      tipo_chamado: "Incidente" | "Solicitacao" | "Duvida" | "Melhoria" | "Bug"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -344,7 +602,18 @@ export const Constants = {
         "Solicitante",
       ],
       plano_workspace: ["Gratuito", "Inicial", "Profissional", "Empresarial"],
+      prioridade_chamado: ["Baixa", "Media", "Alta", "Urgente"],
+      status_chamado: [
+        "Aberto",
+        "Em andamento",
+        "Aguardando solicitante",
+        "Aguardando terceiros",
+        "Resolvido",
+        "Fechado",
+        "Cancelado",
+      ],
       status_workspace: ["Ativo", "Suspenso", "Cancelado"],
+      tipo_chamado: ["Incidente", "Solicitacao", "Duvida", "Melhoria", "Bug"],
     },
   },
 } as const
