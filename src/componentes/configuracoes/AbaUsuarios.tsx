@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -134,7 +135,7 @@ export function AbaUsuarios() {
     nome: "",
     telefone: "",
     cargo: "Funcionario" as Cargo,
-    departamento_id: null as string | null,
+    departamento_ids: [] as string[],
   });
   const [errosMembro, setErrosMembro] = useState<Record<string, string>>({});
 
@@ -152,7 +153,7 @@ export function AbaUsuarios() {
       nome: m.perfil.nome ?? "",
       telefone: m.perfil.telefone ?? "",
       cargo: (m.cargo as Cargo) ?? "Funcionario",
-      departamento_id: m.departamento_id,
+      departamento_ids: m.departamento_ids ?? [],
     });
     setEditandoMembro(m);
   }
@@ -164,7 +165,7 @@ export function AbaUsuarios() {
         nome: z.string().trim().min(2, "Informe o nome").max(120),
         telefone: z.string().trim().max(30).optional().or(z.literal("")),
         cargo: z.enum(CARGOS as unknown as [string, ...string[]]),
-        departamento_id: z.string().uuid().nullable(),
+        departamento_ids: z.array(z.string().uuid()),
       });
       const parse = schema.safeParse(formMembro);
       if (!parse.success) {
@@ -185,14 +186,36 @@ export function AbaUsuarios() {
         .eq("id", editandoMembro.usuario_id);
       if (erroPerfil) throw erroPerfil;
 
+      const novosDeptos = parse.data.departamento_ids;
       const { error: erroMembro } = await supabase
         .from("workspace_membros")
         .update({
           cargo: parse.data.cargo as Cargo,
-          departamento_id: parse.data.departamento_id,
+          // mantém o campo legado apontando para o primeiro departamento (compatibilidade)
+          departamento_id: novosDeptos[0] ?? null,
         })
         .eq("id", editandoMembro.id);
       if (erroMembro) throw erroMembro;
+
+      // Sincroniza vínculos N:N
+      const { error: erroDel } = await supabase
+        .from("workspace_membro_departamentos")
+        .delete()
+        .eq("membro_id", editandoMembro.id);
+      if (erroDel) throw erroDel;
+
+      if (novosDeptos.length > 0 && workspaceAtual) {
+        const { error: erroIns } = await supabase
+          .from("workspace_membro_departamentos")
+          .insert(
+            novosDeptos.map((d) => ({
+              membro_id: editandoMembro.id,
+              departamento_id: d,
+              workspace_id: workspaceAtual.id,
+            })),
+          );
+        if (erroIns) throw erroIns;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["membros-workspace"] });
@@ -381,10 +404,12 @@ export function AbaUsuarios() {
                         {rotuloCargo[m.cargo as Cargo] ?? m.cargo}
                       </Badge>
                     )}
-                    {m.departamento_id && mapaDepartamentos.get(m.departamento_id) && (
-                      <Badge variant="secondary">
-                        {mapaDepartamentos.get(m.departamento_id)}
-                      </Badge>
+                    {(m.departamento_ids ?? []).map((dId) =>
+                      mapaDepartamentos.get(dId) ? (
+                        <Badge key={dId} variant="secondary">
+                          {mapaDepartamentos.get(dId)}
+                        </Badge>
+                      ) : null,
                     )}
                     <Badge>{rotuloPapel[m.papel as Papel] ?? m.papel}</Badge>
                   </div>
@@ -695,29 +720,41 @@ export function AbaUsuarios() {
                 <p className="text-xs text-destructive">{errosMembro.telefone}</p>
               )}
             </div>
-            <div className="space-y-1.5">
-              <Label>Departamento</Label>
-              <Select
-                value={formMembro.departamento_id ?? "__nenhum__"}
-                onValueChange={(v) =>
-                  setFormMembro((f) => ({
-                    ...f,
-                    departamento_id: v === "__nenhum__" ? null : v,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__nenhum__">Sem departamento</SelectItem>
-                  {(departamentos ?? []).map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>Departamentos</Label>
+              {(!departamentos || departamentos.length === 0) ? (
+                <p className="text-xs text-muted-foreground">
+                  Crie um departamento na aba "Departamentos" primeiro.
+                </p>
+              ) : (
+                <div className="max-h-44 space-y-1.5 overflow-y-auto rounded-md border border-border p-2">
+                  {departamentos.map((d) => {
+                    const marcado = formMembro.departamento_ids.includes(d.id);
+                    return (
+                      <label
+                        key={d.id}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-accent"
+                      >
+                        <Checkbox
+                          checked={marcado}
+                          onCheckedChange={(c: boolean | "indeterminate") =>
+                            setFormMembro((f) => ({
+                              ...f,
+                              departamento_ids: c === true
+                                ? [...f.departamento_ids, d.id]
+                                : f.departamento_ids.filter((x) => x !== d.id),
+                            }))
+                          }
+                        />
+                        <span>{d.nome}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                O usuário pode pertencer a mais de um departamento.
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label>Cargo *</Label>

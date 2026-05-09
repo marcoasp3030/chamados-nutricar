@@ -704,6 +704,45 @@ export type Database = {
           },
         ]
       }
+      workspace_membro_departamentos: {
+        Row: {
+          criado_em: string
+          departamento_id: string
+          id: string
+          membro_id: string
+          workspace_id: string
+        }
+        Insert: {
+          criado_em?: string
+          departamento_id: string
+          id?: string
+          membro_id: string
+          workspace_id: string
+        }
+        Update: {
+          criado_em?: string
+          departamento_id?: string
+          id?: string
+          membro_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_membro_departamentos_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "departamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_membro_departamentos_membro_id_fkey"
+            columns: ["membro_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_membros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_membros: {
         Row: {
           aceito_em: string | null
