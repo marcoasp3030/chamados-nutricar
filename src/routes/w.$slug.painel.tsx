@@ -163,22 +163,39 @@ function Painel() {
   const abrir = (titulo: string, filtros: FiltrosPrevia, descricao?: string) =>
     setPrevia({ titulo, filtros, descricao });
 
+  const hora = new Date().getHours();
+  const saudacao = hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite";
+
+  const ativos = data ? data.abertos + data.emAndamento + data.aguardando : 0;
+
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Bem-vindo(a) — {workspaceAtual.nome}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Visão geral dos chamados e atividades da empresa.
-          </p>
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
+      <header
+        className="mb-6 overflow-hidden rounded-2xl border border-border p-6 shadow-[var(--shadow-card)]"
+        style={{ background: "var(--gradient-soft)" }}
+      >
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {saudacao}
+            </p>
+            <h1 className="mt-1 text-2xl font-bold text-foreground md:text-3xl">
+              {workspaceAtual.nome}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {data
+                ? `${ativos} ${ativos === 1 ? "chamado ativo" : "chamados ativos"}${
+                    data.vencidos > 0 ? ` • ${data.vencidos} vencido${data.vencidos > 1 ? "s" : ""}` : ""
+                  }`
+                : "Carregando indicadores..."}
+            </p>
+          </div>
+          <Button asChild size="lg" className="shadow-md">
+            <Link to="/w/$slug/chamados/novo" params={{ slug: workspaceAtual.slug }}>
+              <Plus className="h-4 w-4" /> Novo chamado
+            </Link>
+          </Button>
         </div>
-        <Button asChild>
-          <Link to="/w/$slug/chamados/novo" params={{ slug: workspaceAtual.slug }}>
-            <Plus className="h-4 w-4" /> Novo chamado
-          </Link>
-        </Button>
       </header>
 
       {isLoading || !data ? (
