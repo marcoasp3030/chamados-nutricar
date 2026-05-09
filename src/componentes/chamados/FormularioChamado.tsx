@@ -235,13 +235,38 @@ export function FormularioChamado({
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="categoria">Categoria</Label>
-          <Input
-            id="categoria"
-            placeholder="Ex.: Financeiro, TI, RH"
-            value={dados.categoria}
-            onChange={(e) => atualizar("categoria", e.target.value)}
-          />
+          <Label>Categoria</Label>
+          <Select
+            value={dados.categoria || "__nenhuma__"}
+            onValueChange={(v) => atualizar("categoria", v === "__nenhuma__" ? "" : v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecionar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__nenhuma__">Sem categoria</SelectItem>
+              {(categorias ?? []).map((c) => (
+                <SelectItem key={c.id} value={c.nome}>
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="h-2.5 w-2.5 rounded-full"
+                      style={{ backgroundColor: c.cor }}
+                    />
+                    {c.nome}
+                  </span>
+                </SelectItem>
+              ))}
+              {dados.categoria &&
+                !(categorias ?? []).some((c) => c.nome === dados.categoria) && (
+                  <SelectItem value={dados.categoria}>{dados.categoria}</SelectItem>
+                )}
+            </SelectContent>
+          </Select>
+          {(!categorias || categorias.length === 0) && (
+            <p className="text-xs text-muted-foreground">
+              Cadastre categorias em Configurações → Categorias.
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
