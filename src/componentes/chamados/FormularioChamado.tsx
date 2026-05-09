@@ -50,6 +50,8 @@ export interface DadosFormularioChamado {
   prazo: string | null;
   chamado_pai_id: string | null;
   anexos: File[];
+  requisicao_compras: boolean;
+  itens_requisicao: ItemRequisicao[];
 }
 
 interface Props {
