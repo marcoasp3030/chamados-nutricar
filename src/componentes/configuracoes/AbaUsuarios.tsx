@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Copy, Loader2, Mail, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { Copy, Loader2, Mail, Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
@@ -125,6 +125,103 @@ export function AbaUsuarios() {
     null,
   );
   const [removerConvite, setRemoverConvite] = useState<Convite | null>(null);
+
+  // Edição / remoção de membros ativos
+  type MembroAtivo = NonNullable<typeof membros>[number];
+  const [editandoMembro, setEditandoMembro] = useState<MembroAtivo | null>(null);
+  const [removerMembro, setRemoverMembro] = useState<MembroAtivo | null>(null);
+  const [formMembro, setFormMembro] = useState({
+    nome: "",
+    telefone: "",
+    cargo: "Funcionario" as Cargo,
+    departamento_id: null as string | null,
+  });
+  const [errosMembro, setErrosMembro] = useState<Record<string, string>>({});
+
+  const podeAdministrar =
+    workspaceAtual?.papel === "Proprietario" || workspaceAtual?.papel === "Administrador";
+
+  const [usuarioAtualId, setUsuarioAtualId] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUsuarioAtualId(data.user?.id ?? null));
+  }, []);
+
+  function abrirEdicaoMembro(m: MembroAtivo) {
+    setErrosMembro({});
+    setFormMembro({
+      nome: m.perfil.nome ?? "",
+      telefone: m.perfil.telefone ?? "",
+      cargo: (m.cargo as Cargo) ?? "Funcionario",
+      departamento_id: m.departamento_id,
+    });
+    setEditandoMembro(m);
+  }
+
+  const salvarMembro = useMutation({
+    mutationFn: async () => {
+      if (!editandoMembro) throw new Error("Membro inválido");
+      const schema = z.object({
+        nome: z.string().trim().min(2, "Informe o nome").max(120),
+        telefone: z.string().trim().max(30).optional().or(z.literal("")),
+        cargo: z.enum(CARGOS as unknown as [string, ...string[]]),
+        departamento_id: z.string().uuid().nullable(),
+      });
+      const parse = schema.safeParse(formMembro);
+      if (!parse.success) {
+        const f: Record<string, string> = {};
+        for (const [k, v] of Object.entries(parse.error.flatten().fieldErrors)) {
+          if (v && v[0]) f[k] = v[0];
+        }
+        setErrosMembro(f);
+        throw new Error("Verifique os campos");
+      }
+
+      const { error: erroPerfil } = await supabase
+        .from("perfis")
+        .update({
+          nome: parse.data.nome,
+          telefone: parse.data.telefone || null,
+        })
+        .eq("id", editandoMembro.usuario_id);
+      if (erroPerfil) throw erroPerfil;
+
+      const { error: erroMembro } = await supabase
+        .from("workspace_membros")
+        .update({
+          cargo: parse.data.cargo as Cargo,
+          departamento_id: parse.data.departamento_id,
+        })
+        .eq("id", editandoMembro.id);
+      if (erroMembro) throw erroMembro;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["membros-workspace"] });
+      toast.success("Membro atualizado.");
+      setEditandoMembro(null);
+    },
+    onError: (e: Error) => {
+      if (e.message !== "Verifique os campos") {
+        toast.error("Não foi possível salvar.", { description: e.message });
+      }
+    },
+  });
+
+  const desativarMembro = useMutation({
+    mutationFn: async (membroId: string) => {
+      const { error } = await supabase
+        .from("workspace_membros")
+        .update({ ativo: false })
+        .eq("id", membroId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["membros-workspace"] });
+      toast.success("Membro removido.");
+      setRemoverMembro(null);
+    },
+    onError: (e: Error) =>
+      toast.error("Não foi possível remover.", { description: e.message }),
+  });
 
   const { data: convites, isLoading: carregandoConvites } = useQuery({
     queryKey: ["convites", workspaceAtual?.id],
@@ -259,22 +356,66 @@ export function AbaUsuarios() {
           </p>
         ) : (
           <ul className="divide-y divide-border">
-            {membros.map((m) => (
-              <li key={m.usuario_id} className="flex items-center gap-3 px-4 py-3">
-                <Avatar className="h-9 w-9">
-                  <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                    {iniciais(m.perfil.nome)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{m.perfil.nome}</p>
-                  <p className="truncate text-xs text-muted-foreground">{m.perfil.email}</p>
-                </div>
-                <Badge variant="outline" className="capitalize">
-                  {rotuloPapel[m.papel as Papel] ?? m.papel}
-                </Badge>
-              </li>
-            ))}
+            {membros.map((m) => {
+              const ehProprio = m.usuario_id === usuarioAtualId;
+              const ehProprietario = m.papel === "Proprietario";
+              const podeEditar = podeAdministrar;
+              const podeRemover = podeAdministrar && !ehProprietario && !ehProprio;
+              return (
+                <li key={m.usuario_id} className="flex items-center gap-3 px-4 py-3">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                      {iniciais(m.perfil.nome)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{m.perfil.nome}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {m.perfil.email}
+                      {m.perfil.telefone && <> · {m.perfil.telefone}</>}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {m.cargo && (
+                      <Badge variant="outline">
+                        {rotuloCargo[m.cargo as Cargo] ?? m.cargo}
+                      </Badge>
+                    )}
+                    {m.departamento_id && mapaDepartamentos.get(m.departamento_id) && (
+                      <Badge variant="secondary">
+                        {mapaDepartamentos.get(m.departamento_id)}
+                      </Badge>
+                    )}
+                    <Badge>{rotuloPapel[m.papel as Papel] ?? m.papel}</Badge>
+                  </div>
+                  {(podeEditar || podeRemover) && (
+                    <div className="flex shrink-0 gap-1">
+                      {podeEditar && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => abrirEdicaoMembro(m)}
+                          title="Editar membro"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {podeRemover && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setRemoverMembro(m)}
+                          title="Remover membro"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -506,6 +647,128 @@ export function AbaUsuarios() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => removerConvite && excluirConvite.mutate(removerConvite.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog: Editar membro ativo */}
+      <Dialog open={!!editandoMembro} onOpenChange={(o) => !o && setEditandoMembro(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar membro</DialogTitle>
+            <DialogDescription>
+              Atualize nome, celular, departamento e cargo.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="m-nome">Nome *</Label>
+              <Input
+                id="m-nome"
+                maxLength={120}
+                value={formMembro.nome}
+                onChange={(e) => setFormMembro((f) => ({ ...f, nome: e.target.value }))}
+              />
+              {errosMembro.nome && (
+                <p className="text-xs text-destructive">{errosMembro.nome}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>E-mail</Label>
+              <Input value={editandoMembro?.perfil.email ?? ""} disabled />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="m-tel">Celular</Label>
+              <Input
+                id="m-tel"
+                maxLength={30}
+                placeholder="(11) 90000-0000"
+                value={formMembro.telefone}
+                onChange={(e) => setFormMembro((f) => ({ ...f, telefone: e.target.value }))}
+              />
+              {errosMembro.telefone && (
+                <p className="text-xs text-destructive">{errosMembro.telefone}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Departamento</Label>
+              <Select
+                value={formMembro.departamento_id ?? "__nenhum__"}
+                onValueChange={(v) =>
+                  setFormMembro((f) => ({
+                    ...f,
+                    departamento_id: v === "__nenhum__" ? null : v,
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__nenhum__">Sem departamento</SelectItem>
+                  {(departamentos ?? []).map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Cargo *</Label>
+              <Select
+                value={formMembro.cargo}
+                onValueChange={(v) => setFormMembro((f) => ({ ...f, cargo: v as Cargo }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CARGOS.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {rotuloCargo[c]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditandoMembro(null)}
+              disabled={salvarMembro.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={() => salvarMembro.mutate()} disabled={salvarMembro.isPending}>
+              {salvarMembro.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Salvar alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmação: remover membro */}
+      <AlertDialog open={!!removerMembro} onOpenChange={(o) => !o && setRemoverMembro(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover membro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>{removerMembro?.perfil.nome}</strong> deixará de ter acesso a esta empresa.
+              Os chamados e o histórico criados por ele serão preservados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => removerMembro && desativarMembro.mutate(removerMembro.id)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remover
