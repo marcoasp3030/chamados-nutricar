@@ -7,6 +7,7 @@ export interface MembroWorkspace {
   papel: string;
   cargo: string | null;
   departamento_id: string | null;
+  departamento_ids: string[];
   perfil: {
     id: string;
     nome: string;
