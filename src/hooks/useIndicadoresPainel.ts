@@ -22,6 +22,17 @@ export interface IndicadoresPainel {
     prioridade: PrioridadeChamado;
     criado_em: string;
   }>;
+  topLojas: RankingItem[];
+  topDepartamentos: RankingItem[];
+  topCategorias: RankingItem[];
+  topResponsaveis: RankingItem[];
+}
+
+export interface RankingItem {
+  chave: string;
+  rotulo: string;
+  total: number;
+  ativos: number;
 }
 
 const STATUS_VAZIO: Record<StatusChamado, number> = {
