@@ -8,6 +8,9 @@ export interface FiltrosChamados {
   busca?: string;
   responsavel_id?: string | "Todos" | "MEUS";
   somenteRaiz?: boolean;
+  dataInicio?: string; // ISO
+  dataFim?: string; // ISO
+  campoData?: "criado_em" | "atualizado_em" | "prazo" | "fechado_em";
 }
 
 async function buscarPerfisPorIds(ids: string[]) {
@@ -52,6 +55,10 @@ export function useChamados(workspaceId: string | undefined, filtros: FiltrosCha
           q = q.eq("responsavel_id", filtros.responsavel_id);
         }
       }
+
+      const campo = filtros.campoData ?? "criado_em";
+      if (filtros.dataInicio) q = q.gte(campo, filtros.dataInicio);
+      if (filtros.dataFim) q = q.lte(campo, filtros.dataFim);
 
       const { data, error } = await q;
       if (error) throw error;
