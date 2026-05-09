@@ -737,10 +737,10 @@ export function AbaUsuarios() {
                       >
                         <Checkbox
                           checked={marcado}
-                          onCheckedChange={(c) =>
+                          onCheckedChange={(c: boolean | "indeterminate") =>
                             setFormMembro((f) => ({
                               ...f,
-                              departamento_ids: c
+                              departamento_ids: c === true
                                 ? [...f.departamento_ids, d.id]
                                 : f.departamento_ids.filter((x) => x !== d.id),
                             }))
