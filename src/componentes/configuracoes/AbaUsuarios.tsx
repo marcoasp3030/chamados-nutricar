@@ -403,10 +403,12 @@ export function AbaUsuarios() {
                         {rotuloCargo[m.cargo as Cargo] ?? m.cargo}
                       </Badge>
                     )}
-                    {m.departamento_id && mapaDepartamentos.get(m.departamento_id) && (
-                      <Badge variant="secondary">
-                        {mapaDepartamentos.get(m.departamento_id)}
-                      </Badge>
+                    {(m.departamento_ids ?? []).map((dId) =>
+                      mapaDepartamentos.get(dId) ? (
+                        <Badge key={dId} variant="secondary">
+                          {mapaDepartamentos.get(dId)}
+                        </Badge>
+                      ) : null,
                     )}
                     <Badge>{rotuloPapel[m.papel as Papel] ?? m.papel}</Badge>
                   </div>
