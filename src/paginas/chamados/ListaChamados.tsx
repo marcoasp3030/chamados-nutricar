@@ -149,15 +149,30 @@ export function ListaChamados() {
     periodo?: "todos" | "mes";
     vencidos?: boolean;
   };
-  const [filtros, setFiltros] = useState<FiltrosChamados>(FILTROS_INICIAIS);
-  const [periodo, setPeriodo] = useState<Periodo>("todos");
+
+  // Inicializa filtros já considerando os parâmetros de URL para evitar
+  // refetch duplicado e flicker entre o primeiro render e o useEffect.
+  const [filtros, setFiltros] = useState<FiltrosChamados>(() => {
+    const base: FiltrosChamados = { ...FILTROS_INICIAIS };
+    if (search?.status) base.status = search.status;
+    if (search?.prioridade) base.prioridade = search.prioridade;
+    if (search?.responsavel) base.responsavel_id = search.responsavel;
+    if (search?.periodo === "mes") {
+      const { inicio, fim } = intervaloPeriodo("mes");
+      base.dataInicio = inicio?.toISOString();
+      base.dataFim = fim?.toISOString();
+    }
+    return base;
+  });
+  const [periodo, setPeriodo] = useState<Periodo>(() =>
+    search?.periodo === "mes" ? "mes" : "todos",
+  );
   const [intervaloCustom, setIntervaloCustom] = useState<{ from?: Date; to?: Date }>({});
   const [popoverDataAberto, setPopoverDataAberto] = useState(false);
-  const [somenteVencidos, setSomenteVencidos] = useState(false);
+  const [somenteVencidos, setSomenteVencidos] = useState<boolean>(() => !!search?.vencidos);
 
-  // Aplica filtros vindos da URL (links do painel)
+  // Sincroniza quando o usuário muda apenas a URL (navegação posterior)
   useEffect(() => {
-    if (!search) return;
     setFiltros((f) => ({
       ...f,
       status: search.status ?? f.status,
