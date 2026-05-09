@@ -26,6 +26,10 @@ export interface IndicadoresPainel {
   topDepartamentos: RankingItem[];
   topCategorias: RankingItem[];
   topResponsaveis: RankingItem[];
+  slaEstouradoPorDepartamento: RankingItem[];
+  semInteracaoPorDepartamento: RankingItem[];
+  departamentosMaisResolvem: RankingItem[];
+  departamentosPiorIndiceResolucao: RankingItem[];
 }
 
 export interface RankingItem {
@@ -33,6 +37,8 @@ export interface RankingItem {
   rotulo: string;
   total: number;
   ativos: number;
+  /** Texto secundário opcional (ex.: "32% resolvidos"). Quando presente, substitui o badge de ativos. */
+  extra?: string;
 }
 
 const STATUS_VAZIO: Record<StatusChamado, number> = {
@@ -64,16 +70,28 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
       const { data: u } = await supabase.auth.getUser();
       const meuId = u.user?.id;
 
-      const { data, error } = await supabase
-        .from("chamados")
-        .select("id, numero, codigo, titulo, status, prioridade, prazo, criado_em, resolvido_em, fechado_em, responsavel_id, loja, categoria, departamento_id")
-        .eq("workspace_id", workspaceId!)
-        .order("criado_em", { ascending: false })
-        .limit(1000);
+      const [chamadosRes, comentariosRes] = await Promise.all([
+        supabase
+          .from("chamados")
+          .select(
+            "id, numero, codigo, titulo, status, prioridade, prazo, criado_em, primeiro_resposta_em, resolvido_em, fechado_em, responsavel_id, loja, categoria, departamento_id",
+          )
+          .eq("workspace_id", workspaceId!)
+          .order("criado_em", { ascending: false })
+          .limit(1000),
+        supabase
+          .from("chamado_comentarios")
+          .select("chamado_id")
+          .eq("workspace_id", workspaceId!)
+          .limit(1000),
+      ]);
 
-      if (error) throw error;
+      if (chamadosRes.error) throw chamadosRes.error;
 
-      const lista = data ?? [];
+      const lista = chamadosRes.data ?? [];
+      const comSet = new Set(
+        (comentariosRes.data ?? []).map((c) => c.chamado_id as string),
+      );
       const agora = new Date();
       const porStatus = { ...STATUS_VAZIO };
       const porPrioridade = { ...PRIO_VAZIO };
@@ -92,6 +110,11 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
       const acumCat = new Map<string, { total: number; ativos: number }>();
       const acumResp = new Map<string, { total: number; ativos: number }>();
 
+      const acumSla = new Map<string, { total: number; ativos: number }>();
+      const acumSem = new Map<string, { total: number; ativos: number }>();
+      const acumResolvidos = new Map<string, { total: number; ativos: number }>();
+      const acumStats = new Map<string, { total: number; resolvidos: number }>();
+
       const addAcum = (
         mapa: Map<string, { total: number; ativos: number }>,
         chave: string | null | undefined,
@@ -109,16 +132,20 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
         porPrioridade[c.prioridade as PrioridadeChamado] =
           (porPrioridade[c.prioridade as PrioridadeChamado] ?? 0) + 1;
 
-        const ativo = c.status !== "Fechado" && c.status !== "Cancelado" && c.status !== "Resolvido";
+        const ativo =
+          c.status !== "Fechado" && c.status !== "Cancelado" && c.status !== "Resolvido";
         if (c.status === "Aberto") abertos++;
         if (c.status === "Em andamento") emAndamento++;
         if (c.status === "Aguardando solicitante" || c.status === "Aguardando terceiros") aguardando++;
 
-        if (ativo && c.prazo && new Date(c.prazo) < agora) vencidos++;
+        const slaEstourado = !!(ativo && c.prazo && new Date(c.prazo) < agora);
+        if (slaEstourado) vencidos++;
         if (meuId && c.responsavel_id === meuId && ativo) meusAtribuidos++;
 
         const criado = new Date(c.criado_em);
         if (criado >= inicioMes) totalMes++;
+        const foiResolvido =
+          !!c.resolvido_em || c.status === "Resolvido" || c.status === "Fechado";
         if (c.resolvido_em && new Date(c.resolvido_em) >= inicioMes) resolvidosMes++;
         if (c.fechado_em && new Date(c.fechado_em) >= inicioMes) fechadosMes++;
 
@@ -126,9 +153,51 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
         addAcum(acumDep, (c as { departamento_id?: string | null }).departamento_id, ativo);
         addAcum(acumCat, (c as { categoria?: string | null }).categoria, ativo);
         addAcum(acumResp, c.responsavel_id, ativo);
+
+        // SLA estourado por departamento (apenas chamados ativos com prazo expirado)
+        if (slaEstourado) {
+          addAcum(acumSla, c.departamento_id, true);
+        }
+
+        // Sem interação: chamados ativos sem primeira resposta e sem comentários
+        const semInteracao =
+          ativo &&
+          !(c as { primeiro_resposta_em?: string | null }).primeiro_resposta_em &&
+          !comSet.has(c.id);
+        if (semInteracao) {
+          addAcum(acumSem, c.departamento_id, true);
+        }
+
+        // Departamentos que mais resolvem (volume absoluto de resolvidos/fechados)
+        if (foiResolvido) {
+          addAcum(acumResolvidos, c.departamento_id, false);
+        }
+
+        // Estatística por departamento para calcular índice de resolução
+        const kdep =
+          c.departamento_id && String(c.departamento_id).trim()
+            ? String(c.departamento_id)
+            : "__sem__";
+        const stat = acumStats.get(kdep) ?? { total: 0, resolvidos: 0 };
+        stat.total++;
+        if (foiResolvido) stat.resolvidos++;
+        acumStats.set(kdep, stat);
       }
 
-      const depIds = Array.from(acumDep.keys()).filter((k) => k !== "__sem__");
+      // Reúne todos os IDs de departamento que aparecem em qualquer mapa
+      const todosDepIds = new Set<string>();
+      const coletarDeps = (m: Map<string, unknown>) => {
+        for (const k of m.keys()) {
+          if (k !== "__sem__") todosDepIds.add(k);
+        }
+      };
+      coletarDeps(acumDep);
+      coletarDeps(acumSla);
+      coletarDeps(acumSem);
+      coletarDeps(acumResolvidos);
+      coletarDeps(acumStats);
+
+      const depIds = Array.from(todosDepIds);
       const respIds = Array.from(acumResp.keys()).filter((k) => k !== "__sem__");
 
       const [depRes, perfRes] = await Promise.all([
@@ -145,6 +214,9 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
       const nomeResp = new Map<string, string>();
       (perfRes.data ?? []).forEach((p) => nomeResp.set(p.id, p.nome));
 
+      const rotuloDepartamento = (k: string) =>
+        k === "__sem__" ? "Sem departamento" : nomeDep.get(k) ?? "—";
+
       const construirRanking = (
         mapa: Map<string, { total: number; ativos: number }>,
         resolverNome: (k: string) => string,
@@ -158,6 +230,41 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
           }))
           .sort((a, b) => b.total - a.total)
           .slice(0, 5);
+
+      // Pior índice de resolução: requer ao menos 3 chamados para ser representativo
+      const departamentosPiorIndiceResolucao: RankingItem[] = Array.from(acumStats.entries())
+        .filter(([, v]) => v.total >= 3)
+        .map(([chave, v]) => {
+          const taxa = v.total > 0 ? v.resolvidos / v.total : 0;
+          const pct = Math.round(taxa * 100);
+          return {
+            chave,
+            rotulo: rotuloDepartamento(chave),
+            total: v.total,
+            ativos: v.total - v.resolvidos,
+            extra: `${pct}% resolvidos`,
+            _taxa: taxa,
+          };
+        })
+        .sort((a, b) => a._taxa - b._taxa)
+        .slice(0, 5)
+        .map(({ _taxa: _, ...rest }) => rest);
+
+      // Top departamentos que mais resolvem (volume + taxa)
+      const departamentosMaisResolvem: RankingItem[] = Array.from(acumResolvidos.entries())
+        .map(([chave, v]) => {
+          const stat = acumStats.get(chave);
+          const pct = stat && stat.total > 0 ? Math.round((v.total / stat.total) * 100) : 0;
+          return {
+            chave,
+            rotulo: rotuloDepartamento(chave),
+            total: v.total,
+            ativos: 0,
+            extra: stat ? `${pct}% do total` : undefined,
+          };
+        })
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 5);
 
       return {
         abertos,
@@ -180,9 +287,13 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
           criado_em: c.criado_em,
         })),
         topLojas: construirRanking(acumLoja, (k) => k),
-        topDepartamentos: construirRanking(acumDep, (k) => nomeDep.get(k) ?? "—"),
+        topDepartamentos: construirRanking(acumDep, rotuloDepartamento),
         topCategorias: construirRanking(acumCat, (k) => k),
         topResponsaveis: construirRanking(acumResp, (k) => nomeResp.get(k) ?? "—"),
+        slaEstouradoPorDepartamento: construirRanking(acumSla, rotuloDepartamento),
+        semInteracaoPorDepartamento: construirRanking(acumSem, rotuloDepartamento),
+        departamentosMaisResolvem,
+        departamentosPiorIndiceResolucao,
       };
     },
   });
