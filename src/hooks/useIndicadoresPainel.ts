@@ -16,6 +16,7 @@ export interface IndicadoresPainel {
   ultimos: Array<{
     id: string;
     numero: number;
+    codigo: string | null;
     titulo: string;
     status: StatusChamado;
     prioridade: PrioridadeChamado;
