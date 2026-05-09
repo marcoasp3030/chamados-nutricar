@@ -28,8 +28,10 @@ function LayoutChamados() {
     !caminho.includes(`${base}/novo`) &&
     !/\/chamados\/\d+/.test(caminho);
 
+  const ehQuadro = caminho.startsWith(`${base}/quadro`);
+
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
+    <div className={cn("px-6 py-8", ehQuadro ? "mx-auto max-w-[1800px]" : "mx-auto max-w-7xl")}>
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Chamados</h1>
