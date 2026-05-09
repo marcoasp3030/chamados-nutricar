@@ -175,6 +175,7 @@ export function AnexosChamado({ chamadoId, workspaceId, podeExcluirTodos = false
     }
   }
 
+  const itens = lista.data ?? [];
   const usuarioAtual = useQuery({
     queryKey: ["auth-user-id"],
     queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null,
