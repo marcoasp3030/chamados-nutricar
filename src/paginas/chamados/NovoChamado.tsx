@@ -44,9 +44,39 @@ export function NovoChamado({ chamadoPaiId }: Props) {
           criado_por: u.user.id,
           numero: 0,
         })
-        .select("numero")
+        .select("id, numero")
         .single();
       if (error) throw error;
+
+      // Upload de anexos (se houver)
+      if (dados.anexos.length > 0) {
+        const falhas: string[] = [];
+        for (const arquivo of dados.anexos) {
+          const nomeSeguro = arquivo.name.replace(/[^\w.\-]+/g, "_");
+          const caminho = `${workspaceAtual.id}/${data.id}/${crypto.randomUUID()}-${nomeSeguro}`;
+          const up = await supabase.storage
+            .from("chamado-anexos")
+            .upload(caminho, arquivo, { contentType: arquivo.type || undefined });
+          if (up.error) {
+            falhas.push(arquivo.name);
+            continue;
+          }
+          const ins = await supabase.from("chamado_anexos").insert({
+            workspace_id: workspaceAtual.id,
+            chamado_id: data.id,
+            enviado_por: u.user.id,
+            nome_arquivo: arquivo.name,
+            caminho_storage: caminho,
+            tipo_mime: arquivo.type || null,
+            tamanho_bytes: arquivo.size,
+          });
+          if (ins.error) falhas.push(arquivo.name);
+        }
+        if (falhas.length > 0) {
+          toast.warning(`Alguns anexos falharam: ${falhas.join(", ")}`);
+        }
+      }
+
       return data;
     },
     onSuccess: (data) => {
