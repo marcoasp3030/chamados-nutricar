@@ -676,6 +676,7 @@ export function FormularioChamado({
                   </Popover>
                 );
               })()}
+              {dados.departamento_id ? (
                 <p className="text-xs text-muted-foreground">
                   Todos os membros do departamento selecionado ficam vinculados automaticamente.
                 </p>
