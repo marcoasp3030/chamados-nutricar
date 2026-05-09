@@ -184,11 +184,11 @@ export function ListaChamados() {
   const [incluirEncerrados, setIncluirEncerrados] = useState(false);
   const [chamadoDetalhe, setChamadoDetalhe] = useState<ChamadoComPessoas | null>(null);
   const [ordenacao, setOrdenacao] = useState<{
-    campo: "prioridade" | "sla" | null;
+    campo: "prioridade" | "sla" | "criado" | null;
     direcao: "asc" | "desc";
   }>({ campo: null, direcao: "desc" });
 
-  function alternarOrdenacao(campo: "prioridade" | "sla") {
+  function alternarOrdenacao(campo: "prioridade" | "sla" | "criado") {
     setOrdenacao((atual) => {
       if (atual.campo !== campo) {
         return { campo, direcao: "desc" };
@@ -270,6 +270,11 @@ export function ListaChamados() {
       lista = [...lista].sort((a, b) => {
         if (ordenacao.campo === "prioridade") {
           return sinal * (pesoPrioridade[a.prioridade] - pesoPrioridade[b.prioridade]);
+        }
+        if (ordenacao.campo === "criado") {
+          const ta = new Date(a.criado_em).getTime();
+          const tb = new Date(b.criado_em).getTime();
+          return sinal === -1 ? tb - ta : ta - tb;
         }
         // SLA: vencidos primeiro (desc) — quanto mais vencido, mais ao topo.
         // Sem prazo vai para o fim em ambas direções.
@@ -704,7 +709,28 @@ export function ListaChamados() {
                       )}
                     </button>
                   </TableHead>
-                  <TableHead className="w-[110px]">Criado</TableHead>
+                  <TableHead className="w-[110px]">
+                    <button
+                      type="button"
+                      onClick={() => alternarOrdenacao("criado")}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded transition-colors hover:text-foreground",
+                        ordenacao.campo === "criado" && "text-foreground",
+                      )}
+                      title="Ordenar por data de criação"
+                    >
+                      Criado
+                      {ordenacao.campo === "criado" ? (
+                        ordenacao.direcao === "desc" ? (
+                          <ArrowDown className="h-3 w-3" />
+                        ) : (
+                          <ArrowUp className="h-3 w-3" />
+                        )
+                      ) : (
+                        <ArrowUpDown className="h-3 w-3 opacity-50" />
+                      )}
+                    </button>
+                  </TableHead>
                   <TableHead className="w-[60px] text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
