@@ -66,6 +66,7 @@ export function NovoChamado({ chamadoPaiId }: Props) {
               descricao: it.descricao.trim(),
               referencia: it.referencia || null,
               data_necessidade: it.data_necessidade,
+              prioridade: it.prioridade,
             })),
           );
           if (insItens.error) {
