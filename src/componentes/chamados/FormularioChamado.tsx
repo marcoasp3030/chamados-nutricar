@@ -141,6 +141,7 @@ export function FormularioChamado({
     categoria: inicial?.categoria ?? "",
     loja: (inicial as { loja?: string | null } | undefined)?.loja ?? null,
     responsavel_id: inicial?.responsavel_id ?? null,
+    departamento_id: (inicial as { departamento_id?: string | null } | undefined)?.departamento_id ?? null,
     prazo: inicial?.prazo ?? null,
     chamado_pai_id: chamadoPaiId ?? inicial?.chamado_pai_id ?? null,
     anexos: [],
