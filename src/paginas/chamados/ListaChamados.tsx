@@ -142,12 +142,55 @@ function intervaloPeriodo(p: Periodo): { inicio?: Date; fim?: Date } {
 
 export function ListaChamados() {
   const { workspaceAtual } = useWorkspaceStore();
+  const search = useSearch({ strict: false }) as {
+    status?: StatusChamado | "Todos";
+    prioridade?: PrioridadeChamado | "Todas";
+    responsavel?: "Todos" | "MEUS";
+    periodo?: "todos" | "mes";
+    vencidos?: boolean;
+  };
   const [filtros, setFiltros] = useState<FiltrosChamados>(FILTROS_INICIAIS);
   const [periodo, setPeriodo] = useState<Periodo>("todos");
   const [intervaloCustom, setIntervaloCustom] = useState<{ from?: Date; to?: Date }>({});
   const [popoverDataAberto, setPopoverDataAberto] = useState(false);
+  const [somenteVencidos, setSomenteVencidos] = useState(false);
 
-  const { data, isLoading } = useChamados(workspaceAtual?.id, filtros);
+  // Aplica filtros vindos da URL (links do painel)
+  useEffect(() => {
+    if (!search) return;
+    setFiltros((f) => ({
+      ...f,
+      status: search.status ?? f.status,
+      prioridade: search.prioridade ?? f.prioridade,
+      responsavel_id: search.responsavel ?? f.responsavel_id,
+    }));
+    if (search.periodo === "mes") {
+      setPeriodo("mes");
+      const { inicio, fim } = intervaloPeriodo("mes");
+      setFiltros((f) => ({
+        ...f,
+        dataInicio: inicio?.toISOString(),
+        dataFim: fim?.toISOString(),
+      }));
+    }
+    if (search.vencidos) setSomenteVencidos(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.status, search.prioridade, search.responsavel, search.periodo, search.vencidos]);
+
+  const { data: dadosBrutos, isLoading } = useChamados(workspaceAtual?.id, filtros);
+  const data = useMemo(() => {
+    if (!dadosBrutos) return dadosBrutos;
+    if (!somenteVencidos) return dadosBrutos;
+    const agora = new Date();
+    return dadosBrutos.filter(
+      (c) =>
+        c.prazo &&
+        new Date(c.prazo) < agora &&
+        c.status !== "Fechado" &&
+        c.status !== "Cancelado" &&
+        c.status !== "Resolvido",
+    );
+  }, [dadosBrutos, somenteVencidos]);
 
   function aplicarPeriodo(p: Periodo) {
     setPeriodo(p);
