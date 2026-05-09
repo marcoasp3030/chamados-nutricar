@@ -74,6 +74,7 @@ export function FormularioChamado({
     prioridade: (inicial?.prioridade as PrioridadeChamado) ?? "Media",
     status: (inicial?.status as StatusChamado) ?? "Aberto",
     categoria: inicial?.categoria ?? "",
+    loja: (inicial as { loja?: string | null } | undefined)?.loja ?? null,
     responsavel_id: inicial?.responsavel_id ?? null,
     prazo: inicial?.prazo ?? null,
     chamado_pai_id: chamadoPaiId ?? inicial?.chamado_pai_id ?? null,
