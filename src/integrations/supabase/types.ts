@@ -174,6 +174,50 @@ export type Database = {
           },
         ]
       }
+      chamado_ia_execucoes: {
+        Row: {
+          acao: string
+          chamado_id: string
+          criado_em: string
+          erro: string | null
+          id: string
+          modelo: string | null
+          resultado: string | null
+          usuario_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          acao: string
+          chamado_id: string
+          criado_em?: string
+          erro?: string | null
+          id?: string
+          modelo?: string | null
+          resultado?: string | null
+          usuario_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          acao?: string
+          chamado_id?: string
+          criado_em?: string
+          erro?: string | null
+          id?: string
+          modelo?: string | null
+          resultado?: string | null
+          usuario_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chamado_ia_execucoes_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "chamados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chamados: {
         Row: {
           atualizado_em: string
