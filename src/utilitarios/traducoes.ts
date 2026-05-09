@@ -47,3 +47,18 @@ export const rotuloTipoChamado: Record<TipoChamado, string> = {
   Melhoria: "Melhoria",
   Bug: "Bug",
 };
+
+export const rotuloStatusProjeto: Record<StatusProjeto, string> = {
+  Planejado: "Planejado",
+  "Em andamento": "Em andamento",
+  Pausado: "Pausado",
+  Concluido: "Concluído",
+  Arquivado: "Arquivado",
+};
+
+export const rotuloStatusTarefa: Record<StatusTarefa, string> = {
+  "A fazer": "A fazer",
+  "Em andamento": "Em andamento",
+  "Em revisao": "Em revisão",
+  Concluido: "Concluído",
+};
