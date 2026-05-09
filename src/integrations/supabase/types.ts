@@ -261,6 +261,7 @@ export type Database = {
           descricao: string | null
           fechado_em: string | null
           id: string
+          loja: string | null
           numero: number
           prazo: string | null
           primeiro_resposta_em: string | null
@@ -283,6 +284,7 @@ export type Database = {
           descricao?: string | null
           fechado_em?: string | null
           id?: string
+          loja?: string | null
           numero: number
           prazo?: string | null
           primeiro_resposta_em?: string | null
@@ -305,6 +307,7 @@ export type Database = {
           descricao?: string | null
           fechado_em?: string | null
           id?: string
+          loja?: string | null
           numero?: number
           prazo?: string | null
           primeiro_resposta_em?: string | null

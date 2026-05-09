@@ -109,6 +109,7 @@ export function DetalheChamado({ numero }: Props) {
           prioridade: dados.prioridade,
           status: dados.status,
           categoria: dados.categoria || null,
+          loja: dados.loja,
           responsavel_id: dados.responsavel_id,
           prazo: dados.prazo,
         })
@@ -427,6 +428,7 @@ function NovoChamadoEmbutido({
         prioridade: dados.prioridade,
         status: "Aberto",
         categoria: dados.categoria || null,
+        loja: dados.loja,
         responsavel_id: dados.responsavel_id,
         prazo: dados.prazo,
         chamado_pai_id: chamadoPaiId,

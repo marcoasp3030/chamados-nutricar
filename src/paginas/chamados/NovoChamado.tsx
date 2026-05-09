@@ -36,6 +36,7 @@ export function NovoChamado({ chamadoPaiId }: Props) {
           prioridade: dados.prioridade,
           status: dados.status || "Aberto",
           categoria: dados.categoria || null,
+          loja: dados.loja,
           responsavel_id: dados.responsavel_id,
           prazo: dados.prazo,
           chamado_pai_id: paiId,

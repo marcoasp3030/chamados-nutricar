@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";
 import { useCategoriasChamado } from "@/componentes/configuracoes/AbaCategorias";
+import { SeletorLoja } from "@/componentes/chamados/SeletorLoja";
 import {
   PRIORIDADES_CHAMADO,
   STATUS_CHAMADO,
@@ -37,6 +38,7 @@ export interface DadosFormularioChamado {
   prioridade: PrioridadeChamado;
   status: StatusChamado;
   categoria: string;
+  loja: string | null;
   responsavel_id: string | null;
   prazo: string | null;
   chamado_pai_id: string | null;
@@ -72,6 +74,7 @@ export function FormularioChamado({
     prioridade: (inicial?.prioridade as PrioridadeChamado) ?? "Media",
     status: (inicial?.status as StatusChamado) ?? "Aberto",
     categoria: inicial?.categoria ?? "",
+    loja: (inicial as { loja?: string | null } | undefined)?.loja ?? null,
     responsavel_id: inicial?.responsavel_id ?? null,
     prazo: inicial?.prazo ?? null,
     chamado_pai_id: chamadoPaiId ?? inicial?.chamado_pai_id ?? null,
@@ -267,6 +270,18 @@ export function FormularioChamado({
               Cadastre categorias em Configurações → Categorias.
             </p>
           )}
+        </div>
+
+        <div className="space-y-2 sm:col-span-2 lg:col-span-3">
+          <Label>Loja</Label>
+          <SeletorLoja
+            workspaceId={workspaceId}
+            valor={dados.loja}
+            aoMudar={(v) => atualizar("loja", v)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Lojas sincronizadas da VMPay. Configure a chave em Configurações → VMPay.
+          </p>
         </div>
 
         <div className="space-y-2">
