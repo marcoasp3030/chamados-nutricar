@@ -304,6 +304,45 @@ export function AbaCategorias() {
               </div>
               {erros.cor && <p className="text-xs text-destructive">{erros.cor}</p>}
             </div>
+
+            <div className="rounded-lg border border-dashed border-border bg-muted/40 p-3">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                SLA (horas)
+              </p>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Usado para sugerir o prazo automaticamente ao abrir um chamado nesta categoria.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="cat-sla-resp">Resposta</Label>
+                  <Input
+                    id="cat-sla-resp"
+                    type="number"
+                    min={0}
+                    placeholder="Ex.: 4"
+                    value={form.sla_resposta_horas}
+                    onChange={(e) => setForm((f) => ({ ...f, sla_resposta_horas: e.target.value }))}
+                  />
+                  {erros.sla_resposta_horas && (
+                    <p className="text-xs text-destructive">{erros.sla_resposta_horas}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cat-sla-res">Resolução</Label>
+                  <Input
+                    id="cat-sla-res"
+                    type="number"
+                    min={0}
+                    placeholder="Ex.: 24"
+                    value={form.sla_resolucao_horas}
+                    onChange={(e) => setForm((f) => ({ ...f, sla_resolucao_horas: e.target.value }))}
+                  />
+                  {erros.sla_resolucao_horas && (
+                    <p className="text-xs text-destructive">{erros.sla_resolucao_horas}</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAberto(false)} disabled={salvar.isPending}>
