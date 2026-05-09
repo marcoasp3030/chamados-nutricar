@@ -64,6 +64,7 @@ export function FormularioChamado({
   aoEnviar,
 }: Props) {
   const { data: membros } = useMembrosWorkspace(workspaceId);
+  const { data: categorias } = useCategoriasChamado(workspaceId);
   const [dados, setDados] = useState<DadosFormularioChamado>({
     titulo: inicial?.titulo ?? "",
     descricao: inicial?.descricao ?? "",
