@@ -66,7 +66,7 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
 
       const { data, error } = await supabase
         .from("chamados")
-        .select("id, numero, codigo, titulo, status, prioridade, prazo, criado_em, resolvido_em, fechado_em, responsavel_id")
+        .select("id, numero, codigo, titulo, status, prioridade, prazo, criado_em, resolvido_em, fechado_em, responsavel_id, loja, categoria, departamento_id")
         .eq("workspace_id", workspaceId!)
         .order("criado_em", { ascending: false })
         .limit(1000);
@@ -87,24 +87,77 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
       let meusAtribuidos = 0;
       let totalMes = 0;
 
+      const acumLoja = new Map<string, { total: number; ativos: number }>();
+      const acumDep = new Map<string, { total: number; ativos: number }>();
+      const acumCat = new Map<string, { total: number; ativos: number }>();
+      const acumResp = new Map<string, { total: number; ativos: number }>();
+
+      const addAcum = (
+        mapa: Map<string, { total: number; ativos: number }>,
+        chave: string | null | undefined,
+        ativo: boolean,
+      ) => {
+        const k = chave && String(chave).trim() ? String(chave) : "__sem__";
+        const cur = mapa.get(k) ?? { total: 0, ativos: 0 };
+        cur.total++;
+        if (ativo) cur.ativos++;
+        mapa.set(k, cur);
+      };
+
       for (const c of lista) {
         porStatus[c.status as StatusChamado] = (porStatus[c.status as StatusChamado] ?? 0) + 1;
         porPrioridade[c.prioridade as PrioridadeChamado] =
           (porPrioridade[c.prioridade as PrioridadeChamado] ?? 0) + 1;
 
-        const ativos = c.status !== "Fechado" && c.status !== "Cancelado" && c.status !== "Resolvido";
+        const ativo = c.status !== "Fechado" && c.status !== "Cancelado" && c.status !== "Resolvido";
         if (c.status === "Aberto") abertos++;
         if (c.status === "Em andamento") emAndamento++;
         if (c.status === "Aguardando solicitante" || c.status === "Aguardando terceiros") aguardando++;
 
-        if (ativos && c.prazo && new Date(c.prazo) < agora) vencidos++;
-        if (meuId && c.responsavel_id === meuId && ativos) meusAtribuidos++;
+        if (ativo && c.prazo && new Date(c.prazo) < agora) vencidos++;
+        if (meuId && c.responsavel_id === meuId && ativo) meusAtribuidos++;
 
         const criado = new Date(c.criado_em);
         if (criado >= inicioMes) totalMes++;
         if (c.resolvido_em && new Date(c.resolvido_em) >= inicioMes) resolvidosMes++;
         if (c.fechado_em && new Date(c.fechado_em) >= inicioMes) fechadosMes++;
+
+        addAcum(acumLoja, (c as { loja?: string | null }).loja, ativo);
+        addAcum(acumDep, (c as { departamento_id?: string | null }).departamento_id, ativo);
+        addAcum(acumCat, (c as { categoria?: string | null }).categoria, ativo);
+        addAcum(acumResp, c.responsavel_id, ativo);
       }
+
+      const depIds = Array.from(acumDep.keys()).filter((k) => k !== "__sem__");
+      const respIds = Array.from(acumResp.keys()).filter((k) => k !== "__sem__");
+
+      const [depRes, perfRes] = await Promise.all([
+        depIds.length
+          ? supabase.from("departamentos").select("id, nome").in("id", depIds)
+          : Promise.resolve({ data: [] as { id: string; nome: string }[] }),
+        respIds.length
+          ? supabase.from("perfis").select("id, nome").in("id", respIds)
+          : Promise.resolve({ data: [] as { id: string; nome: string }[] }),
+      ]);
+
+      const nomeDep = new Map<string, string>();
+      (depRes.data ?? []).forEach((d) => nomeDep.set(d.id, d.nome));
+      const nomeResp = new Map<string, string>();
+      (perfRes.data ?? []).forEach((p) => nomeResp.set(p.id, p.nome));
+
+      const construirRanking = (
+        mapa: Map<string, { total: number; ativos: number }>,
+        resolverNome: (k: string) => string,
+      ): RankingItem[] =>
+        Array.from(mapa.entries())
+          .map(([chave, v]) => ({
+            chave,
+            rotulo: chave === "__sem__" ? "Sem definição" : resolverNome(chave),
+            total: v.total,
+            ativos: v.ativos,
+          }))
+          .sort((a, b) => b.total - a.total)
+          .slice(0, 5);
 
       return {
         abertos,
@@ -126,6 +179,10 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
           prioridade: c.prioridade as PrioridadeChamado,
           criado_em: c.criado_em,
         })),
+        topLojas: construirRanking(acumLoja, (k) => k),
+        topDepartamentos: construirRanking(acumDep, (k) => nomeDep.get(k) ?? "—"),
+        topCategorias: construirRanking(acumCat, (k) => k),
+        topResponsaveis: construirRanking(acumResp, (k) => nomeResp.get(k) ?? "—"),
       };
     },
   });
