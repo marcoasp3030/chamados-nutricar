@@ -172,17 +172,20 @@ interface PreviaState {
   filtros: FiltrosPrevia;
 }
 
+interface CartaoRankingItem {
+  chave: string;
+  rotulo: string;
+  total: number;
+  ativos: number;
+  ids: string[];
+  extra?: string;
+}
+
 interface CartaoRankingProps {
   titulo: string;
   descricao?: string;
   icone: typeof Inbox;
-  itens: Array<{
-    chave: string;
-    rotulo: string;
-    total: number;
-    ativos: number;
-    extra?: string;
-  }>;
+  itens: CartaoRankingItem[];
   corBarra: string;
   corIcone?: string;
   /** Rótulo do contador no header (ex: "total", "vencidos"). Padrão: total geral. */
@@ -192,6 +195,7 @@ interface CartaoRankingProps {
   /** Sufixo após o número total de cada item (ex: "vencidos", "sem ação"). */
   sufixoTotal?: string;
   vazio?: string;
+  aoClicarItem?: (item: CartaoRankingItem) => void;
 }
 
 function CartaoRanking({
@@ -205,6 +209,7 @@ function CartaoRanking({
   corAtivos,
   sufixoTotal,
   vazio,
+  aoClicarItem,
 }: CartaoRankingProps) {
   const max = itens.reduce((m, i) => Math.max(m, i.total), 0);
   const totalGeral = itens.reduce((s, i) => s + i.total, 0);
@@ -242,8 +247,8 @@ function CartaoRanking({
         <ol className="space-y-3">
           {itens.map((it, idx) => {
             const pct = max > 0 ? Math.round((it.total / max) * 100) : 0;
-            return (
-              <li key={it.chave} className="group">
+            const conteudo = (
+              <>
                 <div className="mb-1.5 flex items-center justify-between gap-2 text-sm">
                   <div className="flex min-w-0 items-center gap-2">
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-muted text-[10px] font-bold text-muted-foreground">
@@ -290,6 +295,22 @@ function CartaoRanking({
                     style={{ width: `${pct}%` }}
                   />
                 </div>
+              </>
+            );
+            return (
+              <li key={it.chave} className="group">
+                {aoClicarItem ? (
+                  <button
+                    type="button"
+                    onClick={() => aoClicarItem(it)}
+                    className="-mx-2 block w-full rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring"
+                    title={`Ver chamados — ${it.rotulo}`}
+                  >
+                    {conteudo}
+                  </button>
+                ) : (
+                  conteudo
+                )}
               </li>
             );
           })}
@@ -516,6 +537,13 @@ function Painel() {
               corAtivos="bg-red-500/10 text-red-700 dark:text-red-400"
               rotuloTotal="vencidos"
               vazio="Nenhum SLA estourado"
+              aoClicarItem={(it) =>
+                abrir(
+                  `SLA estourado — ${it.rotulo}`,
+                  { chamadoIds: it.ids },
+                  `${it.total} chamado${it.total === 1 ? "" : "s"} ativo${it.total === 1 ? "" : "s"} com prazo expirado`,
+                )
+              }
             />
             <CartaoRanking
               titulo="Sem interação"
@@ -527,6 +555,13 @@ function Painel() {
               corAtivos="bg-orange-500/10 text-orange-700 dark:text-orange-400"
               rotuloTotal="parados"
               vazio="Tudo com tratativa"
+              aoClicarItem={(it) =>
+                abrir(
+                  `Sem interação — ${it.rotulo}`,
+                  { chamadoIds: it.ids },
+                  `${it.total} chamado${it.total === 1 ? "" : "s"} sem primeira resposta nem comentários`,
+                )
+              }
             />
             <CartaoRanking
               titulo="Mais resolvem"
@@ -538,6 +573,13 @@ function Painel() {
               corAtivos="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
               rotuloTotal="resolvidos"
               vazio="Nenhuma resolução ainda"
+              aoClicarItem={(it) =>
+                abrir(
+                  `Resolvidos — ${it.rotulo}`,
+                  { chamadoIds: it.ids },
+                  `${it.total} chamado${it.total === 1 ? "" : "s"} resolvido${it.total === 1 ? "" : "s"}${it.extra ? ` (${it.extra})` : ""}`,
+                )
+              }
             />
             <CartaoRanking
               titulo="Pior índice de resolução"
@@ -549,6 +591,13 @@ function Painel() {
               corAtivos="bg-rose-500/10 text-rose-700 dark:text-rose-400"
               sufixoTotal="chamados"
               vazio="Sem dados suficientes"
+              aoClicarItem={(it) =>
+                abrir(
+                  `Índice de resolução — ${it.rotulo}`,
+                  { chamadoIds: it.ids },
+                  `${it.total} chamado${it.total === 1 ? "" : "s"} no total${it.extra ? ` • ${it.extra}` : ""}`,
+                )
+              }
             />
           </div>
 
@@ -561,24 +610,36 @@ function Painel() {
               icone={Store}
               itens={data.topLojas}
               corBarra="bg-blue-500"
+              aoClicarItem={(it) =>
+                abrir(`Loja — ${it.rotulo}`, { chamadoIds: it.ids })
+              }
             />
             <CartaoRanking
               titulo="Departamentos"
               icone={Building2}
               itens={data.topDepartamentos}
               corBarra="bg-amber-500"
+              aoClicarItem={(it) =>
+                abrir(`Departamento — ${it.rotulo}`, { chamadoIds: it.ids })
+              }
             />
             <CartaoRanking
               titulo="Categorias"
               icone={FolderTree}
               itens={data.topCategorias}
               corBarra="bg-emerald-500"
+              aoClicarItem={(it) =>
+                abrir(`Categoria — ${it.rotulo}`, { chamadoIds: it.ids })
+              }
             />
             <CartaoRanking
               titulo="Responsáveis"
               icone={Users}
               itens={data.topResponsaveis}
               corBarra="bg-purple-500"
+              aoClicarItem={(it) =>
+                abrir(`Responsável — ${it.rotulo}`, { chamadoIds: it.ids })
+              }
             />
           </div>
         </>

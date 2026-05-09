@@ -31,6 +31,8 @@ export interface FiltrosPrevia {
   responsavel?: "Todos" | "MEUS";
   periodo?: "todos" | "mes";
   vencidos?: boolean;
+  /** Restringe a lista a um conjunto fixo de IDs (usado por rankings do painel). */
+  chamadoIds?: string[];
 }
 
 interface Props {
@@ -66,6 +68,10 @@ export function PreviaIndicador({
 
   const chamadosFiltrados = useMemo(() => {
     let lista = data ?? [];
+    if (filtros.chamadoIds && filtros.chamadoIds.length > 0) {
+      const set = new Set(filtros.chamadoIds);
+      lista = lista.filter((c) => set.has(c.id));
+    }
     if (filtros.vencidos) {
       lista = lista.filter(
         (c) =>
@@ -81,9 +87,11 @@ export function PreviaIndicador({
       lista = lista.filter((c) => new Date(c.criado_em) >= ini);
     }
     return lista;
-  }, [data, filtros.vencidos, filtros.periodo]);
+  }, [data, filtros.vencidos, filtros.periodo, filtros.chamadoIds]);
 
-  const top = chamadosFiltrados.slice(0, 6);
+  const top = filtros.chamadoIds
+    ? chamadosFiltrados.slice(0, 50)
+    : chamadosFiltrados.slice(0, 6);
 
   const search: Record<string, unknown> = {};
   if (filtros.status && filtros.status !== "Todos") search.status = filtros.status;
@@ -267,16 +275,18 @@ export function PreviaIndicador({
           <Button variant="outline" onClick={aoFechar}>
             Fechar
           </Button>
-          <Button asChild>
-            <Link
-              to="/w/$slug/chamados"
-              params={{ slug }}
-              search={search as never}
-              onClick={aoFechar}
-            >
-              Ver lista completa <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
+          {!filtros.chamadoIds && (
+            <Button asChild>
+              <Link
+                to="/w/$slug/chamados"
+                params={{ slug }}
+                search={search as never}
+                onClick={aoFechar}
+              >
+                Ver lista completa <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
