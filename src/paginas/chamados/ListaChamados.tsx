@@ -271,6 +271,11 @@ export function ListaChamados() {
         if (ordenacao.campo === "prioridade") {
           return sinal * (pesoPrioridade[a.prioridade] - pesoPrioridade[b.prioridade]);
         }
+        if (ordenacao.campo === "criado") {
+          const ta = new Date(a.criado_em).getTime();
+          const tb = new Date(b.criado_em).getTime();
+          return sinal === -1 ? tb - ta : ta - tb;
+        }
         // SLA: vencidos primeiro (desc) — quanto mais vencido, mais ao topo.
         // Sem prazo vai para o fim em ambas direções.
         const ta = a.prazo ? new Date(a.prazo).getTime() : null;
