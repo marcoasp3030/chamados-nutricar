@@ -537,6 +537,13 @@ function Painel() {
               corAtivos="bg-red-500/10 text-red-700 dark:text-red-400"
               rotuloTotal="vencidos"
               vazio="Nenhum SLA estourado"
+              aoClicarItem={(it) =>
+                abrir(
+                  `SLA estourado — ${it.rotulo}`,
+                  { chamadoIds: it.ids },
+                  `${it.total} chamado${it.total === 1 ? "" : "s"} ativo${it.total === 1 ? "" : "s"} com prazo expirado`,
+                )
+              }
             />
             <CartaoRanking
               titulo="Sem interação"
@@ -548,6 +555,13 @@ function Painel() {
               corAtivos="bg-orange-500/10 text-orange-700 dark:text-orange-400"
               rotuloTotal="parados"
               vazio="Tudo com tratativa"
+              aoClicarItem={(it) =>
+                abrir(
+                  `Sem interação — ${it.rotulo}`,
+                  { chamadoIds: it.ids },
+                  `${it.total} chamado${it.total === 1 ? "" : "s"} sem primeira resposta nem comentários`,
+                )
+              }
             />
             <CartaoRanking
               titulo="Mais resolvem"
@@ -559,6 +573,13 @@ function Painel() {
               corAtivos="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
               rotuloTotal="resolvidos"
               vazio="Nenhuma resolução ainda"
+              aoClicarItem={(it) =>
+                abrir(
+                  `Resolvidos — ${it.rotulo}`,
+                  { chamadoIds: it.ids },
+                  `${it.total} chamado${it.total === 1 ? "" : "s"} resolvido${it.total === 1 ? "" : "s"}${it.extra ? ` (${it.extra})` : ""}`,
+                )
+              }
             />
             <CartaoRanking
               titulo="Pior índice de resolução"
@@ -570,6 +591,13 @@ function Painel() {
               corAtivos="bg-rose-500/10 text-rose-700 dark:text-rose-400"
               sufixoTotal="chamados"
               vazio="Sem dados suficientes"
+              aoClicarItem={(it) =>
+                abrir(
+                  `Índice de resolução — ${it.rotulo}`,
+                  { chamadoIds: it.ids },
+                  `${it.total} chamado${it.total === 1 ? "" : "s"} no total${it.extra ? ` • ${it.extra}` : ""}`,
+                )
+              }
             />
           </div>
 
@@ -582,24 +610,36 @@ function Painel() {
               icone={Store}
               itens={data.topLojas}
               corBarra="bg-blue-500"
+              aoClicarItem={(it) =>
+                abrir(`Loja — ${it.rotulo}`, { chamadoIds: it.ids })
+              }
             />
             <CartaoRanking
               titulo="Departamentos"
               icone={Building2}
               itens={data.topDepartamentos}
               corBarra="bg-amber-500"
+              aoClicarItem={(it) =>
+                abrir(`Departamento — ${it.rotulo}`, { chamadoIds: it.ids })
+              }
             />
             <CartaoRanking
               titulo="Categorias"
               icone={FolderTree}
               itens={data.topCategorias}
               corBarra="bg-emerald-500"
+              aoClicarItem={(it) =>
+                abrir(`Categoria — ${it.rotulo}`, { chamadoIds: it.ids })
+              }
             />
             <CartaoRanking
               titulo="Responsáveis"
               icone={Users}
               itens={data.topResponsaveis}
               corBarra="bg-purple-500"
+              aoClicarItem={(it) =>
+                abrir(`Responsável — ${it.rotulo}`, { chamadoIds: it.ids })
+              }
             />
           </div>
         </>
