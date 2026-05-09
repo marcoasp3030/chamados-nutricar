@@ -76,8 +76,21 @@ export function SeletorLoja({ workspaceId, valor, aoMudar }: Props) {
               </div>
             )}
             {error && (
-              <div className="px-3 py-4 text-sm text-destructive">
-                {(error as Error).message}
+              <div className="space-y-2 px-3 py-4 text-sm">
+                <p className="text-destructive">{(error as Error).message}</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => refetch()}
+                  disabled={isFetching}
+                  className="w-full"
+                >
+                  {isFetching ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : null}
+                  Tentar novamente
+                </Button>
               </div>
             )}
             {!isLoading && !error && (
