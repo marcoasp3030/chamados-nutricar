@@ -357,7 +357,7 @@ export function AbaUsuarios() {
         ) : (
           <ul className="divide-y divide-border">
             {membros.map((m) => {
-              const ehProprio = m.usuario_id === workspaceAtual?.id;
+              const ehProprio = m.usuario_id === usuarioAtualId;
               const ehProprietario = m.papel === "Proprietario";
               const podeEditar = podeAdministrar;
               const podeRemover = podeAdministrar && !ehProprietario && !ehProprio;
@@ -647,6 +647,128 @@ export function AbaUsuarios() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => removerConvite && excluirConvite.mutate(removerConvite.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog: Editar membro ativo */}
+      <Dialog open={!!editandoMembro} onOpenChange={(o) => !o && setEditandoMembro(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar membro</DialogTitle>
+            <DialogDescription>
+              Atualize nome, celular, departamento e cargo.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="m-nome">Nome *</Label>
+              <Input
+                id="m-nome"
+                maxLength={120}
+                value={formMembro.nome}
+                onChange={(e) => setFormMembro((f) => ({ ...f, nome: e.target.value }))}
+              />
+              {errosMembro.nome && (
+                <p className="text-xs text-destructive">{errosMembro.nome}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>E-mail</Label>
+              <Input value={editandoMembro?.perfil.email ?? ""} disabled />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="m-tel">Celular</Label>
+              <Input
+                id="m-tel"
+                maxLength={30}
+                placeholder="(11) 90000-0000"
+                value={formMembro.telefone}
+                onChange={(e) => setFormMembro((f) => ({ ...f, telefone: e.target.value }))}
+              />
+              {errosMembro.telefone && (
+                <p className="text-xs text-destructive">{errosMembro.telefone}</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Departamento</Label>
+              <Select
+                value={formMembro.departamento_id ?? "__nenhum__"}
+                onValueChange={(v) =>
+                  setFormMembro((f) => ({
+                    ...f,
+                    departamento_id: v === "__nenhum__" ? null : v,
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__nenhum__">Sem departamento</SelectItem>
+                  {(departamentos ?? []).map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Cargo *</Label>
+              <Select
+                value={formMembro.cargo}
+                onValueChange={(v) => setFormMembro((f) => ({ ...f, cargo: v as Cargo }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CARGOS.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {rotuloCargo[c]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditandoMembro(null)}
+              disabled={salvarMembro.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={() => salvarMembro.mutate()} disabled={salvarMembro.isPending}>
+              {salvarMembro.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Salvar alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmação: remover membro */}
+      <AlertDialog open={!!removerMembro} onOpenChange={(o) => !o && setRemoverMembro(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover membro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>{removerMembro?.perfil.nome}</strong> deixará de ter acesso a esta empresa.
+              Os chamados e o histórico criados por ele serão preservados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => removerMembro && desativarMembro.mutate(removerMembro.id)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remover
