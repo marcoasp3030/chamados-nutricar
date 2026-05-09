@@ -56,6 +56,10 @@ export function useChamados(workspaceId: string | undefined, filtros: FiltrosCha
         }
       }
 
+      const campo = filtros.campoData ?? "criado_em";
+      if (filtros.dataInicio) q = q.gte(campo, filtros.dataInicio);
+      if (filtros.dataFim) q = q.lte(campo, filtros.dataFim);
+
       const { data, error } = await q;
       if (error) throw error;
 
