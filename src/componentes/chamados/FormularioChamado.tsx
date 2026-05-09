@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";
 import { useCategoriasChamado } from "@/componentes/configuracoes/AbaCategorias";
+import { SeletorLoja } from "@/componentes/chamados/SeletorLoja";
 import {
   PRIORIDADES_CHAMADO,
   STATUS_CHAMADO,
