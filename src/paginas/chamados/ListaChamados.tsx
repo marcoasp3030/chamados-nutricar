@@ -500,6 +500,13 @@ export function ListaChamados() {
             },
           });
         }
+        if (somenteVencidos) {
+          chips.push({
+            key: "vencidos",
+            label: "Apenas vencidos",
+            onRemove: () => setSomenteVencidos(false),
+          });
+        }
         if (chips.length === 0) return null;
         return (
           <div className="flex flex-wrap items-center gap-2">
