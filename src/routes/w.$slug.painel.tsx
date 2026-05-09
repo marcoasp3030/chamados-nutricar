@@ -88,15 +88,21 @@ function BarraProporcional({
   valor,
   total,
   corClasse,
+  to,
+  search,
+  slug,
 }: {
   rotulo: string;
   valor: number;
   total: number;
   corClasse: string;
+  to?: string;
+  search?: Record<string, unknown>;
+  slug?: string;
 }) {
   const pct = total > 0 ? Math.round((valor / total) * 100) : 0;
-  return (
-    <div>
+  const conteudo = (
+    <>
       <div className="mb-1 flex items-center justify-between text-sm">
         <span className="text-foreground">{rotulo}</span>
         <span className="text-muted-foreground">
@@ -109,8 +115,22 @@ function BarraProporcional({
           style={{ width: `${pct}%` }}
         />
       </div>
-    </div>
+    </>
   );
+
+  if (slug && to) {
+    return (
+      <Link
+        to="/w/$slug/chamados"
+        params={{ slug }}
+        search={search ?? {}}
+        className="block rounded-md p-1 -m-1 transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring"
+      >
+        {conteudo}
+      </Link>
+    );
+  }
+  return <div>{conteudo}</div>;
 }
 
 const CORES_STATUS: Record<StatusChamado, string> = {
