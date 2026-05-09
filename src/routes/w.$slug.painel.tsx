@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
@@ -19,6 +20,10 @@ import { useIndicadoresPainel } from "@/hooks/useIndicadoresPainel";
 import { BadgeStatus } from "@/componentes/chamados/BadgeStatus";
 import { BadgePrioridade } from "@/componentes/chamados/BadgePrioridade";
 import {
+  PreviaIndicador,
+  type FiltrosPrevia,
+} from "@/componentes/painel/PreviaIndicador";
+import {
   PRIORIDADES_CHAMADO,
   STATUS_KANBAN,
   type PrioridadeChamado,
@@ -38,11 +43,10 @@ interface CartaoIndicadorProps {
   icone: typeof Inbox;
   cor?: string;
   rodape?: string;
-  search?: Record<string, unknown>;
-  slug?: string;
+  onClick?: () => void;
 }
 
-function CartaoIndicador({ rotulo, valor, icone: Icone, cor, rodape, search, slug }: CartaoIndicadorProps) {
+function CartaoIndicador({ rotulo, valor, icone: Icone, cor, rodape, onClick }: CartaoIndicadorProps) {
   const conteudo = (
     <>
       <div className="flex items-center justify-between">
@@ -62,24 +66,22 @@ function CartaoIndicador({ rotulo, valor, icone: Icone, cor, rodape, search, slu
   );
 
   const base =
-    "block rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] text-left";
+    "block w-full rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] text-left";
 
-  if (slug) {
+  if (onClick) {
     return (
-      <Link
-        to="/w/$slug/chamados"
-        params={{ slug }}
-        search={(search ?? {}) as never}
+      <button
+        type="button"
+        onClick={onClick}
         className={cn(
           base,
           "transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring",
         )}
       >
         {conteudo}
-      </Link>
+      </button>
     );
   }
-
   return <div className={base}>{conteudo}</div>;
 }
 
@@ -88,17 +90,13 @@ function BarraProporcional({
   valor,
   total,
   corClasse,
-  to,
-  search,
-  slug,
+  onClick,
 }: {
   rotulo: string;
   valor: number;
   total: number;
   corClasse: string;
-  to?: string;
-  search?: Record<string, unknown>;
-  slug?: string;
+  onClick?: () => void;
 }) {
   const pct = total > 0 ? Math.round((valor / total) * 100) : 0;
   const conteudo = (
@@ -118,16 +116,15 @@ function BarraProporcional({
     </>
   );
 
-  if (slug && to) {
+  if (onClick) {
     return (
-      <Link
-        to="/w/$slug/chamados"
-        params={{ slug }}
-        search={(search ?? {}) as never}
-        className="block rounded-md p-1 -m-1 transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring"
+      <button
+        type="button"
+        onClick={onClick}
+        className="block w-full text-left rounded-md p-1 -m-1 transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring"
       >
         {conteudo}
-      </Link>
+      </button>
     );
   }
   return <div>{conteudo}</div>;
@@ -150,11 +147,21 @@ const CORES_PRIO: Record<PrioridadeChamado, string> = {
   Urgente: "bg-red-500",
 };
 
+interface PreviaState {
+  titulo: string;
+  descricao?: string;
+  filtros: FiltrosPrevia;
+}
+
 function Painel() {
   const { workspaceAtual } = useWorkspaceStore();
   const { data, isLoading } = useIndicadoresPainel(workspaceAtual?.id);
+  const [previa, setPrevia] = useState<PreviaState | null>(null);
 
   if (!workspaceAtual) return null;
+
+  const abrir = (titulo: string, filtros: FiltrosPrevia, descricao?: string) =>
+    setPrevia({ titulo, filtros, descricao });
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
@@ -186,16 +193,14 @@ function Painel() {
               valor={data.abertos}
               icone={Inbox}
               cor="bg-blue-500/10 text-blue-600 dark:text-blue-400"
-              slug={workspaceAtual.slug}
-              search={{ status: "Aberto" }}
+              onClick={() => abrir("Chamados abertos", { status: "Aberto" })}
             />
             <CartaoIndicador
               rotulo="Em andamento"
               valor={data.emAndamento}
               icone={PlayCircle}
               cor="bg-amber-500/10 text-amber-600 dark:text-amber-400"
-              slug={workspaceAtual.slug}
-              search={{ status: "Em andamento" }}
+              onClick={() => abrir("Em andamento", { status: "Em andamento" })}
             />
             <CartaoIndicador
               rotulo="Aguardando"
@@ -203,16 +208,18 @@ function Painel() {
               icone={Clock}
               cor="bg-purple-500/10 text-purple-600 dark:text-purple-400"
               rodape="Solicitante ou terceiros"
-              slug={workspaceAtual.slug}
-              search={{ status: "Aguardando solicitante" }}
+              onClick={() =>
+                abrir("Aguardando", { status: "Aguardando solicitante" }, "Solicitante ou terceiros")
+              }
             />
             <CartaoIndicador
               rotulo="Resolvidos no mês"
               valor={data.resolvidosMes}
               icone={CheckCircle2}
               cor="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-              slug={workspaceAtual.slug}
-              search={{ status: "Resolvido", periodo: "mes" }}
+              onClick={() =>
+                abrir("Resolvidos no mês", { status: "Resolvido", periodo: "mes" })
+              }
             />
           </section>
 
@@ -223,32 +230,32 @@ function Painel() {
               icone={AlertTriangle}
               cor="bg-red-500/10 text-red-600 dark:text-red-400"
               rodape="Prazo expirado e ainda ativos"
-              slug={workspaceAtual.slug}
-              search={{ vencidos: true }}
+              onClick={() =>
+                abrir("Vencidos", { vencidos: true }, "Prazo expirado e ainda ativos")
+              }
             />
             <CartaoIndicador
               rotulo="Atribuídos a mim"
               valor={data.meusAtribuidos}
               icone={UserCheck}
               cor="bg-primary/10 text-primary"
-              slug={workspaceAtual.slug}
-              search={{ responsavel: "MEUS" }}
+              onClick={() => abrir("Atribuídos a mim", { responsavel: "MEUS" })}
             />
             <CartaoIndicador
               rotulo="Abertos no mês"
               valor={data.totalMes}
               icone={TrendingUp}
               cor="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
-              slug={workspaceAtual.slug}
-              search={{ periodo: "mes" }}
+              onClick={() => abrir("Abertos no mês", { periodo: "mes" })}
             />
             <CartaoIndicador
               rotulo="Fechados no mês"
               valor={data.fechadosMes}
               icone={CheckCircle2}
               cor="bg-slate-500/10 text-slate-600 dark:text-slate-300"
-              slug={workspaceAtual.slug}
-              search={{ status: "Fechado", periodo: "mes" }}
+              onClick={() =>
+                abrir("Fechados no mês", { status: "Fechado", periodo: "mes" })
+              }
             />
           </section>
 
@@ -263,9 +270,7 @@ function Painel() {
                     valor={data.porStatus[s] ?? 0}
                     total={Object.values(data.porStatus).reduce((a, b) => a + b, 0)}
                     corClasse={CORES_STATUS[s]}
-                    to="/w/$slug/chamados"
-                    slug={workspaceAtual.slug}
-                    search={{ status: s }}
+                    onClick={() => abrir(rotuloStatusChamado[s], { status: s })}
                   />
                 ))}
               </div>
@@ -281,9 +286,9 @@ function Painel() {
                     valor={data.porPrioridade[p] ?? 0}
                     total={Object.values(data.porPrioridade).reduce((a, b) => a + b, 0)}
                     corClasse={CORES_PRIO[p]}
-                    to="/w/$slug/chamados"
-                    slug={workspaceAtual.slug}
-                    search={{ prioridade: p }}
+                    onClick={() =>
+                      abrir(`Prioridade ${rotuloPrioridade[p]}`, { prioridade: p })
+                    }
                   />
                 ))}
               </div>
@@ -332,6 +337,18 @@ function Painel() {
             </section>
           </div>
         </>
+      )}
+
+      {previa && (
+        <PreviaIndicador
+          aberto={!!previa}
+          aoFechar={() => setPrevia(null)}
+          titulo={previa.titulo}
+          descricao={previa.descricao}
+          filtrosIniciais={previa.filtros}
+          workspaceId={workspaceAtual.id}
+          slug={workspaceAtual.slug}
+        />
       )}
     </div>
   );
