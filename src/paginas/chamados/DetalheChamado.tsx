@@ -52,6 +52,7 @@ import { ComentariosChamado } from "@/componentes/chamados/ComentariosChamado";
 import { HistoricoChamado } from "@/componentes/chamados/HistoricoChamado";
 import { LinhaTempoChamado } from "@/componentes/chamados/LinhaTempoChamado";
 import { AnexosChamado } from "@/componentes/chamados/AnexosChamado";
+import { RequisicaoCompras } from "@/componentes/chamados/RequisicaoCompras";
 import { ArvoreSubchamados } from "@/componentes/chamados/ArvoreSubchamados";
 import { AcoesIAChamado } from "@/componentes/chamados/AcoesIAChamado";
 import { HistoricoIAChamado } from "@/componentes/chamados/HistoricoIAChamado";
@@ -236,6 +237,10 @@ export function DetalheChamado({ numero }: Props) {
               <p className="text-sm text-muted-foreground">Sem descrição.</p>
             )}
           </section>
+
+          {(chamado as unknown as { requisicao_compras?: boolean }).requisicao_compras && (
+            <RequisicaoCompras chamadoId={chamado.id} />
+          )}
 
           <section className="rounded-2xl border border-border bg-card p-5">
             <ArvoreSubchamados
