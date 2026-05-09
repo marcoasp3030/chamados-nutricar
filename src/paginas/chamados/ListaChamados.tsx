@@ -295,11 +295,95 @@ export function ListaChamados() {
           </SelectContent>
         </Select>
 
+        <Select value={periodo} onValueChange={(v) => aplicarPeriodo(v as Periodo)}>
+          <SelectTrigger className="w-[180px]">
+            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(ROTULO_PERIODO) as Periodo[]).map((p) => (
+              <SelectItem key={p} value={p}>
+                {ROTULO_PERIODO[p]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filtros.campoData ?? "criado_em"}
+          onValueChange={(v) =>
+            setFiltros((f) => ({ ...f, campoData: v as FiltrosChamados["campoData"] }))
+          }
+        >
+          <SelectTrigger className="w-[160px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(ROTULO_CAMPO_DATA) as Array<keyof typeof ROTULO_CAMPO_DATA>).map(
+              (k) => (
+                <SelectItem key={k} value={k}>
+                  Data: {ROTULO_CAMPO_DATA[k]}
+                </SelectItem>
+              ),
+            )}
+          </SelectContent>
+        </Select>
+
+        <Popover open={popoverDataAberto} onOpenChange={setPopoverDataAberto}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                "h-9 justify-start gap-2 font-normal",
+                !filtros.dataInicio && !filtros.dataFim && "text-muted-foreground",
+              )}
+            >
+              <CalendarIcon className="h-4 w-4" />
+              {intervaloCustom.from || filtros.dataInicio ? (
+                <>
+                  {format(
+                    intervaloCustom.from ?? new Date(filtros.dataInicio!),
+                    "dd/MM/yy",
+                    { locale: ptBR },
+                  )}
+                  {(intervaloCustom.to || filtros.dataFim) && (
+                    <>
+                      {" – "}
+                      {format(
+                        intervaloCustom.to ?? new Date(filtros.dataFim!),
+                        "dd/MM/yy",
+                        { locale: ptBR },
+                      )}
+                    </>
+                  )}
+                </>
+              ) : (
+                <span>Intervalo personalizado</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="range"
+              numberOfMonths={2}
+              locale={ptBR}
+              selected={{
+                from: intervaloCustom.from ?? (filtros.dataInicio ? new Date(filtros.dataInicio) : undefined),
+                to: intervaloCustom.to ?? (filtros.dataFim ? new Date(filtros.dataFim) : undefined),
+              }}
+              onSelect={(r) => aplicarCustom(r as { from?: Date; to?: Date } | undefined)}
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+            />
+          </PopoverContent>
+        </Popover>
+
         {temFiltro && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setFiltros(FILTROS_INICIAIS)}
+            onClick={limparTudo}
             className="text-muted-foreground"
           >
             <X className="h-4 w-4" /> Limpar
