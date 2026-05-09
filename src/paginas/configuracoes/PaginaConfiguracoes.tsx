@@ -78,6 +78,10 @@ export function PaginaConfiguracoes() {
           <AbaDepartamentos />
         </TabsContent>
 
+        <TabsContent value="usuarios-departamentos" className="mt-6">
+          <AbaUsuariosDepartamentos />
+        </TabsContent>
+
         <TabsContent value="categorias" className="mt-6">
           <AbaCategorias />
         </TabsContent>
