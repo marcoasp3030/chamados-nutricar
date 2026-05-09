@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   CalendarClock,
@@ -153,6 +154,40 @@ export function FormularioChamado({
   useEffect(() => {
     if (chamadoPaiId) setDados((d) => ({ ...d, chamado_pai_id: chamadoPaiId }));
   }, [chamadoPaiId]);
+
+  // Subchamados herdam categoria (e por consequência o SLA) e prazo do chamado pai.
+  const { data: chamadoPai } = useQuery({
+    queryKey: ["chamado-pai-para-form", chamadoPaiId],
+    enabled: !!chamadoPaiId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chamados")
+        .select("categoria, prazo")
+        .eq("id", chamadoPaiId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (!chamadoPai || !chamadoPaiId) return;
+    setDados((d) => {
+      // Só herda quando o usuário ainda não tocou nesses campos
+      if (d.categoria || d.prazo) return d;
+      const categoriaPai = chamadoPai.categoria ?? "";
+      const cat = (categorias ?? []).find((c) => c.nome === categoriaPai);
+      let prazo = d.prazo;
+      if (cat?.sla_resolucao_horas) {
+        const dt = new Date();
+        dt.setHours(dt.getHours() + cat.sla_resolucao_horas);
+        prazo = dt.toISOString();
+      } else if (chamadoPai.prazo) {
+        prazo = chamadoPai.prazo;
+      }
+      return { ...d, categoria: categoriaPai, prazo };
+    });
+  }, [chamadoPai, chamadoPaiId, categorias]);
 
   const [classificando, setClassificando] = useState(false);
   const [tentouEnviar, setTentouEnviar] = useState(false);
