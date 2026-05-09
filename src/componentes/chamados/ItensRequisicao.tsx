@@ -2,6 +2,15 @@ import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PRIORIDADES_CHAMADO, type PrioridadeChamado } from "@/tipos/chamado";
+import { rotuloPrioridade } from "@/utilitarios/traducoes";
 
 export interface ItemRequisicao {
   quantidade: number;
@@ -9,6 +18,7 @@ export interface ItemRequisicao {
   descricao: string;
   referencia: string;
   data_necessidade: string | null;
+  prioridade: PrioridadeChamado;
 }
 
 export function itemRequisicaoVazio(): ItemRequisicao {
@@ -18,6 +28,7 @@ export function itemRequisicaoVazio(): ItemRequisicao {
     descricao: "",
     referencia: "",
     data_necessidade: null,
+    prioridade: "Media",
   };
 }
 
@@ -94,7 +105,39 @@ export function ItensRequisicao({ itens, aoMudar, desabilitado }: Props) {
                 disabled={desabilitado}
               />
             </div>
-            <div className="space-y-1.5 col-span-2 sm:col-span-4">
+            <div className="space-y-1.5 col-span-2 sm:col-span-2">
+              <Label className="text-xs">Prioridade</Label>
+              <Select
+                value={item.prioridade}
+                onValueChange={(v) =>
+                  atualizar(i, "prioridade", v as PrioridadeChamado)
+                }
+                disabled={desabilitado}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORIDADES_CHAMADO.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {rotuloPrioridade[p]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5 col-span-2 sm:col-span-2">
+              <Label className="text-xs">Data de necessidade</Label>
+              <Input
+                type="date"
+                value={item.data_necessidade ?? ""}
+                onChange={(e) =>
+                  atualizar(i, "data_necessidade", e.target.value || null)
+                }
+                disabled={desabilitado}
+              />
+            </div>
+            <div className="space-y-1.5 col-span-2 sm:col-span-6">
               <Label className="text-xs">Descrição *</Label>
               <Input
                 required
@@ -104,23 +147,12 @@ export function ItensRequisicao({ itens, aoMudar, desabilitado }: Props) {
                 disabled={desabilitado}
               />
             </div>
-            <div className="space-y-1.5 col-span-2 sm:col-span-4">
+            <div className="space-y-1.5 col-span-2 sm:col-span-6">
               <Label className="text-xs">Referência / Marca / Link</Label>
               <Input
                 placeholder="Ex.: Marca XYZ ou https://..."
                 value={item.referencia}
                 onChange={(e) => atualizar(i, "referencia", e.target.value)}
-                disabled={desabilitado}
-              />
-            </div>
-            <div className="space-y-1.5 col-span-2">
-              <Label className="text-xs">Data de necessidade</Label>
-              <Input
-                type="date"
-                value={item.data_necessidade ?? ""}
-                onChange={(e) =>
-                  atualizar(i, "data_necessidade", e.target.value || null)
-                }
                 disabled={desabilitado}
               />
             </div>
