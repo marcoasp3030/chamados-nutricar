@@ -209,6 +209,7 @@ function CartaoRanking({
   corAtivos,
   sufixoTotal,
   vazio,
+  aoClicarItem,
 }: CartaoRankingProps) {
   const max = itens.reduce((m, i) => Math.max(m, i.total), 0);
   const totalGeral = itens.reduce((s, i) => s + i.total, 0);
