@@ -126,6 +126,98 @@ export function AbaUsuarios() {
   );
   const [removerConvite, setRemoverConvite] = useState<Convite | null>(null);
 
+  // Edição / remoção de membros ativos
+  type MembroAtivo = NonNullable<typeof membros>[number];
+  const [editandoMembro, setEditandoMembro] = useState<MembroAtivo | null>(null);
+  const [removerMembro, setRemoverMembro] = useState<MembroAtivo | null>(null);
+  const [formMembro, setFormMembro] = useState({
+    nome: "",
+    telefone: "",
+    cargo: "Funcionario" as Cargo,
+    departamento_id: null as string | null,
+  });
+  const [errosMembro, setErrosMembro] = useState<Record<string, string>>({});
+
+  const podeAdministrar =
+    workspaceAtual?.papel === "Proprietario" || workspaceAtual?.papel === "Administrador";
+
+  function abrirEdicaoMembro(m: MembroAtivo) {
+    setErrosMembro({});
+    setFormMembro({
+      nome: m.perfil.nome ?? "",
+      telefone: m.perfil.telefone ?? "",
+      cargo: (m.cargo as Cargo) ?? "Funcionario",
+      departamento_id: m.departamento_id,
+    });
+    setEditandoMembro(m);
+  }
+
+  const salvarMembro = useMutation({
+    mutationFn: async () => {
+      if (!editandoMembro) throw new Error("Membro inválido");
+      const schema = z.object({
+        nome: z.string().trim().min(2, "Informe o nome").max(120),
+        telefone: z.string().trim().max(30).optional().or(z.literal("")),
+        cargo: z.enum(CARGOS as unknown as [string, ...string[]]),
+        departamento_id: z.string().uuid().nullable(),
+      });
+      const parse = schema.safeParse(formMembro);
+      if (!parse.success) {
+        const f: Record<string, string> = {};
+        for (const [k, v] of Object.entries(parse.error.flatten().fieldErrors)) {
+          if (v && v[0]) f[k] = v[0];
+        }
+        setErrosMembro(f);
+        throw new Error("Verifique os campos");
+      }
+
+      const { error: erroPerfil } = await supabase
+        .from("perfis")
+        .update({
+          nome: parse.data.nome,
+          telefone: parse.data.telefone || null,
+        })
+        .eq("id", editandoMembro.usuario_id);
+      if (erroPerfil) throw erroPerfil;
+
+      const { error: erroMembro } = await supabase
+        .from("workspace_membros")
+        .update({
+          cargo: parse.data.cargo as Cargo,
+          departamento_id: parse.data.departamento_id,
+        })
+        .eq("id", editandoMembro.id);
+      if (erroMembro) throw erroMembro;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["membros-workspace"] });
+      toast.success("Membro atualizado.");
+      setEditandoMembro(null);
+    },
+    onError: (e: Error) => {
+      if (e.message !== "Verifique os campos") {
+        toast.error("Não foi possível salvar.", { description: e.message });
+      }
+    },
+  });
+
+  const desativarMembro = useMutation({
+    mutationFn: async (membroId: string) => {
+      const { error } = await supabase
+        .from("workspace_membros")
+        .update({ ativo: false })
+        .eq("id", membroId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["membros-workspace"] });
+      toast.success("Membro removido.");
+      setRemoverMembro(null);
+    },
+    onError: (e: Error) =>
+      toast.error("Não foi possível remover.", { description: e.message }),
+  });
+
   const { data: convites, isLoading: carregandoConvites } = useQuery({
     queryKey: ["convites", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id,
@@ -259,22 +351,66 @@ export function AbaUsuarios() {
           </p>
         ) : (
           <ul className="divide-y divide-border">
-            {membros.map((m) => (
-              <li key={m.usuario_id} className="flex items-center gap-3 px-4 py-3">
-                <Avatar className="h-9 w-9">
-                  <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                    {iniciais(m.perfil.nome)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{m.perfil.nome}</p>
-                  <p className="truncate text-xs text-muted-foreground">{m.perfil.email}</p>
-                </div>
-                <Badge variant="outline" className="capitalize">
-                  {rotuloPapel[m.papel as Papel] ?? m.papel}
-                </Badge>
-              </li>
-            ))}
+            {membros.map((m) => {
+              const ehProprio = m.usuario_id === workspaceAtual?.id;
+              const ehProprietario = m.papel === "Proprietario";
+              const podeEditar = podeAdministrar;
+              const podeRemover = podeAdministrar && !ehProprietario && !ehProprio;
+              return (
+                <li key={m.usuario_id} className="flex items-center gap-3 px-4 py-3">
+                  <Avatar className="h-9 w-9">
+                    <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                      {iniciais(m.perfil.nome)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{m.perfil.nome}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {m.perfil.email}
+                      {m.perfil.telefone && <> · {m.perfil.telefone}</>}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {m.cargo && (
+                      <Badge variant="outline">
+                        {rotuloCargo[m.cargo as Cargo] ?? m.cargo}
+                      </Badge>
+                    )}
+                    {m.departamento_id && mapaDepartamentos.get(m.departamento_id) && (
+                      <Badge variant="secondary">
+                        {mapaDepartamentos.get(m.departamento_id)}
+                      </Badge>
+                    )}
+                    <Badge>{rotuloPapel[m.papel as Papel] ?? m.papel}</Badge>
+                  </div>
+                  {(podeEditar || podeRemover) && (
+                    <div className="flex shrink-0 gap-1">
+                      {podeEditar && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => abrirEdicaoMembro(m)}
+                          title="Editar membro"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {podeRemover && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setRemoverMembro(m)}
+                          title="Remover membro"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
