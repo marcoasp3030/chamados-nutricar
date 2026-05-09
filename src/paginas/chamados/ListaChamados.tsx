@@ -273,6 +273,7 @@ export function ListaChamados() {
     setPeriodo("todos");
     setIntervaloCustom({});
     setSomenteVencidos(false);
+    setIncluirEncerrados(false);
   }
 
   const indicadores = useMemo(() => {
