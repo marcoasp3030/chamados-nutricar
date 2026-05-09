@@ -219,6 +219,7 @@ export function ListaChamados() {
     setFiltros(FILTROS_INICIAIS);
     setPeriodo("todos");
     setIntervaloCustom({});
+    setSomenteVencidos(false);
   }
 
   const indicadores = useMemo(() => {
