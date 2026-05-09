@@ -74,20 +74,115 @@ const FILTROS_INICIAIS: FiltrosChamados = {
   busca: "",
   responsavel_id: "Todos",
   somenteRaiz: true,
+  campoData: "criado_em",
 };
+
+type Periodo =
+  | "todos"
+  | "hoje"
+  | "ontem"
+  | "7dias"
+  | "30dias"
+  | "semana"
+  | "mes"
+  | "mes_anterior"
+  | "ano"
+  | "personalizado";
+
+const ROTULO_PERIODO: Record<Periodo, string> = {
+  todos: "Qualquer data",
+  hoje: "Hoje",
+  ontem: "Ontem",
+  "7dias": "Últimos 7 dias",
+  "30dias": "Últimos 30 dias",
+  semana: "Esta semana",
+  mes: "Este mês",
+  mes_anterior: "Mês anterior",
+  ano: "Este ano",
+  personalizado: "Personalizado",
+};
+
+const ROTULO_CAMPO_DATA: Record<NonNullable<FiltrosChamados["campoData"]>, string> = {
+  criado_em: "Criação",
+  atualizado_em: "Atualização",
+  prazo: "Prazo",
+  fechado_em: "Fechamento",
+};
+
+function intervaloPeriodo(p: Periodo): { inicio?: Date; fim?: Date } {
+  const hoje = new Date();
+  switch (p) {
+    case "hoje":
+      return { inicio: startOfDay(hoje), fim: endOfDay(hoje) };
+    case "ontem": {
+      const o = subDays(hoje, 1);
+      return { inicio: startOfDay(o), fim: endOfDay(o) };
+    }
+    case "7dias":
+      return { inicio: startOfDay(subDays(hoje, 6)), fim: endOfDay(hoje) };
+    case "30dias":
+      return { inicio: startOfDay(subDays(hoje, 29)), fim: endOfDay(hoje) };
+    case "semana":
+      return {
+        inicio: startOfWeek(hoje, { weekStartsOn: 1 }),
+        fim: endOfWeek(hoje, { weekStartsOn: 1 }),
+      };
+    case "mes":
+      return { inicio: startOfMonth(hoje), fim: endOfMonth(hoje) };
+    case "mes_anterior": {
+      const m = subDays(startOfMonth(hoje), 1);
+      return { inicio: startOfMonth(m), fim: endOfMonth(m) };
+    }
+    case "ano":
+      return { inicio: startOfYear(hoje), fim: endOfYear(hoje) };
+    default:
+      return {};
+  }
+}
 
 export function ListaChamados() {
   const { workspaceAtual } = useWorkspaceStore();
   const [filtros, setFiltros] = useState<FiltrosChamados>(FILTROS_INICIAIS);
+  const [periodo, setPeriodo] = useState<Periodo>("todos");
+  const [intervaloCustom, setIntervaloCustom] = useState<{ from?: Date; to?: Date }>({});
+  const [popoverDataAberto, setPopoverDataAberto] = useState(false);
 
   const { data, isLoading } = useChamados(workspaceAtual?.id, filtros);
+
+  function aplicarPeriodo(p: Periodo) {
+    setPeriodo(p);
+    if (p === "personalizado") return;
+    const { inicio, fim } = intervaloPeriodo(p);
+    setFiltros((f) => ({
+      ...f,
+      dataInicio: inicio?.toISOString(),
+      dataFim: fim?.toISOString(),
+    }));
+    setIntervaloCustom({});
+  }
+
+  function aplicarCustom(range: { from?: Date; to?: Date } | undefined) {
+    const r = range ?? {};
+    setIntervaloCustom(r);
+    setPeriodo("personalizado");
+    setFiltros((f) => ({
+      ...f,
+      dataInicio: r.from ? startOfDay(r.from).toISOString() : undefined,
+      dataFim: r.to ? endOfDay(r.to).toISOString() : undefined,
+    }));
+  }
+
+  function limparTudo() {
+    setFiltros(FILTROS_INICIAIS);
+    setPeriodo("todos");
+    setIntervaloCustom({});
+  }
 
   const indicadores = useMemo(() => {
     const lista = data ?? [];
     const ativos = lista.filter(
       (c) => c.status !== "Fechado" && c.status !== "Cancelado" && c.status !== "Resolvido",
     );
-    const agora = new Date();
     return {
       total: lista.length,
       abertos: lista.filter((c) => c.status === "Aberto").length,
@@ -100,7 +195,10 @@ export function ListaChamados() {
     (filtros.busca && filtros.busca.length > 0) ||
     filtros.status !== "Todos" ||
     filtros.prioridade !== "Todas" ||
-    (filtros.responsavel_id && filtros.responsavel_id !== "Todos");
+    (filtros.responsavel_id && filtros.responsavel_id !== "Todos") ||
+    periodo !== "todos" ||
+    !!filtros.dataInicio ||
+    !!filtros.dataFim;
 
   if (!workspaceAtual) return null;
 
