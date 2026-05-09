@@ -261,6 +261,7 @@ export type Database = {
           descricao: string
           id: string
           ordem: number
+          prioridade: Database["public"]["Enums"]["prioridade_chamado"]
           quantidade: number
           referencia: string | null
           unidade: string | null
@@ -275,6 +276,7 @@ export type Database = {
           descricao: string
           id?: string
           ordem?: number
+          prioridade?: Database["public"]["Enums"]["prioridade_chamado"]
           quantidade?: number
           referencia?: string | null
           unidade?: string | null
@@ -289,6 +291,7 @@ export type Database = {
           descricao?: string
           id?: string
           ordem?: number
+          prioridade?: Database["public"]["Enums"]["prioridade_chamado"]
           quantidade?: number
           referencia?: string | null
           unidade?: string | null
