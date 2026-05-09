@@ -40,6 +40,8 @@ import type { PrioridadeChamado } from "@/tipos/chamado";
 
 interface Props {
   chamadoId: string;
+  codigoChamado?: string;
+  tituloChamado?: string;
 }
 
 type StatusCompra =
