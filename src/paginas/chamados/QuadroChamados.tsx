@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
@@ -93,20 +94,32 @@ export function QuadroChamados() {
               )}
               aria-hidden
             />
-            <div className="flex items-center justify-between px-3 pt-4 pb-2">
-              <div className="flex items-center gap-2">
-                <span className={cn("h-2 w-2 rounded-full", cores.ponto)} aria-hidden />
-                <h3 className="text-sm font-semibold">{rotuloStatusChamado[status]}</h3>
+            <div className="flex items-center justify-between gap-2 border-b border-border/60 px-3 pt-4 pb-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", cores.ponto)} aria-hidden />
+                <h3 className="truncate text-sm font-semibold uppercase tracking-wide text-foreground">
+                  {rotuloStatusChamado[status]}
+                </h3>
+                <span className="shrink-0 rounded-full bg-background px-2 py-0.5 text-[11px] font-semibold text-muted-foreground ring-1 ring-border">
+                  {itens.length}
+                </span>
               </div>
-              <span className="rounded-full bg-background px-2 py-0.5 text-xs font-semibold text-muted-foreground">
-                {itens.length}
-              </span>
+              <Link
+                to="/w/$slug/chamados/novo"
+                params={{ slug: workspaceAtual.slug }}
+                search={{ status }}
+                aria-label={`Novo chamado em ${rotuloStatusChamado[status]}`}
+                title={`Novo chamado em ${rotuloStatusChamado[status]}`}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+              >
+                <Plus className="h-4 w-4" />
+              </Link>
             </div>
 
-            <div className="flex-1 space-y-2 px-2 pb-3">
+            <div className="flex-1 space-y-2 px-2 pt-2 pb-3">
               {itens.length === 0 ? (
                 <p className="rounded-lg border border-dashed border-border/60 px-3 py-8 text-center text-xs text-muted-foreground">
-                  Solte aqui ou nenhum chamado
+                  Arraste um chamado para cá
                 </p>
               ) : (
                 itens.map((c) => (
