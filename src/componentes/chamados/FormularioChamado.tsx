@@ -166,6 +166,15 @@ export function FormularioChamado({
         />
       </div>
 
+      <div className="space-y-2">
+        <Label>Anexos</Label>
+        <SeletorAnexos
+          arquivos={dados.anexos}
+          aoMudar={(arquivos) => atualizar("anexos", arquivos)}
+          desabilitado={enviando}
+        />
+      </div>
+
       <div className="flex justify-end">
         <Button
           type="button"
