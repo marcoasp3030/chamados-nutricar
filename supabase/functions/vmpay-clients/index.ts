@@ -38,20 +38,27 @@ Deno.serve(async (req) => {
     if (!cfg?.api_key)
       return json({ ok: false, erro: "Nenhuma chave VMPay cadastrada.", clientes: [] }, 200);
 
-    const url = `https://vmpay.vertitecnologia.com.br/api/v1/clients?access_token=${encodeURIComponent(cfg.api_key)}`;
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => "");
-      return json(
-        { ok: false, erro: `VMPay respondeu ${res.status}: ${txt.slice(0, 200)}`, clientes: [] },
-        200,
-      );
+    const perPage = 200;
+    const todos: Array<{ id: number; name: string }> = [];
+    let page = 1;
+    const maxPages = 50;
+    while (page <= maxPages) {
+      const url = `https://vmpay.vertitecnologia.com.br/api/v1/clients?access_token=${encodeURIComponent(cfg.api_key)}&page=${page}&per_page=${perPage}`;
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        return json(
+          { ok: false, erro: `VMPay respondeu ${res.status}: ${txt.slice(0, 200)}`, clientes: todos },
+          200,
+        );
+      }
+      const arr = (await res.json()) as Array<{ id: number; name: string }>;
+      if (!Array.isArray(arr) || arr.length === 0) break;
+      for (const c of arr) todos.push({ id: c.id, name: c.name });
+      if (arr.length < perPage) break;
+      page += 1;
     }
-    const arr = (await res.json()) as Array<{ id: number; name: string }>;
-    return json({
-      ok: true,
-      clientes: (arr ?? []).map((c) => ({ id: c.id, name: c.name })),
-    }, 200);
+    return json({ ok: true, clientes: todos }, 200);
   } catch (e: any) {
     return json({ ok: false, erro: e?.message ?? "Falha inesperada.", clientes: [] }, 200);
   }
