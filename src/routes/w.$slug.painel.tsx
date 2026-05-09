@@ -174,32 +174,69 @@ interface PreviaState {
 
 interface CartaoRankingProps {
   titulo: string;
+  descricao?: string;
   icone: typeof Inbox;
-  itens: Array<{ chave: string; rotulo: string; total: number; ativos: number }>;
+  itens: Array<{
+    chave: string;
+    rotulo: string;
+    total: number;
+    ativos: number;
+    extra?: string;
+  }>;
   corBarra: string;
+  corIcone?: string;
+  /** Rótulo do contador no header (ex: "total", "vencidos"). Padrão: total geral. */
+  rotuloTotal?: string;
+  /** Cor do badge "ativos" — padrão amber. */
+  corAtivos?: string;
+  /** Sufixo após o número total de cada item (ex: "vencidos", "sem ação"). */
+  sufixoTotal?: string;
+  vazio?: string;
 }
 
-function CartaoRanking({ titulo, icone: Icone, itens, corBarra }: CartaoRankingProps) {
+function CartaoRanking({
+  titulo,
+  descricao,
+  icone: Icone,
+  itens,
+  corBarra,
+  corIcone,
+  rotuloTotal,
+  corAtivos,
+  sufixoTotal,
+  vazio,
+}: CartaoRankingProps) {
   const max = itens.reduce((m, i) => Math.max(m, i.total), 0);
   const totalGeral = itens.reduce((s, i) => s + i.total, 0);
   return (
     <section className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] transition-shadow hover:shadow-md">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/10">
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div
+            className={cn(
+              "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/10",
+              corIcone,
+            )}
+          >
             <Icone className="h-4 w-4" />
           </div>
-          <h2 className="text-sm font-semibold tracking-tight">{titulo}</h2>
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-semibold tracking-tight">{titulo}</h2>
+            {descricao && (
+              <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{descricao}</p>
+            )}
+          </div>
         </div>
         {totalGeral > 0 && (
-          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
             {totalGeral}
+            {rotuloTotal ? ` ${rotuloTotal}` : ""}
           </span>
         )}
       </div>
       {itens.length === 0 ? (
         <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border py-8">
-          <p className="text-xs text-muted-foreground">Sem dados ainda</p>
+          <p className="text-xs text-muted-foreground">{vazio ?? "Sem dados ainda"}</p>
         </div>
       ) : (
         <ol className="space-y-3">
@@ -220,10 +257,30 @@ function CartaoRanking({ titulo, icone: Icone, itens, corBarra }: CartaoRankingP
                     <span className="text-base font-bold tabular-nums text-foreground">
                       {it.total}
                     </span>
-                    {it.ativos > 0 && (
-                      <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
-                        {it.ativos} ativos
+                    {sufixoTotal && (
+                      <span className="text-[10px] text-muted-foreground">{sufixoTotal}</span>
+                    )}
+                    {it.extra ? (
+                      <span
+                        className={cn(
+                          "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                          corAtivos ?? "bg-primary/10 text-primary",
+                        )}
+                      >
+                        {it.extra}
                       </span>
+                    ) : (
+                      it.ativos > 0 && (
+                        <span
+                          className={cn(
+                            "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                            corAtivos ??
+                              "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+                          )}
+                        >
+                          {it.ativos} ativos
+                        </span>
+                      )
                     )}
                   </div>
                 </div>
