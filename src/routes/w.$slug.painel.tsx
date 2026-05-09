@@ -247,8 +247,8 @@ function CartaoRanking({
         <ol className="space-y-3">
           {itens.map((it, idx) => {
             const pct = max > 0 ? Math.round((it.total / max) * 100) : 0;
-            return (
-              <li key={it.chave} className="group">
+            const conteudo = (
+              <>
                 <div className="mb-1.5 flex items-center justify-between gap-2 text-sm">
                   <div className="flex min-w-0 items-center gap-2">
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-muted text-[10px] font-bold text-muted-foreground">
@@ -295,6 +295,22 @@ function CartaoRanking({
                     style={{ width: `${pct}%` }}
                   />
                 </div>
+              </>
+            );
+            return (
+              <li key={it.chave} className="group">
+                {aoClicarItem ? (
+                  <button
+                    type="button"
+                    onClick={() => aoClicarItem(it)}
+                    className="-mx-2 block w-full rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring"
+                    title={`Ver chamados — ${it.rotulo}`}
+                  >
+                    {conteudo}
+                  </button>
+                ) : (
+                  conteudo
+                )}
               </li>
             );
           })}
