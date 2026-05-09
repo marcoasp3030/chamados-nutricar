@@ -5,14 +5,18 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   AlertTriangle,
+  Building2,
   CheckCircle2,
   Clock,
+  FolderTree,
   Inbox,
   Loader2,
   PlayCircle,
   Plus,
+  Store,
   TrendingUp,
   UserCheck,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
@@ -151,6 +155,57 @@ interface PreviaState {
   titulo: string;
   descricao?: string;
   filtros: FiltrosPrevia;
+}
+
+interface CartaoRankingProps {
+  titulo: string;
+  icone: typeof Inbox;
+  itens: Array<{ chave: string; rotulo: string; total: number; ativos: number }>;
+  corBarra: string;
+}
+
+function CartaoRanking({ titulo, icone: Icone, itens, corBarra }: CartaoRankingProps) {
+  const max = itens.reduce((m, i) => Math.max(m, i.total), 0);
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+      <div className="mb-4 flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Icone className="h-4 w-4" />
+        </div>
+        <h2 className="text-sm font-semibold">{titulo}</h2>
+      </div>
+      {itens.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
+      ) : (
+        <ul className="space-y-3">
+          {itens.map((it) => {
+            const pct = max > 0 ? Math.round((it.total / max) * 100) : 0;
+            return (
+              <li key={it.chave}>
+                <div className="mb-1 flex items-center justify-between gap-2 text-sm">
+                  <span className="truncate text-foreground" title={it.rotulo}>
+                    {it.rotulo}
+                  </span>
+                  <span className="shrink-0 text-muted-foreground">
+                    <span className="font-semibold text-foreground">{it.total}</span>
+                    {it.ativos > 0 && (
+                      <span className="ml-1 text-xs">({it.ativos} ativos)</span>
+                    )}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={cn("h-full rounded-full transition-all", corBarra)}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
 }
 
 function Painel() {
@@ -354,6 +409,36 @@ function Painel() {
                 </ul>
               )}
             </section>
+          </div>
+
+          <h2 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Visões por dimensão
+          </h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <CartaoRanking
+              titulo="Lojas com mais chamados"
+              icone={Store}
+              itens={data.topLojas}
+              corBarra="bg-blue-500"
+            />
+            <CartaoRanking
+              titulo="Departamentos"
+              icone={Building2}
+              itens={data.topDepartamentos}
+              corBarra="bg-amber-500"
+            />
+            <CartaoRanking
+              titulo="Categorias"
+              icone={FolderTree}
+              itens={data.topCategorias}
+              corBarra="bg-emerald-500"
+            />
+            <CartaoRanking
+              titulo="Responsáveis"
+              icone={Users}
+              itens={data.topResponsaveis}
+              corBarra="bg-purple-500"
+            />
           </div>
         </>
       )}
