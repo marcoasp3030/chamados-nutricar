@@ -50,6 +50,7 @@ import { BadgeStatus } from "@/componentes/chamados/BadgeStatus";
 import { BadgePrioridade } from "@/componentes/chamados/BadgePrioridade";
 import { ComentariosChamado } from "@/componentes/chamados/ComentariosChamado";
 import { HistoricoChamado } from "@/componentes/chamados/HistoricoChamado";
+import { LinhaTempoChamado } from "@/componentes/chamados/LinhaTempoChamado";
 import { ArvoreSubchamados } from "@/componentes/chamados/ArvoreSubchamados";
 import { AcoesIAChamado } from "@/componentes/chamados/AcoesIAChamado";
 import { HistoricoIAChamado } from "@/componentes/chamados/HistoricoIAChamado";
@@ -244,12 +245,16 @@ export function DetalheChamado({ numero }: Props) {
           </section>
 
           <section className="rounded-2xl border border-border bg-card p-5">
-            <Tabs defaultValue="comentarios">
+            <Tabs defaultValue="linha-tempo">
               <TabsList>
+                <TabsTrigger value="linha-tempo">Linha do tempo</TabsTrigger>
                 <TabsTrigger value="comentarios">Comentários</TabsTrigger>
                 <TabsTrigger value="historico">Histórico</TabsTrigger>
                 <TabsTrigger value="ia">IA</TabsTrigger>
               </TabsList>
+              <TabsContent value="linha-tempo" className="pt-4">
+                <LinhaTempoChamado chamadoId={chamado.id} numeroPrincipal={chamado.numero} />
+              </TabsContent>
               <TabsContent value="comentarios" className="pt-4">
                 <ComentariosChamado
                   chamadoId={chamado.id}
