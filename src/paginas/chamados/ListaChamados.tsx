@@ -17,6 +17,9 @@ import {
 import { ptBR } from "date-fns/locale";
 import {
   AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   Calendar as CalendarIcon,
   CircleDot,
   Eye,
