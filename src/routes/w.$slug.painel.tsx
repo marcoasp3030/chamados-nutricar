@@ -5,14 +5,18 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   AlertTriangle,
+  Building2,
   CheckCircle2,
   Clock,
+  FolderTree,
   Inbox,
   Loader2,
   PlayCircle,
   Plus,
+  Store,
   TrendingUp,
   UserCheck,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
