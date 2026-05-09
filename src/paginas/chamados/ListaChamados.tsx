@@ -184,11 +184,11 @@ export function ListaChamados() {
   const [incluirEncerrados, setIncluirEncerrados] = useState(false);
   const [chamadoDetalhe, setChamadoDetalhe] = useState<ChamadoComPessoas | null>(null);
   const [ordenacao, setOrdenacao] = useState<{
-    campo: "prioridade" | "sla" | null;
+    campo: "prioridade" | "sla" | "criado" | null;
     direcao: "asc" | "desc";
   }>({ campo: null, direcao: "desc" });
 
-  function alternarOrdenacao(campo: "prioridade" | "sla") {
+  function alternarOrdenacao(campo: "prioridade" | "sla" | "criado") {
     setOrdenacao((atual) => {
       if (atual.campo !== campo) {
         return { campo, direcao: "desc" };
