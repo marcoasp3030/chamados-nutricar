@@ -30,6 +30,9 @@ export function PaginaConfiguracoes() {
           <TabsTrigger value="departamentos">
             <Building2 className="h-4 w-4" /> Departamentos
           </TabsTrigger>
+          <TabsTrigger value="categorias">
+            <Tag className="h-4 w-4" /> Categorias
+          </TabsTrigger>
           <TabsTrigger value="ia">
             <Sparkles className="h-4 w-4" /> Inteligência Artificial
           </TabsTrigger>
