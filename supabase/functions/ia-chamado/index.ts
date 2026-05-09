@@ -8,15 +8,16 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-type Acao = "resumir" | "sugerir_resposta" | "classificar";
+type Acao = "resumir" | "sugerir_resposta" | "classificar" | "corrigir_escrita";
 
 interface CorpoRequisicao {
   workspace_id: string;
   acao: Acao;
   chamado_id?: string;
-  // para classificar sem chamado existente:
+  // para classificar/corrigir sem chamado existente:
   titulo?: string;
   descricao?: string;
+  texto?: string;
 }
 
 const PROMPTS: Record<Acao, string> = {
@@ -26,6 +27,8 @@ const PROMPTS: Record<Acao, string> = {
     "Você é um atendente de suporte cordial e profissional. Com base no chamado e no histórico de comentários, redija um rascunho de resposta pública ao solicitante em português brasileiro. Tom acolhedor, claro e direto. Não invente fatos. Termine com uma pergunta ou próximo passo.",
   classificar:
     "Você classifica chamados de suporte. Analise o título e descrição e responda APENAS com um JSON válido no formato: {\"prioridade\":\"Baixa|Media|Alta|Urgente\",\"categoria\":\"<categoria curta em português>\",\"justificativa\":\"<frase curta>\"}. Sem texto fora do JSON.",
+  corrigir_escrita:
+    "Você é um revisor de português brasileiro. Corrija ortografia, gramática, pontuação e clareza do texto a seguir, mantendo o sentido, o tom e o formato (quebras de linha, listas) originais. NÃO adicione explicações, comentários, aspas ou markdown. Responda APENAS com o texto corrigido, nada mais.",
 };
 
 Deno.serve(async (req) => {
