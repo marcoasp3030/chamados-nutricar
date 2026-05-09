@@ -100,7 +100,7 @@ function ehLink(s: string) {
   return /^https?:\/\//i.test(s.trim());
 }
 
-export function RequisicaoCompras({ chamadoId }: Props) {
+export function RequisicaoCompras({ chamadoId, codigoChamado, tituloChamado }: Props) {
   const qc = useQueryClient();
   const [editando, setEditando] = useState<string | null>(null);
   const [obsTemp, setObsTemp] = useState("");
