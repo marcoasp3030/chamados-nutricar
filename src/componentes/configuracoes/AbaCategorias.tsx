@@ -74,19 +74,37 @@ export function AbaCategorias() {
   const [aberto, setAberto] = useState(false);
   const [editando, setEditando] = useState<CategoriaChamado | null>(null);
   const [confirmarRemover, setConfirmarRemover] = useState<CategoriaChamado | null>(null);
-  const [form, setForm] = useState({ nome: "", descricao: "", cor: "#88BE46" });
-  const [erros, setErros] = useState<{ nome?: string; descricao?: string; cor?: string }>({});
+  const [form, setForm] = useState({
+    nome: "",
+    descricao: "",
+    cor: "#88BE46",
+    sla_resposta_horas: "",
+    sla_resolucao_horas: "",
+  });
+  const [erros, setErros] = useState<{
+    nome?: string;
+    descricao?: string;
+    cor?: string;
+    sla_resposta_horas?: string;
+    sla_resolucao_horas?: string;
+  }>({});
 
   function abrirNovo() {
     setEditando(null);
-    setForm({ nome: "", descricao: "", cor: "#88BE46" });
+    setForm({ nome: "", descricao: "", cor: "#88BE46", sla_resposta_horas: "", sla_resolucao_horas: "" });
     setErros({});
     setAberto(true);
   }
 
   function abrirEdicao(c: CategoriaChamado) {
     setEditando(c);
-    setForm({ nome: c.nome, descricao: c.descricao ?? "", cor: c.cor });
+    setForm({
+      nome: c.nome,
+      descricao: c.descricao ?? "",
+      cor: c.cor,
+      sla_resposta_horas: c.sla_resposta_horas != null ? String(c.sla_resposta_horas) : "",
+      sla_resolucao_horas: c.sla_resolucao_horas != null ? String(c.sla_resolucao_horas) : "",
+    });
     setErros({});
     setAberto(true);
   }
@@ -100,6 +118,8 @@ export function AbaCategorias() {
           nome: flat.nome?.[0],
           descricao: flat.descricao?.[0],
           cor: flat.cor?.[0],
+          sla_resposta_horas: flat.sla_resposta_horas?.[0],
+          sla_resolucao_horas: flat.sla_resolucao_horas?.[0],
         });
         throw new Error("Verifique os campos");
       }
@@ -107,10 +127,15 @@ export function AbaCategorias() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Sessão expirada");
 
+      const toIntOrNull = (v: unknown) =>
+        typeof v === "number" && !Number.isNaN(v) ? v : null;
+
       const payload = {
         nome: parse.data.nome,
         descricao: parse.data.descricao || null,
         cor: parse.data.cor,
+        sla_resposta_horas: toIntOrNull(parse.data.sla_resposta_horas),
+        sla_resolucao_horas: toIntOrNull(parse.data.sla_resolucao_horas),
       };
 
       if (editando) {
