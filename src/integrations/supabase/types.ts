@@ -256,6 +256,7 @@ export type Database = {
           atualizado_em: string
           categoria: string | null
           chamado_pai_id: string | null
+          codigo: string | null
           criado_em: string
           criado_por: string
           descricao: string | null
@@ -279,6 +280,7 @@ export type Database = {
           atualizado_em?: string
           categoria?: string | null
           chamado_pai_id?: string | null
+          codigo?: string | null
           criado_em?: string
           criado_por: string
           descricao?: string | null
@@ -302,6 +304,7 @@ export type Database = {
           atualizado_em?: string
           categoria?: string | null
           chamado_pai_id?: string | null
+          codigo?: string | null
           criado_em?: string
           criado_por?: string
           descricao?: string | null
@@ -758,6 +761,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calcular_sigla_workspace: { Args: { _nome: string }; Returns: string }
       pode_ver_todos_chamados: {
         Args: { _workspace_id: string }
         Returns: boolean

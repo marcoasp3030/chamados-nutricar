@@ -249,7 +249,7 @@ export function ListaChamados() {
                         params={{ slug: workspaceAtual.slug, numero: String(c.numero) }}
                         className="hover:text-primary hover:underline"
                       >
-                        #{c.numero}
+                        {c.codigo ?? `#${c.numero}`}
                       </Link>
                     </TableCell>
                     <TableCell>

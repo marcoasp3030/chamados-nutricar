@@ -58,7 +58,7 @@ export function CartaoChamado({
       <div className="space-y-2.5 p-3 pl-4">
         <div className="flex items-center justify-between gap-2">
           <span className="font-mono text-[11px] font-medium text-muted-foreground">
-            #{chamado.numero}
+            {chamado.codigo ?? `#${chamado.numero}`}
           </span>
           <BadgePrioridade prioridade={chamado.prioridade} className="text-[10px] px-1.5 py-0" />
         </div>

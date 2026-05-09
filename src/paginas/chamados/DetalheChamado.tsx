@@ -178,7 +178,7 @@ export function DetalheChamado({ numero }: Props) {
             </Link>
           </Button>
           <div className="flex flex-wrap items-center gap-3">
-            <span className="font-mono text-sm text-muted-foreground">#{chamado.numero}</span>
+            <span className="font-mono text-sm text-muted-foreground">{chamado.codigo ?? `#${chamado.numero}`}</span>
             <h1 className="text-2xl font-bold">{chamado.titulo}</h1>
           </div>
           <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -368,7 +368,7 @@ export function DetalheChamado({ numero }: Props) {
       <Dialog open={editando} onOpenChange={setEditando}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Editar chamado #{chamado.numero}</DialogTitle>
+            <DialogTitle>Editar chamado {chamado.codigo ?? `#${chamado.numero}`}</DialogTitle>
           </DialogHeader>
           <FormularioChamado
             workspaceId={chamado.workspace_id}
@@ -385,7 +385,7 @@ export function DetalheChamado({ numero }: Props) {
       <Dialog open={novoSub} onOpenChange={setNovoSub}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Novo subchamado de #{chamado.numero}</DialogTitle>
+            <DialogTitle>Novo subchamado de {chamado.codigo ?? `#${chamado.numero}`}</DialogTitle>
           </DialogHeader>
           <NovoChamadoEmbutido
             chamadoPaiId={chamado.id}

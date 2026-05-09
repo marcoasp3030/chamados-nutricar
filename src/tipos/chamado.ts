@@ -15,6 +15,7 @@ export interface Chamado {
   id: string;
   workspace_id: string;
   numero: number;
+  codigo: string | null;
   titulo: string;
   descricao: string | null;
   status: StatusChamado;

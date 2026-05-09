@@ -16,6 +16,7 @@ export interface IndicadoresPainel {
   ultimos: Array<{
     id: string;
     numero: number;
+    codigo: string | null;
     titulo: string;
     status: StatusChamado;
     prioridade: PrioridadeChamado;
@@ -54,7 +55,7 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
 
       const { data, error } = await supabase
         .from("chamados")
-        .select("id, numero, titulo, status, prioridade, prazo, criado_em, resolvido_em, fechado_em, responsavel_id")
+        .select("id, numero, codigo, titulo, status, prioridade, prazo, criado_em, resolvido_em, fechado_em, responsavel_id")
         .eq("workspace_id", workspaceId!)
         .order("criado_em", { ascending: false })
         .limit(1000);
@@ -108,6 +109,7 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
         ultimos: lista.slice(0, 6).map((c) => ({
           id: c.id,
           numero: c.numero,
+          codigo: (c as { codigo?: string | null }).codigo ?? null,
           titulo: c.titulo,
           status: c.status as StatusChamado,
           prioridade: c.prioridade as PrioridadeChamado,
