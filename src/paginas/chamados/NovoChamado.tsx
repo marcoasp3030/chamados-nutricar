@@ -1,7 +1,9 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
+import { ArrowLeft, GitBranch, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import {
   FormularioChamado,
@@ -120,31 +122,62 @@ export function NovoChamado({ chamadoPaiId }: Props) {
 
   if (!workspaceAtual) return null;
 
-  return (
-    <div className="mx-auto max-w-3xl">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold">
-          {paiId ? "Novo subchamado" : "Novo chamado"}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Preencha as informações para registrar um novo {paiId ? "subchamado" : "chamado"}.
-        </p>
-      </header>
+  const voltar = () =>
+    navigate({ to: "/w/$slug/chamados", params: { slug: workspaceAtual.slug } });
 
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-[var(--shadow-card)]">
-        <FormularioChamado
-          workspaceId={workspaceAtual.id}
-          chamadoPaiId={paiId}
-          inicial={statusInicial ? { status: statusInicial } : undefined}
-          permiteEditarStatus={!!statusInicial}
-          enviando={criar.isPending}
-          rotuloEnvio={paiId ? "Criar subchamado" : "Criar chamado"}
-          aoCancelar={() =>
-            navigate({ to: "/w/$slug/chamados", params: { slug: workspaceAtual.slug } })
-          }
-          aoEnviar={(dados) => criar.mutate(dados)}
-        />
+  return (
+    <div className="mx-auto max-w-6xl">
+      {/* Cabeçalho com breadcrumb-like nav */}
+      <div className="mb-6">
+        <button
+          type="button"
+          onClick={voltar}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Voltar para Chamados
+        </button>
+
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              {paiId ? (
+                <GitBranch className="h-5 w-5 text-primary" />
+              ) : (
+                <Sparkles className="h-5 w-5 text-primary" />
+              )}
+              <h1 className="text-2xl font-bold text-foreground md:text-3xl">
+                {paiId ? "Novo subchamado" : "Novo chamado"}
+              </h1>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Preencha as informações abaixo para registrar{" "}
+              {paiId ? "um subchamado vinculado." : "um novo chamado."}
+            </p>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={voltar}
+            disabled={criar.isPending}
+            className="hidden sm:inline-flex"
+          >
+            Cancelar
+          </Button>
+        </div>
       </div>
+
+      <FormularioChamado
+        workspaceId={workspaceAtual.id}
+        chamadoPaiId={paiId}
+        inicial={statusInicial ? { status: statusInicial } : undefined}
+        permiteEditarStatus={!!statusInicial}
+        enviando={criar.isPending}
+        rotuloEnvio={paiId ? "Criar subchamado" : "Criar chamado"}
+        aoCancelar={voltar}
+        aoEnviar={(dados) => criar.mutate(dados)}
+      />
     </div>
   );
 }
