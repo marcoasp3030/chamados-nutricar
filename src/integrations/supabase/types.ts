@@ -327,6 +327,7 @@ export type Database = {
           codigo: string | null
           criado_em: string
           criado_por: string
+          departamento_id: string | null
           descricao: string | null
           fechado_em: string | null
           id: string
@@ -352,6 +353,7 @@ export type Database = {
           codigo?: string | null
           criado_em?: string
           criado_por: string
+          departamento_id?: string | null
           descricao?: string | null
           fechado_em?: string | null
           id?: string
@@ -377,6 +379,7 @@ export type Database = {
           codigo?: string | null
           criado_em?: string
           criado_por?: string
+          departamento_id?: string | null
           descricao?: string | null
           fechado_em?: string | null
           id?: string
