@@ -73,14 +73,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Nutricar Brasil" },
+      { name: "description", content: "Lovable Workflow Hub is a comprehensive system for managing tickets, tasks, and processes." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Nutricar Brasil" },
+      { property: "og:description", content: "Lovable Workflow Hub is a comprehensive system for managing tickets, tasks, and processes." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Nutricar Brasil" },
+      { name: "twitter:description", content: "Lovable Workflow Hub is a comprehensive system for managing tickets, tasks, and processes." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/be1092ef-ad76-4907-8ae4-6d6e6cee0867/id-preview-77a62f1c--98165f9e-498c-4810-868e-07ed8362bbd9.lovable.app-1778365909865.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/be1092ef-ad76-4907-8ae4-6d6e6cee0867/id-preview-77a62f1c--98165f9e-498c-4810-868e-07ed8362bbd9.lovable.app-1778365909865.png" },
     ],
     links: [
       {
