@@ -96,6 +96,10 @@ Deno.serve(async (req) => {
       const descricao = corpo.descricao ?? "";
       if (!titulo.trim()) return json({ error: "Título é obrigatório para classificar." }, 400);
       contextoUsuario = `Título: ${titulo}\n\nDescrição: ${descricao || "(sem descrição)"}`;
+    } else if (corpo.acao === "corrigir_escrita") {
+      const texto = (corpo.texto ?? corpo.descricao ?? "").trim();
+      if (!texto) return json({ error: "Texto vazio." }, 400);
+      contextoUsuario = texto;
     } else {
       if (!corpo.chamado_id) return json({ error: "chamado_id é obrigatório." }, 400);
       const { data: chamado, error: erroCh } = await supaAdmin
