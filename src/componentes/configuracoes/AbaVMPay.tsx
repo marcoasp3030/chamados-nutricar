@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Save, CreditCard, Eye, EyeOff, Trash2, PlugZap, Store } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
-import { testarVMPay } from "@/lib/vmpay.functions";
 
 interface ConfigVMPay {
   workspace_id: string;
@@ -88,6 +86,23 @@ export function AbaVMPay() {
     onError: (e: Error) => toast.error("Falha ao remover.", { description: e.message }),
   });
 
+  type TesteResp = { ok: boolean; erro?: string | null; clientes: Array<{ id: number; name: string }> };
+  const teste = useMutation({
+    mutationFn: async (): Promise<TesteResp> => {
+      if (!workspaceAtual) throw new Error("Workspace inválido.");
+      const { data, error } = await supabase.functions.invoke<TesteResp>("vmpay-clients", {
+        body: { workspaceId: workspaceAtual.id },
+      });
+      if (error) throw error;
+      return data ?? { ok: false, erro: "Resposta vazia.", clientes: [] };
+    },
+    onSuccess: (r) => {
+      if (r.ok) toast.success(`Conexão OK — ${r.clientes.length} loja(s) encontrada(s).`);
+      else toast.error("Falha ao testar VMPay", { description: r.erro ?? undefined });
+    },
+    onError: (e: Error) => toast.error("Falha ao testar VMPay", { description: e.message }),
+  });
+
   if (!podeAdmin) {
     return (
       <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
@@ -105,19 +120,6 @@ export function AbaVMPay() {
   }
 
   const temChaveSalva = !!config?.api_key;
-
-  const testar = useServerFn(testarVMPay);
-  const teste = useMutation({
-    mutationFn: async () => {
-      if (!workspaceAtual) throw new Error("Workspace inválido.");
-      return testar({ data: { workspaceId: workspaceAtual.id } });
-    },
-    onSuccess: (r) => {
-      if (r.ok) toast.success(`Conexão OK — ${r.clientes.length} loja(s) encontrada(s).`);
-      else toast.error("Falha ao testar VMPay", { description: r.erro ?? undefined });
-    },
-    onError: (e: Error) => toast.error("Falha ao testar VMPay", { description: e.message }),
-  });
 
   return (
     <div className="space-y-6">
