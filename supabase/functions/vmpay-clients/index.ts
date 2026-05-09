@@ -44,11 +44,40 @@ Deno.serve(async (req) => {
     const maxPages = 50;
     while (page <= maxPages) {
       const url = `https://vmpay.vertitecnologia.com.br/api/v1/clients?access_token=${encodeURIComponent(cfg.api_key)}&page=${page}&per_page=${perPage}`;
-      const res = await fetch(url, { headers: { Accept: "application/json" } });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
+
+      // Retry com backoff para erros transitórios (502/503/504/timeouts)
+      let res: Response | null = null;
+      let ultimoErro = "";
+      const tentativas = 3;
+      for (let i = 0; i < tentativas; i++) {
+        try {
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 15000);
+          res = await fetch(url, {
+            headers: { Accept: "application/json" },
+            signal: ctrl.signal,
+          });
+          clearTimeout(t);
+          if (res.ok) break;
+          if (![502, 503, 504, 408, 429].includes(res.status)) break;
+          ultimoErro = `HTTP ${res.status}`;
+        } catch (e: any) {
+          ultimoErro = e?.message ?? "fetch falhou";
+          res = null;
+        }
+        if (i < tentativas - 1) await new Promise((r) => setTimeout(r, 600 * (i + 1)));
+      }
+
+      if (!res || !res.ok) {
+        const status = res?.status ?? 0;
+        const erroAmigavel =
+          status === 502 || status === 503 || status === 504
+            ? "O serviço VMPay está temporariamente indisponível. Tente novamente em alguns instantes."
+            : status === 401 || status === 403
+              ? "Chave VMPay inválida ou sem permissão."
+              : `Não foi possível consultar a VMPay (${ultimoErro || `HTTP ${status}`}).`;
         return json(
-          { ok: false, erro: `VMPay respondeu ${res.status}: ${txt.slice(0, 200)}`, clientes: todos },
+          { ok: false, erro: erroAmigavel, fallback: true, clientes: todos },
           200,
         );
       }
