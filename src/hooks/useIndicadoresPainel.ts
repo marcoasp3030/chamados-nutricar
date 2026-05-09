@@ -237,7 +237,7 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
         .map(([chave, v]) => {
           const taxa = v.total > 0 ? v.resolvidos / v.total : 0;
           const pct = Math.round(taxa * 100);
-          return {
+          const item: RankingItem & { _taxa: number } = {
             chave,
             rotulo: rotuloDepartamento(chave),
             total: v.total,
@@ -245,10 +245,14 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
             extra: `${pct}% resolvidos`,
             _taxa: taxa,
           };
+          return item;
         })
         .sort((a, b) => a._taxa - b._taxa)
         .slice(0, 5)
-        .map(({ _taxa: _, ...rest }) => rest);
+        .map(({ _taxa, ...rest }) => {
+          void _taxa;
+          return rest;
+        });
 
       // Top departamentos que mais resolvem (volume + taxa)
       const departamentosMaisResolvem: RankingItem[] = Array.from(acumResolvidos.entries())
