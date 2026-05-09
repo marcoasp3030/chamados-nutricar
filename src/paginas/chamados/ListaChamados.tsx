@@ -178,6 +178,8 @@ export function ListaChamados() {
   const [intervaloCustom, setIntervaloCustom] = useState<{ from?: Date; to?: Date }>({});
   const [popoverDataAberto, setPopoverDataAberto] = useState(false);
   const [somenteVencidos, setSomenteVencidos] = useState<boolean>(() => !!search?.vencidos);
+  const [incluirEncerrados, setIncluirEncerrados] = useState(false);
+  const [chamadoDetalhe, setChamadoDetalhe] = useState<ChamadoComPessoas | null>(null);
 
   // Sincroniza quando o usuário muda apenas a URL (navegação posterior)
   useEffect(() => {
@@ -201,19 +203,47 @@ export function ListaChamados() {
   }, [search.status, search.prioridade, search.responsavel, search.periodo, search.vencidos]);
 
   const { data: dadosBrutos, isLoading } = useChamados(workspaceAtual?.id, filtros);
+
+  // Conjunto de chamados que possuem subchamados (para mostrar indicador na tabela)
+  const { data: idsComSubchamados } = useQuery({
+    queryKey: ["chamados-com-subs", workspaceAtual?.id],
+    enabled: !!workspaceAtual?.id,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("chamados")
+        .select("chamado_pai_id")
+        .eq("workspace_id", workspaceAtual!.id)
+        .not("chamado_pai_id", "is", null);
+      return new Set((data ?? []).map((d) => d.chamado_pai_id as string));
+    },
+  });
+
+  const STATUS_ENCERRADOS = new Set<StatusChamado>(["Fechado", "Cancelado", "Resolvido"]);
+
   const data = useMemo(() => {
     if (!dadosBrutos) return dadosBrutos;
-    if (!somenteVencidos) return dadosBrutos;
-    const agora = new Date();
-    return dadosBrutos.filter(
-      (c) =>
-        c.prazo &&
-        new Date(c.prazo) < agora &&
-        c.status !== "Fechado" &&
-        c.status !== "Cancelado" &&
-        c.status !== "Resolvido",
-    );
-  }, [dadosBrutos, somenteVencidos]);
+    let lista = dadosBrutos;
+    // Por padrão, oculta encerrados — exceto se o usuário escolheu um status
+    // específico encerrado, marcou "incluir encerrados" ou está filtrando vencidos.
+    const statusEspecificoEncerrado =
+      filtros.status && filtros.status !== "Todos" && STATUS_ENCERRADOS.has(filtros.status as StatusChamado);
+    if (!incluirEncerrados && !statusEspecificoEncerrado && !somenteVencidos) {
+      lista = lista.filter((c) => !STATUS_ENCERRADOS.has(c.status));
+    }
+    if (somenteVencidos) {
+      const agora = new Date();
+      lista = lista.filter(
+        (c) =>
+          c.prazo &&
+          new Date(c.prazo) < agora &&
+          c.status !== "Fechado" &&
+          c.status !== "Cancelado" &&
+          c.status !== "Resolvido",
+      );
+    }
+    return lista;
+  }, [dadosBrutos, somenteVencidos, incluirEncerrados, filtros.status]);
 
   function aplicarPeriodo(p: Periodo) {
     setPeriodo(p);
