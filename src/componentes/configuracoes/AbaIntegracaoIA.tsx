@@ -73,17 +73,17 @@ export function AbaIntegracaoIA() {
       if (!workspaceAtual) throw new Error("Workspace inválido.");
       const { data: u } = await supabase.auth.getUser();
 
-      const payload: Record<string, unknown> = {
-        workspace_id: workspaceAtual.id,
-        modelo,
-        ativo,
-        atualizado_por: u.user?.id,
-      };
-      // Só atualiza a chave se o admin digitou algo novo
-      if (chave.trim()) payload.openai_api_key = chave.trim();
       if (!config && !chave.trim()) {
         throw new Error("Informe a chave OpenAI para ativar a IA.");
       }
+
+      const payload = {
+        workspace_id: workspaceAtual.id,
+        modelo,
+        ativo,
+        atualizado_por: u.user?.id ?? null,
+        ...(chave.trim() ? { openai_api_key: chave.trim() } : {}),
+      };
 
       const { error } = await supabase
         .from("workspace_ia_config")
