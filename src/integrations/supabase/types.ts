@@ -672,6 +672,33 @@ export type Database = {
           },
         ]
       }
+      workspace_vmpay_config: {
+        Row: {
+          api_key: string | null
+          ativo: boolean
+          atualizado_em: string
+          atualizado_por: string | null
+          criado_em: string
+          workspace_id: string
+        }
+        Insert: {
+          api_key?: string | null
+          ativo?: boolean
+          atualizado_em?: string
+          atualizado_por?: string | null
+          criado_em?: string
+          workspace_id: string
+        }
+        Update: {
+          api_key?: string | null
+          ativo?: boolean
+          atualizado_em?: string
+          atualizado_por?: string | null
+          criado_em?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       workspaces: {
         Row: {
           atualizado_em: string
