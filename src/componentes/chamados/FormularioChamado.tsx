@@ -562,34 +562,120 @@ export function FormularioChamado({
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Observador
               </Label>
-              <Select
-                value={dados.responsavel_id ?? "__nenhum__"}
-                onValueChange={(v) =>
-                  atualizar("responsavel_id", v === "__nenhum__" ? null : v)
-                }
-                disabled={!!dados.departamento_id}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar observador" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__nenhum__">Sem observador</SelectItem>
-                  {(membros ?? []).map((m) => {
-                    const dep = (departamentos ?? []).find((d) => d.id === m.departamento_id);
-                    return (
-                      <SelectItem key={m.usuario_id} value={m.usuario_id}>
-                        <span className="flex flex-col">
-                          <span className="text-sm">{m.perfil.nome}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {dep?.nome ?? "Sem departamento"}
-                          </span>
+              {(() => {
+                const selecionado = (membros ?? []).find(
+                  (m) => m.usuario_id === dados.responsavel_id,
+                );
+                const depSel = selecionado
+                  ? (departamentos ?? []).find(
+                      (d) => d.id === selecionado.departamento_id,
+                    )
+                  : null;
+                return (
+                  <Popover open={observadorAberto} onOpenChange={setObservadorAberto}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={observadorAberto}
+                        disabled={!!dados.departamento_id}
+                        className="w-full justify-between font-normal"
+                      >
+                        <span className="flex items-center gap-2 truncate text-left">
+                          <UserCircle2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          {selecionado ? (
+                            <span className="flex flex-col truncate">
+                              <span className="truncate text-sm">{selecionado.perfil.nome}</span>
+                              <span className="truncate text-xs text-muted-foreground">
+                                {depSel?.nome ?? "Sem departamento"}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="truncate text-muted-foreground">
+                              Selecionar observador
+                            </span>
+                          )}
                         </span>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-              {dados.departamento_id ? (
+                        {selecionado ? (
+                          <X
+                            className="h-4 w-4 shrink-0 opacity-60 hover:opacity-100"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              atualizar("responsavel_id", null);
+                            }}
+                          />
+                        ) : (
+                          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-[--radix-popover-trigger-width] p-0"
+                      align="start"
+                    >
+                      <Command
+                        filter={(value, search) =>
+                          value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
+                        }
+                      >
+                        <CommandInput placeholder="Buscar por nome ou departamento..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum membro encontrado.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              value="sem observador"
+                              onSelect={() => {
+                                atualizar("responsavel_id", null);
+                                setObservadorAberto(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  !dados.responsavel_id ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                              Sem observador
+                            </CommandItem>
+                            {(membros ?? []).map((m) => {
+                              const dep = (departamentos ?? []).find(
+                                (d) => d.id === m.departamento_id,
+                              );
+                              const depNome = dep?.nome ?? "Sem departamento";
+                              return (
+                                <CommandItem
+                                  key={m.usuario_id}
+                                  value={`${m.perfil.nome} ${depNome} ${m.perfil.email ?? ""}`}
+                                  onSelect={() => {
+                                    atualizar("responsavel_id", m.usuario_id);
+                                    setObservadorAberto(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      dados.responsavel_id === m.usuario_id
+                                        ? "opacity-100"
+                                        : "opacity-0",
+                                    )}
+                                  />
+                                  <span className="flex flex-col">
+                                    <span className="text-sm">{m.perfil.nome}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {depNome}
+                                    </span>
+                                  </span>
+                                </CommandItem>
+                              );
+                            })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                );
+              })()}
                 <p className="text-xs text-muted-foreground">
                   Todos os membros do departamento selecionado ficam vinculados automaticamente.
                 </p>
