@@ -1,20 +1,30 @@
-import { useMemo } from "react";
-import { Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { useChamados } from "@/hooks/useChamados";
-import { BadgePrioridade } from "@/componentes/chamados/BadgePrioridade";
+import { CartaoChamado } from "@/componentes/chamados/CartaoChamado";
 import { STATUS_KANBAN, type StatusChamado, type ChamadoComPessoas } from "@/tipos/chamado";
 import { rotuloStatusChamado } from "@/utilitarios/traducoes";
 import { cn } from "@/lib/utils";
+
+const corColuna: Record<StatusChamado, { ponto: string; topo: string }> = {
+  Aberto: { ponto: "bg-blue-500", topo: "from-blue-500/60" },
+  "Em andamento": { ponto: "bg-amber-500", topo: "from-amber-500/60" },
+  "Aguardando solicitante": { ponto: "bg-purple-500", topo: "from-purple-500/60" },
+  "Aguardando terceiros": { ponto: "bg-pink-500", topo: "from-pink-500/60" },
+  Resolvido: { ponto: "bg-emerald-500", topo: "from-emerald-500/60" },
+  Fechado: { ponto: "bg-slate-500", topo: "from-slate-500/60" },
+  Cancelado: { ponto: "bg-red-500", topo: "from-red-500/60" },
+};
 
 export function QuadroChamados() {
   const { workspaceAtual } = useWorkspaceStore();
   const { data, isLoading } = useChamados(workspaceAtual?.id, { somenteRaiz: true });
   const queryClient = useQueryClient();
+  const [colunaAtiva, setColunaAtiva] = useState<StatusChamado | null>(null);
 
   const colunas = useMemo(() => {
     const mapa = new Map<StatusChamado, ChamadoComPessoas[]>();
@@ -52,53 +62,60 @@ export function QuadroChamados() {
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="-mx-2 flex gap-4 overflow-x-auto px-2 pb-4">
       {STATUS_KANBAN.map((status) => {
         const itens = colunas.get(status) ?? [];
+        const cores = corColuna[status];
+        const ativa = colunaAtiva === status;
         return (
           <div
             key={status}
-            className="w-[300px] flex-shrink-0 rounded-2xl border border-border bg-muted/30 p-3"
-            onDragOver={(e) => e.preventDefault()}
+            className={cn(
+              "relative flex w-[300px] flex-shrink-0 flex-col rounded-2xl border bg-muted/40 transition-colors",
+              ativa ? "border-primary bg-primary/5" : "border-border",
+            )}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setColunaAtiva(status);
+            }}
+            onDragLeave={() => setColunaAtiva((s) => (s === status ? null : s))}
             onDrop={(e) => {
+              e.preventDefault();
+              setColunaAtiva(null);
               const id = e.dataTransfer.getData("text/plain");
               if (id) moverStatus.mutate({ id, status });
             }}
           >
-            <div className="mb-3 flex items-center justify-between px-1">
-              <h3 className="text-sm font-semibold">{rotuloStatusChamado[status]}</h3>
-              <span className="rounded-full bg-background px-2 py-0.5 text-xs font-medium text-muted-foreground">
+            <div
+              className={cn(
+                "pointer-events-none absolute inset-x-0 top-0 h-1 rounded-t-2xl bg-gradient-to-r to-transparent",
+                cores.topo,
+              )}
+              aria-hidden
+            />
+            <div className="flex items-center justify-between px-3 pt-4 pb-2">
+              <div className="flex items-center gap-2">
+                <span className={cn("h-2 w-2 rounded-full", cores.ponto)} aria-hidden />
+                <h3 className="text-sm font-semibold">{rotuloStatusChamado[status]}</h3>
+              </div>
+              <span className="rounded-full bg-background px-2 py-0.5 text-xs font-semibold text-muted-foreground">
                 {itens.length}
               </span>
             </div>
-            <div className="space-y-2">
+
+            <div className="flex-1 space-y-2 px-2 pb-3">
               {itens.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-border/60 px-3 py-6 text-center text-xs text-muted-foreground">
-                  Nenhum chamado
+                <p className="rounded-lg border border-dashed border-border/60 px-3 py-8 text-center text-xs text-muted-foreground">
+                  Solte aqui ou nenhum chamado
                 </p>
               ) : (
                 itens.map((c) => (
-                  <Link
+                  <CartaoChamado
                     key={c.id}
-                    to="/w/$slug/chamados/$numero"
-                    params={{ slug: workspaceAtual.slug, numero: String(c.numero) }}
-                    draggable
+                    chamado={c}
+                    slug={workspaceAtual.slug}
                     onDragStart={(e) => e.dataTransfer.setData("text/plain", c.id)}
-                    className={cn(
-                      "block cursor-grab rounded-xl border border-border bg-card p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing",
-                    )}
-                  >
-                    <div className="mb-1 flex items-center justify-between gap-2">
-                      <span className="font-mono text-xs text-muted-foreground">#{c.numero}</span>
-                      <BadgePrioridade prioridade={c.prioridade} />
-                    </div>
-                    <p className="line-clamp-3 text-sm font-medium">{c.titulo}</p>
-                    {c.responsavel && (
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        {c.responsavel.nome}
-                      </p>
-                    )}
-                  </Link>
+                  />
                 ))
               )}
             </div>
