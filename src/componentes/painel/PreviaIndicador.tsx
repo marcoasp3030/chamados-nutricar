@@ -68,6 +68,10 @@ export function PreviaIndicador({
 
   const chamadosFiltrados = useMemo(() => {
     let lista = data ?? [];
+    if (filtros.chamadoIds && filtros.chamadoIds.length > 0) {
+      const set = new Set(filtros.chamadoIds);
+      lista = lista.filter((c) => set.has(c.id));
+    }
     if (filtros.vencidos) {
       lista = lista.filter(
         (c) =>
@@ -83,7 +87,7 @@ export function PreviaIndicador({
       lista = lista.filter((c) => new Date(c.criado_em) >= ini);
     }
     return lista;
-  }, [data, filtros.vencidos, filtros.periodo]);
+  }, [data, filtros.vencidos, filtros.periodo, filtros.chamadoIds]);
 
   const top = chamadosFiltrados.slice(0, 6);
 
