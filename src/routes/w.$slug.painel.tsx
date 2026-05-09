@@ -53,24 +53,35 @@ interface CartaoIndicadorProps {
 function CartaoIndicador({ rotulo, valor, icone: Icone, cor, rodape, onClick }: CartaoIndicadorProps) {
   const conteudo = (
     <>
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">{rotulo}</span>
+      <div className="flex items-start justify-between gap-3">
         <div
           className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary",
+            "flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/10",
             cor,
           )}
         >
-          <Icone className="h-4 w-4" />
+          <Icone className="h-5 w-5" />
         </div>
+        {onClick && (
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70 opacity-0 transition-opacity group-hover:opacity-100">
+            ver
+          </span>
+        )}
       </div>
-      <div className="mt-3 text-3xl font-bold text-foreground">{valor}</div>
-      {rodape && <p className="mt-1 text-xs text-muted-foreground">{rodape}</p>}
+      <div className="mt-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {rotulo}
+        </p>
+        <div className="mt-1 text-3xl font-bold leading-none tracking-tight text-foreground">
+          {valor}
+        </div>
+        {rodape && <p className="mt-2 text-xs text-muted-foreground">{rodape}</p>}
+      </div>
     </>
   );
 
   const base =
-    "block w-full rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] text-left";
+    "group relative block w-full overflow-hidden rounded-2xl border border-border bg-card p-5 text-left shadow-[var(--shadow-card)]";
 
   if (onClick) {
     return (
@@ -79,7 +90,7 @@ function CartaoIndicador({ rotulo, valor, icone: Icone, cor, rodape, onClick }: 
         onClick={onClick}
         className={cn(
           base,
-          "transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring",
+          "transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring",
         )}
       >
         {conteudo}
@@ -166,43 +177,62 @@ interface CartaoRankingProps {
 
 function CartaoRanking({ titulo, icone: Icone, itens, corBarra }: CartaoRankingProps) {
   const max = itens.reduce((m, i) => Math.max(m, i.total), 0);
+  const totalGeral = itens.reduce((s, i) => s + i.total, 0);
   return (
-    <section className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <div className="mb-4 flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Icone className="h-4 w-4" />
+    <section className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] transition-shadow hover:shadow-md">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/10">
+            <Icone className="h-4 w-4" />
+          </div>
+          <h2 className="text-sm font-semibold tracking-tight">{titulo}</h2>
         </div>
-        <h2 className="text-sm font-semibold">{titulo}</h2>
+        {totalGeral > 0 && (
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            {totalGeral}
+          </span>
+        )}
       </div>
       {itens.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Sem dados ainda.</p>
+        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border py-8">
+          <p className="text-xs text-muted-foreground">Sem dados ainda</p>
+        </div>
       ) : (
-        <ul className="space-y-3">
-          {itens.map((it) => {
+        <ol className="space-y-3">
+          {itens.map((it, idx) => {
             const pct = max > 0 ? Math.round((it.total / max) * 100) : 0;
             return (
-              <li key={it.chave}>
-                <div className="mb-1 flex items-center justify-between gap-2 text-sm">
-                  <span className="truncate text-foreground" title={it.rotulo}>
-                    {it.rotulo}
-                  </span>
-                  <span className="shrink-0 text-muted-foreground">
-                    <span className="font-semibold text-foreground">{it.total}</span>
+              <li key={it.chave} className="group">
+                <div className="mb-1.5 flex items-center justify-between gap-2 text-sm">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-muted text-[10px] font-bold text-muted-foreground">
+                      {idx + 1}
+                    </span>
+                    <span className="truncate font-medium text-foreground" title={it.rotulo}>
+                      {it.rotulo}
+                    </span>
+                  </div>
+                  <div className="flex shrink-0 items-baseline gap-1.5">
+                    <span className="text-base font-bold tabular-nums text-foreground">
+                      {it.total}
+                    </span>
                     {it.ativos > 0 && (
-                      <span className="ml-1 text-xs">({it.ativos} ativos)</span>
+                      <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
+                        {it.ativos} ativos
+                      </span>
                     )}
-                  </span>
+                  </div>
                 </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                   <div
-                    className={cn("h-full rounded-full transition-all", corBarra)}
+                    className={cn("h-full rounded-full transition-all duration-500", corBarra)}
                     style={{ width: `${pct}%` }}
                   />
                 </div>
               </li>
             );
           })}
-        </ul>
+        </ol>
       )}
     </section>
   );
