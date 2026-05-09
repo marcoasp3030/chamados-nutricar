@@ -423,9 +423,20 @@ export function FormularioChamado({
               </Label>
               <Select
                 value={dados.categoria || "__nenhuma__"}
-                onValueChange={(v) =>
-                  atualizar("categoria", v === "__nenhuma__" ? "" : v)
-                }
+                onValueChange={(v) => {
+                  const novaCategoria = v === "__nenhuma__" ? "" : v;
+                  const cat = (categorias ?? []).find((c) => c.nome === novaCategoria);
+                  setDados((d) => {
+                    let prazo = d.prazo;
+                    // Sugere o prazo a partir do SLA de resolução, se ainda não houver prazo definido
+                    if (cat?.sla_resolucao_horas && !d.prazo) {
+                      const dt = new Date();
+                      dt.setHours(dt.getHours() + cat.sla_resolucao_horas);
+                      prazo = dt.toISOString();
+                    }
+                    return { ...d, categoria: novaCategoria, prazo };
+                  });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecionar" />
@@ -439,7 +450,12 @@ export function FormularioChamado({
                           className="h-2.5 w-2.5 rounded-full"
                           style={{ backgroundColor: c.cor }}
                         />
-                        {c.nome}
+                        <span className="flex-1">{c.nome}</span>
+                        {c.sla_resolucao_horas != null && (
+                          <span className="text-xs text-muted-foreground">
+                            SLA {c.sla_resolucao_horas}h
+                          </span>
+                        )}
                       </span>
                     </SelectItem>
                   ))}
@@ -449,6 +465,21 @@ export function FormularioChamado({
                     )}
                 </SelectContent>
               </Select>
+              {(() => {
+                const cat = (categorias ?? []).find((c) => c.nome === dados.categoria);
+                if (!cat) return null;
+                if (cat.sla_resposta_horas == null && cat.sla_resolucao_horas == null) return null;
+                return (
+                  <p className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                    {cat.sla_resposta_horas != null && (
+                      <span>SLA resposta: <strong className="text-foreground">{cat.sla_resposta_horas}h</strong></span>
+                    )}
+                    {cat.sla_resolucao_horas != null && (
+                      <span>SLA resolução: <strong className="text-foreground">{cat.sla_resolucao_horas}h</strong></span>
+                    )}
+                  </p>
+                );
+              })()}
               {(!categorias || categorias.length === 0) && (
                 <p className="text-xs text-muted-foreground">
                   Cadastre categorias em Configurações → Categorias.
