@@ -62,7 +62,7 @@ export function QuadroChamados() {
   }
 
   return (
-    <div className="-mx-2 flex gap-4 overflow-x-auto px-2 pb-4">
+    <div className="-mx-2 flex gap-3 overflow-x-auto px-2 pb-4 xl:gap-4">
       {STATUS_KANBAN.map((status) => {
         const itens = colunas.get(status) ?? [];
         const cores = corColuna[status];
@@ -71,7 +71,7 @@ export function QuadroChamados() {
           <div
             key={status}
             className={cn(
-              "relative flex w-[300px] flex-shrink-0 flex-col rounded-2xl border bg-muted/40 transition-colors",
+              "relative flex min-w-[260px] flex-1 flex-col rounded-2xl border bg-muted/40 transition-colors",
               ativa ? "border-primary bg-primary/5" : "border-border",
             )}
             onDragOver={(e) => {
