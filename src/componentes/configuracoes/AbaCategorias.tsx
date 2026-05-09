@@ -35,12 +35,20 @@ export interface CategoriaChamado {
   cor: string;
   workspace_id: string;
   criado_em: string;
+  sla_resposta_horas: number | null;
+  sla_resolucao_horas: number | null;
 }
+
+const slaSchema = z
+  .union([z.string().trim().length(0), z.coerce.number().int().min(0).max(8760)])
+  .optional();
 
 const categoriaSchema = z.object({
   nome: z.string().trim().min(2, "Mínimo de 2 caracteres").max(60, "Máximo de 60 caracteres"),
   descricao: z.string().trim().max(300).optional().or(z.literal("")),
   cor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
+  sla_resposta_horas: slaSchema,
+  sla_resolucao_horas: slaSchema,
 });
 
 export function useCategoriasChamado(workspaceId: string | undefined) {
@@ -50,7 +58,7 @@ export function useCategoriasChamado(workspaceId: string | undefined) {
     queryFn: async (): Promise<CategoriaChamado[]> => {
       const { data, error } = await supabase
         .from("categorias_chamado")
-        .select("id, nome, descricao, cor, workspace_id, criado_em")
+        .select("id, nome, descricao, cor, workspace_id, criado_em, sla_resposta_horas, sla_resolucao_horas")
         .eq("workspace_id", workspaceId!)
         .order("nome");
       if (error) throw error;
@@ -66,19 +74,37 @@ export function AbaCategorias() {
   const [aberto, setAberto] = useState(false);
   const [editando, setEditando] = useState<CategoriaChamado | null>(null);
   const [confirmarRemover, setConfirmarRemover] = useState<CategoriaChamado | null>(null);
-  const [form, setForm] = useState({ nome: "", descricao: "", cor: "#88BE46" });
-  const [erros, setErros] = useState<{ nome?: string; descricao?: string; cor?: string }>({});
+  const [form, setForm] = useState({
+    nome: "",
+    descricao: "",
+    cor: "#88BE46",
+    sla_resposta_horas: "",
+    sla_resolucao_horas: "",
+  });
+  const [erros, setErros] = useState<{
+    nome?: string;
+    descricao?: string;
+    cor?: string;
+    sla_resposta_horas?: string;
+    sla_resolucao_horas?: string;
+  }>({});
 
   function abrirNovo() {
     setEditando(null);
-    setForm({ nome: "", descricao: "", cor: "#88BE46" });
+    setForm({ nome: "", descricao: "", cor: "#88BE46", sla_resposta_horas: "", sla_resolucao_horas: "" });
     setErros({});
     setAberto(true);
   }
 
   function abrirEdicao(c: CategoriaChamado) {
     setEditando(c);
-    setForm({ nome: c.nome, descricao: c.descricao ?? "", cor: c.cor });
+    setForm({
+      nome: c.nome,
+      descricao: c.descricao ?? "",
+      cor: c.cor,
+      sla_resposta_horas: c.sla_resposta_horas != null ? String(c.sla_resposta_horas) : "",
+      sla_resolucao_horas: c.sla_resolucao_horas != null ? String(c.sla_resolucao_horas) : "",
+    });
     setErros({});
     setAberto(true);
   }
@@ -92,6 +118,8 @@ export function AbaCategorias() {
           nome: flat.nome?.[0],
           descricao: flat.descricao?.[0],
           cor: flat.cor?.[0],
+          sla_resposta_horas: flat.sla_resposta_horas?.[0],
+          sla_resolucao_horas: flat.sla_resolucao_horas?.[0],
         });
         throw new Error("Verifique os campos");
       }
@@ -99,10 +127,15 @@ export function AbaCategorias() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Sessão expirada");
 
+      const toIntOrNull = (v: unknown) =>
+        typeof v === "number" && !Number.isNaN(v) ? v : null;
+
       const payload = {
         nome: parse.data.nome,
         descricao: parse.data.descricao || null,
         cor: parse.data.cor,
+        sla_resposta_horas: toIntOrNull(parse.data.sla_resposta_horas),
+        sla_resolucao_horas: toIntOrNull(parse.data.sla_resolucao_horas),
       };
 
       if (editando) {
@@ -186,6 +219,16 @@ export function AbaCategorias() {
                     {c.descricao && (
                       <p className="truncate text-xs text-muted-foreground">{c.descricao}</p>
                     )}
+                    {(c.sla_resposta_horas != null || c.sla_resolucao_horas != null) && (
+                      <p className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                        {c.sla_resposta_horas != null && (
+                          <span>SLA resposta: <strong className="text-foreground">{c.sla_resposta_horas}h</strong></span>
+                        )}
+                        {c.sla_resolucao_horas != null && (
+                          <span>SLA resolução: <strong className="text-foreground">{c.sla_resolucao_horas}h</strong></span>
+                        )}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-1">
@@ -260,6 +303,45 @@ export function AbaCategorias() {
                 />
               </div>
               {erros.cor && <p className="text-xs text-destructive">{erros.cor}</p>}
+            </div>
+
+            <div className="rounded-lg border border-dashed border-border bg-muted/40 p-3">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                SLA (horas)
+              </p>
+              <p className="mb-3 text-xs text-muted-foreground">
+                Usado para sugerir o prazo automaticamente ao abrir um chamado nesta categoria.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="cat-sla-resp">Resposta</Label>
+                  <Input
+                    id="cat-sla-resp"
+                    type="number"
+                    min={0}
+                    placeholder="Ex.: 4"
+                    value={form.sla_resposta_horas}
+                    onChange={(e) => setForm((f) => ({ ...f, sla_resposta_horas: e.target.value }))}
+                  />
+                  {erros.sla_resposta_horas && (
+                    <p className="text-xs text-destructive">{erros.sla_resposta_horas}</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cat-sla-res">Resolução</Label>
+                  <Input
+                    id="cat-sla-res"
+                    type="number"
+                    min={0}
+                    placeholder="Ex.: 24"
+                    value={form.sla_resolucao_horas}
+                    onChange={(e) => setForm((f) => ({ ...f, sla_resolucao_horas: e.target.value }))}
+                  />
+                  {erros.sla_resolucao_horas && (
+                    <p className="text-xs text-destructive">{erros.sla_resolucao_horas}</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
           <DialogFooter>

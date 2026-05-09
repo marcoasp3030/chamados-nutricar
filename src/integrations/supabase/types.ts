@@ -23,6 +23,8 @@ export type Database = {
           descricao: string | null
           id: string
           nome: string
+          sla_resolucao_horas: number | null
+          sla_resposta_horas: number | null
           workspace_id: string
         }
         Insert: {
@@ -33,6 +35,8 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome: string
+          sla_resolucao_horas?: number | null
+          sla_resposta_horas?: number | null
           workspace_id: string
         }
         Update: {
@@ -43,6 +47,8 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome?: string
+          sla_resolucao_horas?: number | null
+          sla_resposta_horas?: number | null
           workspace_id?: string
         }
         Relationships: []
