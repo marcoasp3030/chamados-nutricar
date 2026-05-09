@@ -14,16 +14,201 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      perfis: {
+        Row: {
+          atualizado_em: string
+          avatar_url: string | null
+          criado_em: string
+          email: string
+          id: string
+          nome: string
+          super_admin: boolean
+          telefone: string | null
+          ultimo_workspace_id: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          avatar_url?: string | null
+          criado_em?: string
+          email: string
+          id: string
+          nome?: string
+          super_admin?: boolean
+          telefone?: string | null
+          ultimo_workspace_id?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          avatar_url?: string | null
+          criado_em?: string
+          email?: string
+          id?: string
+          nome?: string
+          super_admin?: boolean
+          telefone?: string | null
+          ultimo_workspace_id?: string | null
+        }
+        Relationships: []
+      }
+      workspace_convites: {
+        Row: {
+          aceito: boolean
+          convidado_por: string | null
+          criado_em: string
+          email: string
+          expira_em: string
+          id: string
+          papel: Database["public"]["Enums"]["papel_membro"]
+          token: string
+          workspace_id: string
+        }
+        Insert: {
+          aceito?: boolean
+          convidado_por?: string | null
+          criado_em?: string
+          email: string
+          expira_em?: string
+          id?: string
+          papel?: Database["public"]["Enums"]["papel_membro"]
+          token?: string
+          workspace_id: string
+        }
+        Update: {
+          aceito?: boolean
+          convidado_por?: string | null
+          criado_em?: string
+          email?: string
+          expira_em?: string
+          id?: string
+          papel?: Database["public"]["Enums"]["papel_membro"]
+          token?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_convites_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_membros: {
+        Row: {
+          aceito_em: string | null
+          ativo: boolean
+          convidado_por: string | null
+          criado_em: string
+          id: string
+          papel: Database["public"]["Enums"]["papel_membro"]
+          usuario_id: string
+          workspace_id: string
+        }
+        Insert: {
+          aceito_em?: string | null
+          ativo?: boolean
+          convidado_por?: string | null
+          criado_em?: string
+          id?: string
+          papel?: Database["public"]["Enums"]["papel_membro"]
+          usuario_id: string
+          workspace_id: string
+        }
+        Update: {
+          aceito_em?: string | null
+          ativo?: boolean
+          convidado_por?: string | null
+          criado_em?: string
+          id?: string
+          papel?: Database["public"]["Enums"]["papel_membro"]
+          usuario_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_membros_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspaces: {
+        Row: {
+          atualizado_em: string
+          cnpj: string | null
+          cor_primaria: string
+          criado_em: string
+          fuso_horario: string
+          id: string
+          limite_chamados_mes: number
+          limite_usuarios: number
+          logo_url: string | null
+          nome: string
+          plano: Database["public"]["Enums"]["plano_workspace"]
+          proprietario_id: string
+          slug: string
+          status: Database["public"]["Enums"]["status_workspace"]
+        }
+        Insert: {
+          atualizado_em?: string
+          cnpj?: string | null
+          cor_primaria?: string
+          criado_em?: string
+          fuso_horario?: string
+          id?: string
+          limite_chamados_mes?: number
+          limite_usuarios?: number
+          logo_url?: string | null
+          nome: string
+          plano?: Database["public"]["Enums"]["plano_workspace"]
+          proprietario_id: string
+          slug: string
+          status?: Database["public"]["Enums"]["status_workspace"]
+        }
+        Update: {
+          atualizado_em?: string
+          cnpj?: string | null
+          cor_primaria?: string
+          criado_em?: string
+          fuso_horario?: string
+          id?: string
+          limite_chamados_mes?: number
+          limite_usuarios?: number
+          logo_url?: string | null
+          nome?: string
+          plano?: Database["public"]["Enums"]["plano_workspace"]
+          proprietario_id?: string
+          slug?: string
+          status?: Database["public"]["Enums"]["status_workspace"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      tem_papel_workspace: {
+        Args: {
+          _papeis: Database["public"]["Enums"]["papel_membro"][]
+          _workspace_id: string
+        }
+        Returns: boolean
+      }
+      workspaces_do_usuario: { Args: never; Returns: string[] }
     }
     Enums: {
-      [_ in never]: never
+      papel_membro:
+        | "Proprietario"
+        | "Administrador"
+        | "Gestor"
+        | "Atendente"
+        | "Solicitante"
+      plano_workspace: "Gratuito" | "Inicial" | "Profissional" | "Empresarial"
+      status_workspace: "Ativo" | "Suspenso" | "Cancelado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +335,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      papel_membro: [
+        "Proprietario",
+        "Administrador",
+        "Gestor",
+        "Atendente",
+        "Solicitante",
+      ],
+      plano_workspace: ["Gratuito", "Inicial", "Profissional", "Empresarial"],
+      status_workspace: ["Ativo", "Suspenso", "Cancelado"],
+    },
   },
 } as const
