@@ -89,7 +89,9 @@ export function PreviaIndicador({
     return lista;
   }, [data, filtros.vencidos, filtros.periodo, filtros.chamadoIds]);
 
-  const top = chamadosFiltrados.slice(0, 6);
+  const top = filtros.chamadoIds
+    ? chamadosFiltrados.slice(0, 50)
+    : chamadosFiltrados.slice(0, 6);
 
   const search: Record<string, unknown> = {};
   if (filtros.status && filtros.status !== "Todos") search.status = filtros.status;
