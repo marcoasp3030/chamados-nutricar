@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import * as XLSX from "xlsx";
 import {
   Loader2,
   ShoppingCart,
@@ -11,6 +12,7 @@ import {
   Pencil,
   Check,
   X,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
