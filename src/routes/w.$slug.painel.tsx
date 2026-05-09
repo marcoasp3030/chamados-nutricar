@@ -186,12 +186,16 @@ function Painel() {
               valor={data.abertos}
               icone={Inbox}
               cor="bg-blue-500/10 text-blue-600 dark:text-blue-400"
+              slug={workspaceAtual.slug}
+              search={{ status: "Aberto" }}
             />
             <CartaoIndicador
               rotulo="Em andamento"
               valor={data.emAndamento}
               icone={PlayCircle}
               cor="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+              slug={workspaceAtual.slug}
+              search={{ status: "Em andamento" }}
             />
             <CartaoIndicador
               rotulo="Aguardando"
@@ -199,12 +203,16 @@ function Painel() {
               icone={Clock}
               cor="bg-purple-500/10 text-purple-600 dark:text-purple-400"
               rodape="Solicitante ou terceiros"
+              slug={workspaceAtual.slug}
+              search={{ status: "Aguardando solicitante" }}
             />
             <CartaoIndicador
               rotulo="Resolvidos no mês"
               valor={data.resolvidosMes}
               icone={CheckCircle2}
               cor="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              slug={workspaceAtual.slug}
+              search={{ status: "Resolvido", periodo: "mes" }}
             />
           </section>
 
@@ -215,24 +223,32 @@ function Painel() {
               icone={AlertTriangle}
               cor="bg-red-500/10 text-red-600 dark:text-red-400"
               rodape="Prazo expirado e ainda ativos"
+              slug={workspaceAtual.slug}
+              search={{ vencidos: true }}
             />
             <CartaoIndicador
               rotulo="Atribuídos a mim"
               valor={data.meusAtribuidos}
               icone={UserCheck}
               cor="bg-primary/10 text-primary"
+              slug={workspaceAtual.slug}
+              search={{ responsavel: "MEUS" }}
             />
             <CartaoIndicador
               rotulo="Abertos no mês"
               valor={data.totalMes}
               icone={TrendingUp}
               cor="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+              slug={workspaceAtual.slug}
+              search={{ periodo: "mes" }}
             />
             <CartaoIndicador
               rotulo="Fechados no mês"
               valor={data.fechadosMes}
               icone={CheckCircle2}
               cor="bg-slate-500/10 text-slate-600 dark:text-slate-300"
+              slug={workspaceAtual.slug}
+              search={{ status: "Fechado", periodo: "mes" }}
             />
           </section>
 
@@ -247,6 +263,9 @@ function Painel() {
                     valor={data.porStatus[s] ?? 0}
                     total={Object.values(data.porStatus).reduce((a, b) => a + b, 0)}
                     corClasse={CORES_STATUS[s]}
+                    to="/w/$slug/chamados"
+                    slug={workspaceAtual.slug}
+                    search={{ status: s }}
                   />
                 ))}
               </div>
@@ -262,6 +281,9 @@ function Painel() {
                     valor={data.porPrioridade[p] ?? 0}
                     total={Object.values(data.porPrioridade).reduce((a, b) => a + b, 0)}
                     corClasse={CORES_PRIO[p]}
+                    to="/w/$slug/chamados"
+                    slug={workspaceAtual.slug}
+                    search={{ prioridade: p }}
                   />
                 ))}
               </div>
