@@ -259,8 +259,30 @@ export function ListaChamados() {
           c.status !== "Resolvido",
       );
     }
+    if (ordenacao.campo) {
+      const pesoPrioridade: Record<PrioridadeChamado, number> = {
+        Urgente: 4,
+        Alta: 3,
+        Media: 2,
+        Baixa: 1,
+      };
+      const sinal = ordenacao.direcao === "desc" ? -1 : 1;
+      lista = [...lista].sort((a, b) => {
+        if (ordenacao.campo === "prioridade") {
+          return sinal * (pesoPrioridade[a.prioridade] - pesoPrioridade[b.prioridade]);
+        }
+        // SLA: vencidos primeiro (desc) — quanto mais vencido, mais ao topo.
+        // Sem prazo vai para o fim em ambas direções.
+        const ta = a.prazo ? new Date(a.prazo).getTime() : null;
+        const tb = b.prazo ? new Date(b.prazo).getTime() : null;
+        if (ta === null && tb === null) return 0;
+        if (ta === null) return 1;
+        if (tb === null) return -1;
+        return sinal === -1 ? ta - tb : tb - ta;
+      });
+    }
     return lista;
-  }, [dadosBrutos, somenteVencidos, incluirEncerrados, filtros.status]);
+  }, [dadosBrutos, somenteVencidos, incluirEncerrados, filtros.status, ordenacao]);
 
   function aplicarPeriodo(p: Periodo) {
     setPeriodo(p);
