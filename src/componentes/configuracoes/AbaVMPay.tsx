@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Save, CreditCard, Eye, EyeOff, Trash2, PlugZap, Store } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
-import { testarVMPay } from "@/lib/vmpay.functions";
 
 interface ConfigVMPay {
   workspace_id: string;
