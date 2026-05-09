@@ -247,6 +247,7 @@ export function DetalheChamado({ numero }: Props) {
               <TabsList>
                 <TabsTrigger value="comentarios">Comentários</TabsTrigger>
                 <TabsTrigger value="historico">Histórico</TabsTrigger>
+                <TabsTrigger value="ia">IA</TabsTrigger>
               </TabsList>
               <TabsContent value="comentarios" className="pt-4">
                 <ComentariosChamado
@@ -257,6 +258,9 @@ export function DetalheChamado({ numero }: Props) {
               </TabsContent>
               <TabsContent value="historico" className="pt-4">
                 <HistoricoChamado chamadoId={chamado.id} />
+              </TabsContent>
+              <TabsContent value="ia" className="pt-4">
+                <HistoricoIAChamado chamadoId={chamado.id} />
               </TabsContent>
             </Tabs>
           </section>
