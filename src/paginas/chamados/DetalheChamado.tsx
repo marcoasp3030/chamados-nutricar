@@ -51,6 +51,7 @@ import { BadgePrioridade } from "@/componentes/chamados/BadgePrioridade";
 import { ComentariosChamado } from "@/componentes/chamados/ComentariosChamado";
 import { HistoricoChamado } from "@/componentes/chamados/HistoricoChamado";
 import { LinhaTempoChamado } from "@/componentes/chamados/LinhaTempoChamado";
+import { AnexosChamado } from "@/componentes/chamados/AnexosChamado";
 import { ArvoreSubchamados } from "@/componentes/chamados/ArvoreSubchamados";
 import { AcoesIAChamado } from "@/componentes/chamados/AcoesIAChamado";
 import { HistoricoIAChamado } from "@/componentes/chamados/HistoricoIAChamado";
