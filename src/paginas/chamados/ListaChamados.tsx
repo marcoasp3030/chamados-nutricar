@@ -242,7 +242,8 @@ export function ListaChamados() {
     (filtros.responsavel_id && filtros.responsavel_id !== "Todos") ||
     periodo !== "todos" ||
     !!filtros.dataInicio ||
-    !!filtros.dataFim;
+    !!filtros.dataFim ||
+    somenteVencidos;
 
   if (!workspaceAtual) return null;
 
