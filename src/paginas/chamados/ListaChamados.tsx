@@ -19,6 +19,8 @@ import {
   AlertTriangle,
   Calendar as CalendarIcon,
   CircleDot,
+  Eye,
+  GitBranch,
   Loader2,
   Plus,
   Search,
@@ -28,6 +30,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -45,13 +48,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { useChamados, type FiltrosChamados } from "@/hooks/useChamados";
 import { BadgeStatus } from "@/componentes/chamados/BadgeStatus";
 import { BadgePrioridade } from "@/componentes/chamados/BadgePrioridade";
+import { ChamadoDetalheRapido } from "@/componentes/chamados/ChamadoDetalheRapido";
 import {
   PRIORIDADES_CHAMADO,
   STATUS_CHAMADO,
+  type ChamadoComPessoas,
   type PrioridadeChamado,
   type StatusChamado,
 } from "@/tipos/chamado";
@@ -170,6 +178,8 @@ export function ListaChamados() {
   const [intervaloCustom, setIntervaloCustom] = useState<{ from?: Date; to?: Date }>({});
   const [popoverDataAberto, setPopoverDataAberto] = useState(false);
   const [somenteVencidos, setSomenteVencidos] = useState<boolean>(() => !!search?.vencidos);
+  const [incluirEncerrados, setIncluirEncerrados] = useState(false);
+  const [chamadoDetalhe, setChamadoDetalhe] = useState<ChamadoComPessoas | null>(null);
 
   // Sincroniza quando o usuário muda apenas a URL (navegação posterior)
   useEffect(() => {
@@ -193,19 +203,47 @@ export function ListaChamados() {
   }, [search.status, search.prioridade, search.responsavel, search.periodo, search.vencidos]);
 
   const { data: dadosBrutos, isLoading } = useChamados(workspaceAtual?.id, filtros);
+
+  // Conjunto de chamados que possuem subchamados (para mostrar indicador na tabela)
+  const { data: idsComSubchamados } = useQuery({
+    queryKey: ["chamados-com-subs", workspaceAtual?.id],
+    enabled: !!workspaceAtual?.id,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("chamados")
+        .select("chamado_pai_id")
+        .eq("workspace_id", workspaceAtual!.id)
+        .not("chamado_pai_id", "is", null);
+      return new Set((data ?? []).map((d) => d.chamado_pai_id as string));
+    },
+  });
+
+  const STATUS_ENCERRADOS = new Set<StatusChamado>(["Fechado", "Cancelado", "Resolvido"]);
+
   const data = useMemo(() => {
     if (!dadosBrutos) return dadosBrutos;
-    if (!somenteVencidos) return dadosBrutos;
-    const agora = new Date();
-    return dadosBrutos.filter(
-      (c) =>
-        c.prazo &&
-        new Date(c.prazo) < agora &&
-        c.status !== "Fechado" &&
-        c.status !== "Cancelado" &&
-        c.status !== "Resolvido",
-    );
-  }, [dadosBrutos, somenteVencidos]);
+    let lista = dadosBrutos;
+    // Por padrão, oculta encerrados — exceto se o usuário escolheu um status
+    // específico encerrado, marcou "incluir encerrados" ou está filtrando vencidos.
+    const statusEspecificoEncerrado =
+      filtros.status && filtros.status !== "Todos" && STATUS_ENCERRADOS.has(filtros.status as StatusChamado);
+    if (!incluirEncerrados && !statusEspecificoEncerrado && !somenteVencidos) {
+      lista = lista.filter((c) => !STATUS_ENCERRADOS.has(c.status));
+    }
+    if (somenteVencidos) {
+      const agora = new Date();
+      lista = lista.filter(
+        (c) =>
+          c.prazo &&
+          new Date(c.prazo) < agora &&
+          c.status !== "Fechado" &&
+          c.status !== "Cancelado" &&
+          c.status !== "Resolvido",
+      );
+    }
+    return lista;
+  }, [dadosBrutos, somenteVencidos, incluirEncerrados, filtros.status]);
 
   function aplicarPeriodo(p: Periodo) {
     setPeriodo(p);
@@ -235,6 +273,7 @@ export function ListaChamados() {
     setPeriodo("todos");
     setIntervaloCustom({});
     setSomenteVencidos(false);
+    setIncluirEncerrados(false);
   }
 
   const indicadores = useMemo(() => {
@@ -439,6 +478,14 @@ export function ListaChamados() {
           </PopoverContent>
         </Popover>
 
+        <label className="flex h-9 cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-3 text-sm text-muted-foreground transition-colors hover:bg-muted">
+          <Checkbox
+            checked={incluirEncerrados}
+            onCheckedChange={(v) => setIncluirEncerrados(!!v)}
+          />
+          Incluir encerrados
+        </label>
+
         {temFiltro && (
           <Button
             variant="ghost"
@@ -566,110 +613,156 @@ export function ListaChamados() {
             </Button>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/30 hover:bg-muted/30">
-                <TableHead className="w-[80px]">Nº</TableHead>
-                <TableHead>Chamado</TableHead>
-                <TableHead className="w-[170px]">Status</TableHead>
-                <TableHead className="w-[110px]">Prioridade</TableHead>
-                <TableHead className="w-[200px]">Responsável</TableHead>
-                <TableHead className="w-[130px]">Prazo</TableHead>
-                <TableHead className="w-[110px]">Criado</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((c) => {
-                const prazo = c.prazo ? new Date(c.prazo) : null;
-                const ativo =
-                  c.status !== "Fechado" && c.status !== "Cancelado" && c.status !== "Resolvido";
-                const atrasado = prazo && ativo && isPast(prazo);
-                const proximo =
-                  prazo && ativo && !atrasado && differenceInDays(prazo, new Date()) <= 2;
+          <TooltipProvider delayDuration={150}>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30 hover:bg-muted/30">
+                  <TableHead className="w-[80px]">Nº</TableHead>
+                  <TableHead>Chamado</TableHead>
+                  <TableHead className="w-[140px]">Categoria</TableHead>
+                  <TableHead className="w-[170px]">Status</TableHead>
+                  <TableHead className="w-[110px]">Prioridade</TableHead>
+                  <TableHead className="w-[200px]">Responsável</TableHead>
+                  <TableHead className="w-[130px]">Prazo</TableHead>
+                  <TableHead className="w-[110px]">Criado</TableHead>
+                  <TableHead className="w-[60px] text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.map((c) => {
+                  const prazo = c.prazo ? new Date(c.prazo) : null;
+                  const ativo =
+                    c.status !== "Fechado" && c.status !== "Cancelado" && c.status !== "Resolvido";
+                  const atrasado = prazo && ativo && isPast(prazo);
+                  const proximo =
+                    prazo && ativo && !atrasado && differenceInDays(prazo, new Date()) <= 2;
+                  const temSubs = idsComSubchamados?.has(c.id);
 
-                return (
-                  <TableRow key={c.id} className="group transition-colors hover:bg-muted/40">
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      <Link
-                        to="/w/$slug/chamados/$numero"
-                        params={{ slug: workspaceAtual.slug, numero: String(c.numero) }}
-                        className="hover:text-primary hover:underline"
-                      >
-                        {c.codigo ?? `#${c.numero}`}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <Link
-                        to="/w/$slug/chamados/$numero"
-                        params={{ slug: workspaceAtual.slug, numero: String(c.numero) }}
-                        className="block"
-                      >
-                        <div className="font-medium text-foreground transition-colors group-hover:text-primary">
-                          {c.titulo}
-                        </div>
-                        {c.solicitante && (
-                          <div className="mt-0.5 text-xs text-muted-foreground">
-                            por {c.solicitante.nome}
-                            {c.tipo && <> · {c.tipo}</>}
-                          </div>
-                        )}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <BadgeStatus status={c.status} />
-                    </TableCell>
-                    <TableCell>
-                      <BadgePrioridade prioridade={c.prioridade} />
-                    </TableCell>
-                    <TableCell>
-                      {c.responsavel ? (
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
-                              {iniciais(c.responsavel.nome)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="truncate text-sm">{c.responsavel.nome}</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm italic text-muted-foreground">
-                          Sem responsável
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {prazo ? (
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium",
-                            atrasado
-                              ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
-                              : proximo
-                                ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"
-                                : "bg-muted text-muted-foreground",
-                          )}
+                  return (
+                    <TableRow key={c.id} className="group transition-colors hover:bg-muted/40">
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        <Link
+                          to="/w/$slug/chamados/$numero"
+                          params={{ slug: workspaceAtual.slug, numero: String(c.numero) }}
+                          className="hover:text-primary hover:underline"
                         >
-                          {atrasado ? (
-                            <AlertTriangle className="h-3 w-3" />
-                          ) : (
-                            <CalendarIcon className="h-3 w-3" />
+                          {c.codigo ?? `#${c.numero}`}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          to="/w/$slug/chamados/$numero"
+                          params={{ slug: workspaceAtual.slug, numero: String(c.numero) }}
+                          className="block"
+                        >
+                          <div className="flex items-center gap-1.5 font-medium text-foreground transition-colors group-hover:text-primary">
+                            <span className="truncate">{c.titulo}</span>
+                            {temSubs && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                                    <GitBranch className="h-3 w-3" />
+                                    sub
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>Possui subchamados</TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
+                          {c.solicitante && (
+                            <div className="mt-0.5 text-xs text-muted-foreground">
+                              por {c.solicitante.nome}
+                              {c.tipo && <> · {c.tipo}</>}
+                            </div>
                           )}
-                          {format(prazo, "dd/MM/yyyy", { locale: ptBR })}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {format(new Date(c.criado_em), "dd/MM/yyyy", { locale: ptBR })}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        {c.categoria ? (
+                          <span className="inline-flex max-w-full items-center truncate rounded-md bg-muted px-2 py-0.5 text-xs text-foreground">
+                            {c.categoria}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <BadgeStatus status={c.status} />
+                      </TableCell>
+                      <TableCell>
+                        <BadgePrioridade prioridade={c.prioridade} />
+                      </TableCell>
+                      <TableCell>
+                        {c.responsavel ? (
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
+                                {iniciais(c.responsavel.nome)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="truncate text-sm">{c.responsavel.nome}</span>
+                          </div>
+                        ) : (
+                          <span className="text-sm italic text-muted-foreground">
+                            Sem responsável
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {prazo ? (
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium",
+                              atrasado
+                                ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
+                                : proximo
+                                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200"
+                                  : "bg-muted text-muted-foreground",
+                            )}
+                          >
+                            {atrasado ? (
+                              <AlertTriangle className="h-3 w-3" />
+                            ) : (
+                              <CalendarIcon className="h-3 w-3" />
+                            )}
+                            {format(prazo, "dd/MM/yyyy", { locale: ptBR })}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {format(new Date(c.criado_em), "dd/MM/yyyy", { locale: ptBR })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8"
+                              onClick={() => setChamadoDetalhe(c)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Ver detalhes</TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TooltipProvider>
         )}
       </div>
+
+      <ChamadoDetalheRapido
+        chamado={chamadoDetalhe}
+        slug={workspaceAtual.slug}
+        aoFechar={() => setChamadoDetalhe(null)}
+      />
     </div>
   );
 }
