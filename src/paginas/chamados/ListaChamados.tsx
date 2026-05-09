@@ -1,10 +1,23 @@
 import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { format, isPast, differenceInDays } from "date-fns";
+import {
+  format,
+  isPast,
+  differenceInDays,
+  startOfDay,
+  endOfDay,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  subDays,
+  startOfYear,
+  endOfYear,
+} from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   AlertTriangle,
-  Calendar,
+  Calendar as CalendarIcon,
   CircleDot,
   Loader2,
   Plus,
@@ -14,7 +27,9 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
