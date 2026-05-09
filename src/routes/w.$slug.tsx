@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
-import { BarraLateral } from "@/componentes/layout/BarraLateral";
+import { AppSidebar } from "@/componentes/layout/AppSidebar";
 import { Cabecalho } from "@/componentes/layout/Cabecalho";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import type { PapelMembro, WorkspaceComPapel } from "@/tipos/workspace";
 
 export const Route = createFileRoute("/w/$slug")({
@@ -72,14 +73,16 @@ function LayoutWorkspace() {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
-      <BarraLateral />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Cabecalho />
-        <main className="flex-1 overflow-auto">
-          <Outlet />
-        </main>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-background">
+        <AppSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Cabecalho />
+          <main className="flex-1 overflow-auto">
+            <Outlet />
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
