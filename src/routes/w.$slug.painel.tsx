@@ -69,7 +69,7 @@ function CartaoIndicador({ rotulo, valor, icone: Icone, cor, rodape, search, slu
       <Link
         to="/w/$slug/chamados"
         params={{ slug }}
-        search={search ?? {}}
+        search={(search ?? {}) as never}
         className={cn(
           base,
           "transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring",
@@ -123,7 +123,7 @@ function BarraProporcional({
       <Link
         to="/w/$slug/chamados"
         params={{ slug }}
-        search={search ?? {}}
+        search={(search ?? {}) as never}
         className="block rounded-md p-1 -m-1 transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring"
       >
         {conteudo}
