@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/select";
 import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";
 import { useCategoriasChamado } from "@/componentes/configuracoes/AbaCategorias";
+import { useDepartamentos } from "@/componentes/configuracoes/AbaDepartamentos";
+import { Building2 } from "lucide-react";
 import { SeletorLoja } from "@/componentes/chamados/SeletorLoja";
 import { SeletorAnexos } from "@/componentes/chamados/SeletorAnexos";
 import {
