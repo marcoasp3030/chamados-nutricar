@@ -16,6 +16,7 @@ import {
 import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";
 import { useCategoriasChamado } from "@/componentes/configuracoes/AbaCategorias";
 import { SeletorLoja } from "@/componentes/chamados/SeletorLoja";
+import { SeletorAnexos } from "@/componentes/chamados/SeletorAnexos";
 import {
   PRIORIDADES_CHAMADO,
   STATUS_CHAMADO,
@@ -42,6 +43,7 @@ export interface DadosFormularioChamado {
   responsavel_id: string | null;
   prazo: string | null;
   chamado_pai_id: string | null;
+  anexos: File[];
 }
 
 interface Props {
@@ -78,6 +80,7 @@ export function FormularioChamado({
     responsavel_id: inicial?.responsavel_id ?? null,
     prazo: inicial?.prazo ?? null,
     chamado_pai_id: chamadoPaiId ?? inicial?.chamado_pai_id ?? null,
+    anexos: [],
   });
 
   useEffect(() => {
