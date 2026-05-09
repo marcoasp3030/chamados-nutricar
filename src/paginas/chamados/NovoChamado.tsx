@@ -43,10 +43,36 @@ export function NovoChamado({ chamadoPaiId }: Props) {
           solicitante_id: u.user.id,
           criado_por: u.user.id,
           numero: 0,
+          requisicao_compras: dados.requisicao_compras,
         })
         .select("id, numero")
         .single();
       if (error) throw error;
+
+      // Itens da requisição de compras
+      if (dados.requisicao_compras && dados.itens_requisicao.length > 0) {
+        const itensValidos = dados.itens_requisicao.filter(
+          (it) => it.descricao.trim().length > 0,
+        );
+        if (itensValidos.length > 0) {
+          const insItens = await supabase.from("chamado_requisicao_itens").insert(
+            itensValidos.map((it, idx) => ({
+              workspace_id: workspaceAtual.id,
+              chamado_id: data.id,
+              criado_por: u.user.id,
+              ordem: idx,
+              quantidade: it.quantidade,
+              unidade: it.unidade || null,
+              descricao: it.descricao.trim(),
+              referencia: it.referencia || null,
+              data_necessidade: it.data_necessidade,
+            })),
+          );
+          if (insItens.error) {
+            toast.warning("Chamado criado, mas alguns itens da requisição falharam.");
+          }
+        }
+      }
 
       // Upload de anexos (se houver)
       if (dados.anexos.length > 0) {
