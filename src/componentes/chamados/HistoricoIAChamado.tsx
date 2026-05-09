@@ -37,20 +37,23 @@ export function HistoricoIAChamado({ chamadoId }: Props) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("chamado_ia_execucoes")
-        .select("*, perfil:perfis!chamado_ia_execucoes_usuario_id_fkey(nome)")
+        .select("*")
         .eq("chamado_id", chamadoId)
         .order("criado_em", { ascending: false });
-      // O join via FK pode não existir; tenta fallback simples
-      if (error) {
-        const fallback = await supabase
-          .from("chamado_ia_execucoes")
-          .select("*")
-          .eq("chamado_id", chamadoId)
-          .order("criado_em", { ascending: false });
-        if (fallback.error) throw fallback.error;
-        return fallback.data as ExecucaoIA[];
+      if (error) throw error;
+      const execs = (data ?? []) as ExecucaoIA[];
+      const ids = Array.from(new Set(execs.map((e) => e.usuario_id).filter(Boolean))) as string[];
+      if (ids.length > 0) {
+        const { data: perfis } = await supabase
+          .from("perfis")
+          .select("id, nome")
+          .in("id", ids);
+        const mapa = new Map((perfis ?? []).map((p) => [p.id, p.nome]));
+        for (const e of execs) {
+          if (e.usuario_id) e.perfil = { nome: mapa.get(e.usuario_id) ?? "—" };
+        }
       }
-      return data as ExecucaoIA[];
+      return execs;
     },
   });
 
