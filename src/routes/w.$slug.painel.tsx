@@ -11,10 +11,14 @@ import {
   FolderTree,
   Inbox,
   Loader2,
+  MessageSquareOff,
   PlayCircle,
   Plus,
+  ShieldAlert,
   Store,
+  TrendingDown,
   TrendingUp,
+  Trophy,
   UserCheck,
   Users,
 } from "lucide-react";
@@ -170,32 +174,69 @@ interface PreviaState {
 
 interface CartaoRankingProps {
   titulo: string;
+  descricao?: string;
   icone: typeof Inbox;
-  itens: Array<{ chave: string; rotulo: string; total: number; ativos: number }>;
+  itens: Array<{
+    chave: string;
+    rotulo: string;
+    total: number;
+    ativos: number;
+    extra?: string;
+  }>;
   corBarra: string;
+  corIcone?: string;
+  /** Rótulo do contador no header (ex: "total", "vencidos"). Padrão: total geral. */
+  rotuloTotal?: string;
+  /** Cor do badge "ativos" — padrão amber. */
+  corAtivos?: string;
+  /** Sufixo após o número total de cada item (ex: "vencidos", "sem ação"). */
+  sufixoTotal?: string;
+  vazio?: string;
 }
 
-function CartaoRanking({ titulo, icone: Icone, itens, corBarra }: CartaoRankingProps) {
+function CartaoRanking({
+  titulo,
+  descricao,
+  icone: Icone,
+  itens,
+  corBarra,
+  corIcone,
+  rotuloTotal,
+  corAtivos,
+  sufixoTotal,
+  vazio,
+}: CartaoRankingProps) {
   const max = itens.reduce((m, i) => Math.max(m, i.total), 0);
   const totalGeral = itens.reduce((s, i) => s + i.total, 0);
   return (
     <section className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)] transition-shadow hover:shadow-md">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/10">
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div
+            className={cn(
+              "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/10",
+              corIcone,
+            )}
+          >
             <Icone className="h-4 w-4" />
           </div>
-          <h2 className="text-sm font-semibold tracking-tight">{titulo}</h2>
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-semibold tracking-tight">{titulo}</h2>
+            {descricao && (
+              <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{descricao}</p>
+            )}
+          </div>
         </div>
         {totalGeral > 0 && (
-          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
             {totalGeral}
+            {rotuloTotal ? ` ${rotuloTotal}` : ""}
           </span>
         )}
       </div>
       {itens.length === 0 ? (
         <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border py-8">
-          <p className="text-xs text-muted-foreground">Sem dados ainda</p>
+          <p className="text-xs text-muted-foreground">{vazio ?? "Sem dados ainda"}</p>
         </div>
       ) : (
         <ol className="space-y-3">
@@ -216,10 +257,30 @@ function CartaoRanking({ titulo, icone: Icone, itens, corBarra }: CartaoRankingP
                     <span className="text-base font-bold tabular-nums text-foreground">
                       {it.total}
                     </span>
-                    {it.ativos > 0 && (
-                      <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
-                        {it.ativos} ativos
+                    {sufixoTotal && (
+                      <span className="text-[10px] text-muted-foreground">{sufixoTotal}</span>
+                    )}
+                    {it.extra ? (
+                      <span
+                        className={cn(
+                          "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                          corAtivos ?? "bg-primary/10 text-primary",
+                        )}
+                      >
+                        {it.extra}
                       </span>
+                    ) : (
+                      it.ativos > 0 && (
+                        <span
+                          className={cn(
+                            "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                            corAtivos ??
+                              "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+                          )}
+                        >
+                          {it.ativos} ativos
+                        </span>
+                      )
                     )}
                   </div>
                 </div>
@@ -439,6 +500,56 @@ function Painel() {
                 </ul>
               )}
             </section>
+          </div>
+
+          <h2 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Indicadores estratégicos
+          </h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+            <CartaoRanking
+              titulo="SLA estourado"
+              descricao="Chamados ativos com prazo expirado"
+              icone={ShieldAlert}
+              itens={data.slaEstouradoPorDepartamento}
+              corBarra="bg-red-500"
+              corIcone="bg-red-500/10 text-red-600 dark:text-red-400 ring-red-500/10"
+              corAtivos="bg-red-500/10 text-red-700 dark:text-red-400"
+              rotuloTotal="vencidos"
+              vazio="Nenhum SLA estourado"
+            />
+            <CartaoRanking
+              titulo="Sem interação"
+              descricao="Ativos sem resposta nem comentários"
+              icone={MessageSquareOff}
+              itens={data.semInteracaoPorDepartamento}
+              corBarra="bg-orange-500"
+              corIcone="bg-orange-500/10 text-orange-600 dark:text-orange-400 ring-orange-500/10"
+              corAtivos="bg-orange-500/10 text-orange-700 dark:text-orange-400"
+              rotuloTotal="parados"
+              vazio="Tudo com tratativa"
+            />
+            <CartaoRanking
+              titulo="Mais resolvem"
+              descricao="Departamentos com maior volume resolvido"
+              icone={Trophy}
+              itens={data.departamentosMaisResolvem}
+              corBarra="bg-emerald-500"
+              corIcone="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-emerald-500/10"
+              corAtivos="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+              rotuloTotal="resolvidos"
+              vazio="Nenhuma resolução ainda"
+            />
+            <CartaoRanking
+              titulo="Pior índice de resolução"
+              descricao="Menor taxa de resolução (mín. 3 chamados)"
+              icone={TrendingDown}
+              itens={data.departamentosPiorIndiceResolucao}
+              corBarra="bg-rose-500"
+              corIcone="bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-rose-500/10"
+              corAtivos="bg-rose-500/10 text-rose-700 dark:text-rose-400"
+              sufixoTotal="chamados"
+              vazio="Sem dados suficientes"
+            />
           </div>
 
           <h2 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
