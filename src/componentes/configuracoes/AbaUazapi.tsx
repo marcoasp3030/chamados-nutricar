@@ -439,6 +439,7 @@ export function AbaUazapi() {
           </h3>
           <p className="text-xs text-muted-foreground">
             Use o número completo com DDI e DDD, somente dígitos. Ex: 5511999998888.
+            {!conectado && " Disponível apenas com WhatsApp conectado."}
           </p>
           <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
             <div className="space-y-2">
