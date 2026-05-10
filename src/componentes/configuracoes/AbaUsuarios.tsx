@@ -275,14 +275,14 @@ export function AbaUsuarios() {
       telefone: "",
       papel: "Solicitante",
       cargo: "Funcionario",
-      departamento_id: null,
+      departamento_ids: [],
     });
     setErros({});
   }
 
-  const criarConvite = useMutation({
+  const criarUsuario = useMutation({
     mutationFn: async () => {
-      const parse = conviteSchema.safeParse(form);
+      const parse = novoUsuarioSchema.safeParse(form);
       if (!parse.success) {
         const f: Record<string, string> = {};
         for (const [k, v] of Object.entries(parse.error.flatten().fieldErrors)) {
@@ -292,37 +292,32 @@ export function AbaUsuarios() {
         throw new Error("Verifique os campos");
       }
       if (!workspaceAtual) throw new Error("Workspace inválido");
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) throw new Error("Sessão expirada");
 
-      const { data, error } = await supabase
-        .from("workspace_convites")
-        .insert({
+      const { data, error } = await supabase.functions.invoke("criar-usuario-direto", {
+        body: {
           workspace_id: workspaceAtual.id,
-          email: parse.data.email.toLowerCase(),
           nome: parse.data.nome,
+          email: parse.data.email.toLowerCase(),
           telefone: parse.data.telefone || null,
-          papel: parse.data.papel as Papel,
-          cargo: parse.data.cargo as Cargo,
-          departamento_id: parse.data.departamento_id,
-          convidado_por: u.user.id,
-        })
-        .select("token, email")
-        .single();
+          papel: parse.data.papel,
+          cargo: parse.data.cargo,
+          departamento_ids: parse.data.departamento_ids,
+        },
+      });
       if (error) throw error;
-      return data;
+      if (data?.error) throw new Error(data.error);
+      return data as { email: string; senha_temporaria: string };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["convites"] });
-      const url = `${window.location.origin}/convite/${data.token}`;
-      setConvitePronto({ url, email: data.email });
-      toast.success("Convite criado.");
+      queryClient.invalidateQueries({ queryKey: ["membros-workspace"] });
+      setUsuarioCriado({ email: data.email, senha: data.senha_temporaria });
+      toast.success("Usuário criado e ativo.");
       setAberto(false);
       resetar();
     },
     onError: (e: Error) => {
       if (e.message !== "Verifique os campos") {
-        toast.error("Não foi possível criar o convite.", { description: e.message });
+        toast.error("Não foi possível criar o usuário.", { description: e.message });
       }
     },
   });
