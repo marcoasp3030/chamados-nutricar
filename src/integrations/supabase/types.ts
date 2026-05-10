@@ -421,6 +421,36 @@ export type Database = {
           },
         ]
       }
+      checklist_comentarios: {
+        Row: {
+          atualizado_em: string
+          autor_id: string
+          checklist_id: string
+          conteudo: string
+          criado_em: string
+          id: string
+          workspace_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          autor_id: string
+          checklist_id: string
+          conteudo: string
+          criado_em?: string
+          id?: string
+          workspace_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          autor_id?: string
+          checklist_id?: string
+          conteudo?: string
+          criado_em?: string
+          id?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       checklist_historico: {
         Row: {
           acao: string
