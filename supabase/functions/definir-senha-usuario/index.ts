@@ -64,8 +64,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
-
     // Solicitante deve ser Proprietário/Administrador
     const { data: papelData, error: papelErr } = await admin
       .from("workspace_membros")
