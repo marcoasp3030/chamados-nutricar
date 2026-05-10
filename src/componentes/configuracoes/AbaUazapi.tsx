@@ -135,7 +135,11 @@ export function AbaUazapi() {
   const mSalvar = useMutation({
     mutationFn: async () => {
       await salvar({
-        data: { workspaceId: workspaceAtual!.id, serverUrl, adminToken: adminToken || "__manter__" },
+        data: {
+          workspaceId: workspaceAtual!.id,
+          serverUrl,
+          ...(adminToken ? { adminToken } : {}),
+        },
       });
     },
     onSuccess: () => {
