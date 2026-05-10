@@ -143,12 +143,18 @@ export function useHistoricoChecklist(checklistId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("checklist_historico")
-        .select("*, perfil:perfis(nome)")
+        .select("*")
         .eq("checklist_id", checklistId!)
         .order("criado_em", { ascending: false })
         .limit(100);
       if (error) throw error;
-      return data ?? [];
+      const usuarios = Array.from(new Set((data ?? []).map((h) => h.usuario_id).filter(Boolean))) as string[];
+      const mapaNomes = new Map<string, string>();
+      if (usuarios.length > 0) {
+        const { data: perfis } = await supabase.from("perfis").select("id, nome").in("id", usuarios);
+        for (const p of perfis ?? []) mapaNomes.set(p.id, p.nome);
+      }
+      return (data ?? []).map((h) => ({ ...h, usuario_nome: h.usuario_id ? mapaNomes.get(h.usuario_id) ?? "Usuário" : "Sistema" }));
     },
   });
 }
