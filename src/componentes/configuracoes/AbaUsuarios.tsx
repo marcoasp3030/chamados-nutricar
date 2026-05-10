@@ -66,7 +66,7 @@ const rotuloPapel: Record<Papel, string> = {
   Proprietario: "Proprietário",
 };
 
-const conviteSchema = z.object({
+const novoUsuarioSchema = z.object({
   nome: z.string().trim().min(2, "Informe o nome").max(120),
   email: z.string().trim().email("E-mail inválido").max(255),
   telefone: z
@@ -77,7 +77,7 @@ const conviteSchema = z.object({
     .or(z.literal("")),
   papel: z.enum(PAPEIS as unknown as [string, ...string[]]),
   cargo: z.enum(CARGOS as unknown as [string, ...string[]]),
-  departamento_id: z.string().uuid().nullable(),
+  departamento_ids: z.array(z.string().uuid()),
 });
 
 interface Convite {
@@ -119,10 +119,10 @@ export function AbaUsuarios() {
     telefone: "",
     papel: "Solicitante" as Papel,
     cargo: "Funcionario" as Cargo,
-    departamento_id: null as string | null,
+    departamento_ids: [] as string[],
   });
   const [erros, setErros] = useState<Record<string, string>>({});
-  const [convitePronto, setConvitePronto] = useState<{ url: string; email: string } | null>(
+  const [usuarioCriado, setUsuarioCriado] = useState<{ email: string; senha: string } | null>(
     null,
   );
   const [removerConvite, setRemoverConvite] = useState<Convite | null>(null);
@@ -275,14 +275,14 @@ export function AbaUsuarios() {
       telefone: "",
       papel: "Solicitante",
       cargo: "Funcionario",
-      departamento_id: null,
+      departamento_ids: [],
     });
     setErros({});
   }
 
-  const criarConvite = useMutation({
+  const criarUsuario = useMutation({
     mutationFn: async () => {
-      const parse = conviteSchema.safeParse(form);
+      const parse = novoUsuarioSchema.safeParse(form);
       if (!parse.success) {
         const f: Record<string, string> = {};
         for (const [k, v] of Object.entries(parse.error.flatten().fieldErrors)) {
@@ -292,37 +292,32 @@ export function AbaUsuarios() {
         throw new Error("Verifique os campos");
       }
       if (!workspaceAtual) throw new Error("Workspace inválido");
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) throw new Error("Sessão expirada");
 
-      const { data, error } = await supabase
-        .from("workspace_convites")
-        .insert({
+      const { data, error } = await supabase.functions.invoke("criar-usuario-direto", {
+        body: {
           workspace_id: workspaceAtual.id,
-          email: parse.data.email.toLowerCase(),
           nome: parse.data.nome,
+          email: parse.data.email.toLowerCase(),
           telefone: parse.data.telefone || null,
-          papel: parse.data.papel as Papel,
-          cargo: parse.data.cargo as Cargo,
-          departamento_id: parse.data.departamento_id,
-          convidado_por: u.user.id,
-        })
-        .select("token, email")
-        .single();
+          papel: parse.data.papel,
+          cargo: parse.data.cargo,
+          departamento_ids: parse.data.departamento_ids,
+        },
+      });
       if (error) throw error;
-      return data;
+      if (data?.error) throw new Error(data.error);
+      return data as { email: string; senha_temporaria: string };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["convites"] });
-      const url = `${window.location.origin}/convite/${data.token}`;
-      setConvitePronto({ url, email: data.email });
-      toast.success("Convite criado.");
+      queryClient.invalidateQueries({ queryKey: ["membros-workspace"] });
+      setUsuarioCriado({ email: data.email, senha: data.senha_temporaria });
+      toast.success("Usuário criado e ativo.");
       setAberto(false);
       resetar();
     },
     onError: (e: Error) => {
       if (e.message !== "Verifique os campos") {
-        toast.error("Não foi possível criar o convite.", { description: e.message });
+        toast.error("Não foi possível criar o usuário.", { description: e.message });
       }
     },
   });
@@ -513,7 +508,7 @@ export function AbaUsuarios() {
           <DialogHeader>
             <DialogTitle>Novo usuário</DialogTitle>
             <DialogDescription>
-              É gerado um convite com link de acesso. O usuário define a senha ao aceitar.
+              O usuário é criado já ativo na empresa. Uma senha temporária será gerada para você compartilhar com ele.
             </DialogDescription>
           </DialogHeader>
 
@@ -551,31 +546,41 @@ export function AbaUsuarios() {
               {erros.telefone && <p className="text-xs text-destructive">{erros.telefone}</p>}
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Departamento</Label>
-              <Select
-                value={form.departamento_id ?? "__nenhum__"}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, departamento_id: v === "__nenhum__" ? null : v }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__nenhum__">Sem departamento</SelectItem>
-                  {(departamentos ?? []).map((d) => (
-                    <SelectItem key={d.id} value={d.id}>
-                      {d.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {(!departamentos || departamentos.length === 0) && (
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>Departamentos</Label>
+              {(!departamentos || departamentos.length === 0) ? (
                 <p className="text-xs text-muted-foreground">
                   Crie um departamento na aba "Departamentos" primeiro.
                 </p>
+              ) : (
+                <div className="max-h-44 space-y-1.5 overflow-y-auto rounded-md border border-border p-2">
+                  {departamentos.map((d) => {
+                    const marcado = form.departamento_ids.includes(d.id);
+                    return (
+                      <label
+                        key={d.id}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-accent"
+                      >
+                        <Checkbox
+                          checked={marcado}
+                          onCheckedChange={(c: boolean | "indeterminate") =>
+                            setForm((f) => ({
+                              ...f,
+                              departamento_ids: c === true
+                                ? [...f.departamento_ids, d.id]
+                                : f.departamento_ids.filter((x) => x !== d.id),
+                            }))
+                          }
+                        />
+                        <span>{d.nome}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               )}
+              <p className="text-xs text-muted-foreground">
+                O usuário pode pertencer a mais de um departamento.
+              </p>
             </div>
 
             <div className="space-y-1.5">
@@ -621,41 +626,44 @@ export function AbaUsuarios() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAberto(false)} disabled={criarConvite.isPending}>
+            <Button variant="outline" onClick={() => setAberto(false)} disabled={criarUsuario.isPending}>
               Cancelar
             </Button>
-            <Button onClick={() => criarConvite.mutate()} disabled={criarConvite.isPending}>
-              {criarConvite.isPending ? (
+            <Button onClick={() => criarUsuario.mutate()} disabled={criarUsuario.isPending}>
+              {criarUsuario.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Plus className="h-4 w-4" />
               )}
-              Gerar convite
+              Criar usuário
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: convite pronto com link */}
-      <Dialog open={!!convitePronto} onOpenChange={(o) => !o && setConvitePronto(null)}>
+      {/* Dialog: usuário criado com senha temporária */}
+      <Dialog open={!!usuarioCriado} onOpenChange={(o) => !o && setUsuarioCriado(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Convite gerado</DialogTitle>
+            <DialogTitle>Usuário criado</DialogTitle>
             <DialogDescription>
-              Compartilhe este link com {convitePronto?.email}. Ele expira em 7 dias.
+              O usuário <strong>{usuarioCriado?.email}</strong> já está ativo. Compartilhe a senha temporária abaixo para o primeiro acesso.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex gap-2">
-            <Input readOnly value={convitePronto?.url ?? ""} className="font-mono text-xs" />
-            <Button
-              variant="outline"
-              onClick={() => convitePronto && copiar(convitePronto.url)}
-            >
-              <Copy className="h-4 w-4" /> Copiar
-            </Button>
+          <div className="space-y-2">
+            <Label>Senha temporária</Label>
+            <div className="flex gap-2">
+              <Input readOnly value={usuarioCriado?.senha ?? ""} className="font-mono text-xs" />
+              <Button
+                variant="outline"
+                onClick={() => usuarioCriado && copiar(usuarioCriado.senha)}
+              >
+                <Copy className="h-4 w-4" /> Copiar
+              </Button>
+            </div>
           </div>
           <DialogFooter>
-            <Button onClick={() => setConvitePronto(null)}>Concluir</Button>
+            <Button onClick={() => setUsuarioCriado(null)}>Concluir</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
