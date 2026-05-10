@@ -467,6 +467,7 @@ export function AbaUazapi() {
               onClick={() => mEnviarTeste.mutate()}
               disabled={
                 mEnviarTeste.isPending ||
+                !conectado ||
                 testeNumero.replace(/\D/g, "").length < 8 ||
                 !testeMensagem.trim()
               }
