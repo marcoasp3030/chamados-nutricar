@@ -129,6 +129,8 @@ export function AbaUazapi() {
   const [serverUrl, setServerUrl] = useState("");
   const [adminToken, setAdminToken] = useState("");
   const [mostrar, setMostrar] = useState(false);
+  const [testeNumero, setTesteNumero] = useState("");
+  const [testeMensagem, setTesteMensagem] = useState("Mensagem de teste do sistema ✅");
 
   useEffect(() => {
     setServerUrl(cfg?.server_url ?? "");
