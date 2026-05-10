@@ -119,10 +119,10 @@ export function AbaUsuarios() {
     telefone: "",
     papel: "Solicitante" as Papel,
     cargo: "Funcionario" as Cargo,
-    departamento_id: null as string | null,
+    departamento_ids: [] as string[],
   });
   const [erros, setErros] = useState<Record<string, string>>({});
-  const [convitePronto, setConvitePronto] = useState<{ url: string; email: string } | null>(
+  const [usuarioCriado, setUsuarioCriado] = useState<{ email: string; senha: string } | null>(
     null,
   );
   const [removerConvite, setRemoverConvite] = useState<Convite | null>(null);
