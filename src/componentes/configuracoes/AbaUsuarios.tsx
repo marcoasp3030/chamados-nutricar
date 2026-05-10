@@ -66,7 +66,7 @@ const rotuloPapel: Record<Papel, string> = {
   Proprietario: "Proprietário",
 };
 
-const conviteSchema = z.object({
+const novoUsuarioSchema = z.object({
   nome: z.string().trim().min(2, "Informe o nome").max(120),
   email: z.string().trim().email("E-mail inválido").max(255),
   telefone: z
@@ -77,7 +77,7 @@ const conviteSchema = z.object({
     .or(z.literal("")),
   papel: z.enum(PAPEIS as unknown as [string, ...string[]]),
   cargo: z.enum(CARGOS as unknown as [string, ...string[]]),
-  departamento_id: z.string().uuid().nullable(),
+  departamento_ids: z.array(z.string().uuid()),
 });
 
 interface Convite {
