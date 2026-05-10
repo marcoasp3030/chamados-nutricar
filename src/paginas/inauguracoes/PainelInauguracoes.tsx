@@ -91,7 +91,9 @@ export function PainelInauguracoes() {
   const { workspaceAtual } = useWorkspaceStore();
   const queryClient = useQueryClient();
   const { data, isLoading } = useInauguracoes(workspaceAtual?.id);
+  const { data: contagemComentarios } = useContagemComentarios(workspaceAtual?.id);
   const [busca, setBusca] = useState("");
+  const [comentariosDe, setComentariosDe] = useState<CardInauguracao | null>(null);
 
   const concluir = useMutation({
     mutationFn: async (id: string) => {
@@ -220,6 +222,8 @@ export function PainelInauguracoes() {
                         item={c}
                         slug={workspaceAtual.slug}
                         coluna={def.id}
+                        comentarios={contagemComentarios?.get(c.id) ?? 0}
+                        onComentarios={() => setComentariosDe(c)}
                         onConcluir={() => concluir.mutate(c.id)}
                       />
                     ))
@@ -230,6 +234,26 @@ export function PainelInauguracoes() {
           })}
         </div>
       )}
+
+      <Sheet open={!!comentariosDe} onOpenChange={(o) => !o && setComentariosDe(null)}>
+        <SheetContent className="flex w-full flex-col sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle className="truncate text-left">
+              {comentariosDe?.razaoSocial ?? comentariosDe?.nome ?? "Comentários"}
+            </SheetTitle>
+            <p className="text-left text-xs text-muted-foreground">
+              Atualizações da equipe sobre esta inauguração
+            </p>
+          </SheetHeader>
+          {comentariosDe && workspaceAtual && (
+            <PainelComentarios
+              checklistId={comentariosDe.id}
+              workspaceId={workspaceAtual.id}
+              className="mt-4 flex-1"
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
