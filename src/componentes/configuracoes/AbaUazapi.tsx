@@ -80,7 +80,7 @@ export function AbaUazapi() {
   const reconectar = useServerFn(reconectarUazapi);
   const desconectar = useServerFn(desconectarUazapi);
   const excluir = useServerFn(excluirInstanciaUazapi);
-
+  const enviarTeste = useServerFn(enviarMensagemTesteUazapi);
   const { data: cfg, isLoading } = useQuery({
     queryKey: ["uazapi-config", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id && !!podeAdmin,
