@@ -10,6 +10,7 @@ export interface ItemPadrao {
 
 export const ITENS_TEMPLATE_PADRAO: ItemPadrao[] = [
   // Dados do Condomínio
+  { secao: "Dados do Condomínio", subsecao: "Cadastrais", rotulo: "Tipo de condomínio", tipo: "select", opcoes: ["Residencial", "Corporativo", "Evento"] },
   { secao: "Dados do Condomínio", subsecao: "Cadastrais", rotulo: "Razão social", tipo: "texto" },
   { secao: "Dados do Condomínio", subsecao: "Cadastrais", rotulo: "Nome fantasia", tipo: "texto" },
   { secao: "Dados do Condomínio", subsecao: "Cadastrais", rotulo: "CNPJ", tipo: "texto" },
