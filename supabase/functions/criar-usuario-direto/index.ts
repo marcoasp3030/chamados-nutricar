@@ -61,8 +61,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
-
     // Verifica se solicitante é Proprietário/Administrador do workspace
     const { data: papelData, error: papelErr } = await admin
       .from("workspace_membros")
