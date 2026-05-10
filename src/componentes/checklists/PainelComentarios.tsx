@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Loader2, Send, Trash2 } from "lucide-react";
@@ -25,6 +26,11 @@ interface Props {
   compact?: boolean;
 }
 
+interface MembroMencionavel {
+  id: string;
+  nome: string;
+}
+
 function iniciais(nome: string) {
   return nome
     .split(/\s+/)
@@ -34,34 +40,42 @@ function iniciais(nome: string) {
     .join("");
 }
 
-function renderizarConteudo(texto: string, nomes: Set<string>) {
-  // Realça @nome quando bate com algum membro conhecido.
+type ParteConteudo =
+  | { tipo: "texto"; v: string }
+  | { tipo: "mencao"; v: string; id: string; nome: string };
+
+function renderizarConteudo(
+  texto: string,
+  membrosPorNome: Map<string, MembroMencionavel>,
+): ParteConteudo[] {
   const norm = (s: string) =>
     s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const partes: Array<{ tipo: "texto" | "mencao"; v: string }> = [];
+  const partes: ParteConteudo[] = [];
   const regex = /@([\p{L}\p{N}._\-]+(?:\s+[\p{L}\p{N}._\-]+){0,3})/gu;
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = regex.exec(texto)) !== null) {
     const candidato = m[1];
-    // Tenta variantes de comprimento (do mais longo ao mais curto)
     const palavras = candidato.split(/\s+/);
-    let casou: string | null = null;
+    let casou: MembroMencionavel | null = null;
+    let comprimentoCasou = 0;
     for (let n = palavras.length; n >= 1; n--) {
       const tentativa = palavras.slice(0, n).join(" ");
-      if (nomes.has(norm(tentativa))) {
-        casou = tentativa;
+      const membro = membrosPorNome.get(norm(tentativa));
+      if (membro) {
+        casou = membro;
+        comprimentoCasou = tentativa.length;
         break;
       }
     }
     if (casou) {
-      partes.push({ tipo: "texto", v: texto.slice(last, m.index) });
-      partes.push({ tipo: "mencao", v: "@" + casou });
-      last = m.index + 1 + casou.length;
+      if (m.index > last) partes.push({ tipo: "texto", v: texto.slice(last, m.index) });
+      partes.push({ tipo: "mencao", v: "@" + casou.nome, id: casou.id, nome: casou.nome });
+      last = m.index + 1 + comprimentoCasou;
       regex.lastIndex = last;
     }
   }
-  partes.push({ tipo: "texto", v: texto.slice(last) });
+  if (last < texto.length) partes.push({ tipo: "texto", v: texto.slice(last) });
   return partes;
 }
 
