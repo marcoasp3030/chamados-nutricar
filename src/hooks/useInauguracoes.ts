@@ -138,6 +138,11 @@ export function useInauguracoes(workspaceId: string | undefined) {
         }
 
         const razao = (destaques["Razão social"] as string | undefined) ?? null;
+        const tipoRaw = destaques["Tipo de condomínio"] as string | undefined;
+        const tipoCondominio: TipoCondominio =
+          tipoRaw === "Residencial" || tipoRaw === "Corporativo" || tipoRaw === "Evento"
+            ? tipoRaw
+            : null;
 
         return {
           id: c.id,
@@ -148,6 +153,7 @@ export function useInauguracoes(workspaceId: string | undefined) {
           responsavelTecnico:
             (destaques["Responsável técnico"] as string | undefined) ?? null,
           cidadeEstado: (destaques["Cidade / Estado"] as string | undefined) ?? null,
+          tipoCondominio,
           pct,
           preenchidos,
           total,
