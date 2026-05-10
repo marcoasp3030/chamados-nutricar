@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -109,6 +110,7 @@ export function AbaUsuarios() {
   const queryClient = useQueryClient();
   const { data: membros, isLoading: carregandoMembros } = useMembrosWorkspace(
     workspaceAtual?.id,
+    { incluirInativos: true },
   );
   const { data: departamentos } = useDepartamentos(workspaceAtual?.id);
 
@@ -244,6 +246,23 @@ export function AbaUsuarios() {
     },
     onError: (e: Error) =>
       toast.error("Não foi possível remover.", { description: e.message }),
+  });
+
+  const alternarAtivoMembro = useMutation({
+    mutationFn: async ({ membroId, ativo }: { membroId: string; ativo: boolean }) => {
+      const { error } = await supabase
+        .from("workspace_membros")
+        .update({ ativo })
+        .eq("id", membroId);
+      if (error) throw error;
+      return ativo;
+    },
+    onSuccess: (ativo) => {
+      queryClient.invalidateQueries({ queryKey: ["membros-workspace"] });
+      toast.success(ativo ? "Usuário ativado." : "Usuário inativado.");
+    },
+    onError: (e: Error) =>
+      toast.error("Não foi possível alterar o status.", { description: e.message }),
   });
 
   const { data: convites, isLoading: carregandoConvites } = useQuery({
@@ -407,7 +426,23 @@ export function AbaUsuarios() {
                       ) : null,
                     )}
                     <Badge>{rotuloPapel[m.papel as Papel] ?? m.papel}</Badge>
+                    {!m.ativo && <Badge variant="destructive">Inativo</Badge>}
                   </div>
+                  {podeAdministrar && !ehProprietario && !ehProprio && (
+                    <div className="flex shrink-0 items-center gap-2 px-1">
+                      <Switch
+                        checked={m.ativo}
+                        disabled={alternarAtivoMembro.isPending}
+                        onCheckedChange={(v) =>
+                          alternarAtivoMembro.mutate({ membroId: m.id, ativo: v })
+                        }
+                        title={m.ativo ? "Inativar usuário" : "Ativar usuário"}
+                      />
+                      <span className="text-xs text-muted-foreground w-12">
+                        {m.ativo ? "Ativo" : "Inativo"}
+                      </span>
+                    </div>
+                  )}
                   {(podeEditar || podeRemover) && (
                     <div className="flex shrink-0 gap-1">
                       {podeEditar && (

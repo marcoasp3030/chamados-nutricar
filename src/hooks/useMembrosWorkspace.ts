@@ -8,6 +8,7 @@ export interface MembroWorkspace {
   cargo: string | null;
   departamento_id: string | null;
   departamento_ids: string[];
+  ativo: boolean;
   perfil: {
     id: string;
     nome: string;
@@ -17,16 +18,21 @@ export interface MembroWorkspace {
   };
 }
 
-export function useMembrosWorkspace(workspaceId: string | undefined) {
+export function useMembrosWorkspace(
+  workspaceId: string | undefined,
+  options?: { incluirInativos?: boolean },
+) {
+  const incluirInativos = options?.incluirInativos ?? false;
   return useQuery({
-    queryKey: ["membros-workspace", workspaceId],
+    queryKey: ["membros-workspace", workspaceId, { incluirInativos }],
     enabled: !!workspaceId,
     queryFn: async (): Promise<MembroWorkspace[]> => {
-      const { data: membros, error } = await supabase
+      let query = supabase
         .from("workspace_membros")
-        .select("id, usuario_id, papel, cargo, departamento_id")
-        .eq("workspace_id", workspaceId!)
-        .eq("ativo", true);
+        .select("id, usuario_id, papel, cargo, departamento_id, ativo")
+        .eq("workspace_id", workspaceId!);
+      if (!incluirInativos) query = query.eq("ativo", true);
+      const { data: membros, error } = await query;
 
       if (error) throw error;
 
@@ -60,6 +66,7 @@ export function useMembrosWorkspace(workspaceId: string | undefined) {
         papel: m.papel,
         cargo: m.cargo,
         departamento_id: m.departamento_id,
+        ativo: m.ativo,
         departamento_ids: mapaDeptos.get(m.id) ?? (m.departamento_id ? [m.departamento_id] : []),
         perfil: mapa.get(m.usuario_id) ?? {
           id: m.usuario_id,
