@@ -80,12 +80,12 @@ function statusNormalizado(s: string | null): string {
 // ======================== SALVAR + VALIDAR ========================
 export const salvarUazapiConfig = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { workspaceId: string; serverUrl: string; adminToken: string }) =>
+  .inputValidator((d: { workspaceId: string; serverUrl: string; adminToken?: string }) =>
     z
       .object({
         workspaceId: z.string().uuid(),
         serverUrl: z.string().url().min(8).max(500),
-        adminToken: z.string().min(4).max(500),
+        adminToken: z.string().min(4).max(500).optional(),
       })
       .parse(d),
   )
@@ -94,6 +94,12 @@ export const salvarUazapiConfig = createServerFn({ method: "POST" })
     await garantirAdmin(supabase, data.workspaceId, userId);
 
     const serverUrl = normalizeServerUrl(data.serverUrl);
+    let token = data.adminToken;
+    if (!token) {
+      const cfg = await carregarConfig(data.workspaceId);
+      token = cfg?.admin_token ?? undefined;
+    }
+    if (!token) throw new Error("Informe o Admin Token.");
     // Valida tentando endpoint comum da Uazapi
     const tentativas = ["/instance/all", "/instances", "/status"];
     let validouOk = false;
