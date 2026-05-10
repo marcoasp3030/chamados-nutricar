@@ -85,14 +85,36 @@ export function DetalheChamado({ numero }: Props) {
   const [editando, setEditando] = useState(false);
   const [novoSub, setNovoSub] = useState(false);
   const [confirmarExcluir, setConfirmarExcluir] = useState(false);
+  const [transicao, setTransicao] = useState<StatusChamado | null>(null);
+  const [motivoTexto, setMotivoTexto] = useState("");
+  const [agendadoPara, setAgendadoPara] = useState("");
+  const [usuarioId, setUsuarioId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUsuarioId(data.user?.id ?? null));
+  }, []);
 
   const podeAtender =
     workspaceAtual && ["Proprietario", "Administrador", "Gestor", "Atendente"].includes(workspaceAtual.papel);
   const podeExcluir =
     workspaceAtual && ["Proprietario", "Administrador"].includes(workspaceAtual.papel);
 
+  const meuMembro = (membros ?? []).find((m) => m.usuario_id === usuarioId);
+  const meusDeptoIds = meuMembro?.departamento_ids ?? [];
+  const ehDoDeptoDestino =
+    !!chamado?.departamento_id && meusDeptoIds.includes(chamado.departamento_id);
+  const podeAssumir =
+    !!usuarioId && ehDoDeptoDestino && chamado?.responsavel_id !== usuarioId;
+
   const atualizar = useMutation({
-    mutationFn: async (campos: { status?: StatusChamado; responsavel_id?: string | null }) => {
+    mutationFn: async (campos: Partial<{
+      status: StatusChamado;
+      responsavel_id: string | null;
+      motivo_agendamento: string | null;
+      agendado_para: string | null;
+      motivo_pausa: string | null;
+      tratativa: string | null;
+    }>) => {
       if (!chamado) throw new Error("Chamado não carregado");
       const { error } = await supabase.from("chamados").update(campos).eq("id", chamado.id);
       if (error) throw error;
@@ -104,6 +126,57 @@ export function DetalheChamado({ numero }: Props) {
     },
     onError: (e: Error) => toast.error("Falha ao atualizar.", { description: e.message }),
   });
+
+  function iniciarTransicao(novo: StatusChamado) {
+    if (!chamado || novo === chamado.status) return;
+    if (
+      chamado.status === "Aberto" &&
+      !["Aberto", "Cancelado", "Fechado"].includes(novo) &&
+      !chamado.responsavel_id
+    ) {
+      toast.error("Atribua um responsável antes de iniciar a resolução.", {
+        description: ehDoDeptoDestino
+          ? "Use o botão 'Atribuir a mim' ou selecione um responsável."
+          : undefined,
+      });
+      return;
+    }
+    if (novo === "Agendado" || novo === "Pausado" || novo === "Resolvido") {
+      setMotivoTexto("");
+      setAgendadoPara("");
+      setTransicao(novo);
+      return;
+    }
+    atualizar.mutate({ status: novo });
+  }
+
+  function confirmarTransicao() {
+    if (!transicao) return;
+    if (transicao === "Agendado") {
+      if (!motivoTexto.trim()) return toast.error("Informe o motivo do agendamento.");
+      if (!agendadoPara) return toast.error("Informe a data do agendamento.");
+      atualizar.mutate({
+        status: "Agendado",
+        motivo_agendamento: motivoTexto.trim(),
+        agendado_para: new Date(agendadoPara).toISOString(),
+      });
+    } else if (transicao === "Pausado") {
+      if (!motivoTexto.trim()) return toast.error("Informe o motivo da pausa.");
+      atualizar.mutate({ status: "Pausado", motivo_pausa: motivoTexto.trim() });
+    } else if (transicao === "Resolvido") {
+      if (!motivoTexto.trim()) return toast.error("Descreva a tratativa realizada.");
+      atualizar.mutate({ status: "Resolvido", tratativa: motivoTexto.trim() });
+    }
+    setTransicao(null);
+  }
+
+  function assumirChamado() {
+    if (!usuarioId) return;
+    atualizar.mutate(
+      { responsavel_id: usuarioId },
+      { onSuccess: () => toast.success("Chamado atribuído a você.") },
+    );
+  }
 
   const editar = useMutation({
     mutationFn: async (dados: DadosFormularioChamado) => {
