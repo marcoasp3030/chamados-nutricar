@@ -26,10 +26,15 @@ function fmtDataHora(iso?: string | null) {
 
 function normalizarTelefone(t?: string | null): string | null {
   if (!t) return null;
-  const d = t.replace(/\D/g, "");
+  let d = t.replace(/\D/g, "");
   if (d.length < 10) return null;
-  // Adiciona DDI 55 se vier sem
-  if (d.length <= 11) return `55${d}`;
+  // Garante DDI 55
+  if (d.length === 10 || d.length === 11) d = `55${d}`;
+  // Para celular brasileiro (55 + DDD + número), garantir o 9 após o DDD
+  // 12 dígitos => 55 + DDD(2) + 8 dígitos => insere 9
+  if (d.length === 12 && d.startsWith("55")) {
+    d = `${d.slice(0, 4)}9${d.slice(4)}`;
+  }
   return d;
 }
 
