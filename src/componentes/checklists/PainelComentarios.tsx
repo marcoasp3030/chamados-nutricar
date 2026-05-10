@@ -109,12 +109,13 @@ export function PainelComentarios({
     [membros, usuario],
   );
 
-  const nomesNorm = useMemo(() => {
-    const s = new Set<string>();
-    for (const m of membros ?? []) {
-      s.add(m.perfil.nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase());
+  const membrosPorNome = useMemo(() => {
+    const m = new Map<string, MembroMencionavel>();
+    for (const x of membros ?? []) {
+      const chave = x.perfil.nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      m.set(chave, { id: x.usuario_id, nome: x.perfil.nome });
     }
-    return s;
+    return m;
   }, [membros]);
 
   const enviar = () => {
@@ -151,7 +152,7 @@ export function PainelComentarios({
         ) : (
           (comentarios ?? []).map((c) => {
             const meu = usuario === c.autor_id;
-            const partes = renderizarConteudo(c.conteudo, nomesNorm);
+            const partes = renderizarConteudo(c.conteudo, membrosPorNome);
             return (
               <div key={c.id} className="flex gap-2.5">
                 <Avatar className="h-8 w-8 shrink-0">
