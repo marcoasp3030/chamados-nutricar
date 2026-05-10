@@ -240,10 +240,11 @@ export const obterStatusUazapi = createServerFn({ method: "POST" })
 
     const token = cfg.instance_token || cfg.admin_token!;
     const tentativas = [
+      `/instance/status`,
+      `/status`,
       `/instance/status?instance=${cfg.instance_name}`,
       `/instance/connectionState/${cfg.instance_name}`,
       `/instance/info`,
-      `/status`,
     ];
     let resp: any = null;
     let httpFinal = 0;
@@ -260,17 +261,22 @@ export const obterStatusUazapi = createServerFn({ method: "POST" })
     let statusBruto = extrairStatus(resp);
     let numero = extrairNumero(resp);
 
-    // Se ainda não conectado e sem QR, tenta /instance/connect para gerar
+    // Se ainda não conectado e sem QR, força connect para gerar QR
     if (statusNormalizado(statusBruto) !== "connected" && !qr) {
-      const conn = await uazapiFetch(
-        cfg.server_url!,
-        `/instance/connect?instance=${cfg.instance_name}`,
-        token,
-        { method: "GET" },
-      );
+      const conn = await chamarConnect(cfg.server_url!, cfg.instance_name, token);
       if (conn.ok) {
         qr = qr ?? extrairQR(conn.data);
         statusBruto = statusBruto ?? extrairStatus(conn.data);
+        numero = numero ?? extrairNumero(conn.data);
+      } else {
+        await registrarLogUazapi(
+          data.workspaceId,
+          "conectar",
+          false,
+          conn.status,
+          `Falha em /instance/connect`,
+          conn.data,
+        );
       }
     }
 
