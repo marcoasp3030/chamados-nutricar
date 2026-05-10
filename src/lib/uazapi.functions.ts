@@ -333,6 +333,67 @@ export const desconectarUazapi = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ======================== ENVIAR MENSAGEM DE TESTE ========================
+export const enviarMensagemTesteUazapi = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { workspaceId: string; numero: string; mensagem: string }) =>
+    z
+      .object({
+        workspaceId: z.string().uuid(),
+        numero: z.string().trim().min(8).max(20),
+        mensagem: z.string().trim().min(1).max(2000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await garantirAdmin(supabase, data.workspaceId, userId);
+    const cfg = await carregarConfig(data.workspaceId);
+    if (!cfg?.instance_name) throw new Error("Crie e conecte a instância antes.");
+    if (cfg.status !== "connected") throw new Error("WhatsApp não está conectado.");
+
+    const token = cfg.instance_token || cfg.admin_token!;
+    const numero = data.numero.replace(/\D/g, "");
+
+    const tentativas: { path: string; body: any }[] = [
+      { path: `/send/text`, body: { number: numero, text: data.mensagem } },
+      { path: `/message/sendText/${cfg.instance_name}`, body: { number: numero, text: data.mensagem } },
+      { path: `/sendMessage/${cfg.instance_name}`, body: { number: numero, body: data.mensagem } },
+    ];
+
+    let ultimaResp: any = null;
+    let ultimoStatus = 0;
+    for (const t of tentativas) {
+      const r = await uazapiFetch(cfg.server_url!, t.path, token, {
+        method: "POST",
+        body: JSON.stringify(t.body),
+      });
+      ultimaResp = r.data;
+      ultimoStatus = r.status;
+      if (r.ok) {
+        await registrarLogUazapi(
+          data.workspaceId,
+          "status",
+          true,
+          r.status,
+          `Mensagem de teste enviada para ${numero}.`,
+        );
+        return { ok: true };
+      }
+    }
+    await registrarLogUazapi(
+      data.workspaceId,
+      "status",
+      false,
+      ultimoStatus,
+      `Falha ao enviar mensagem de teste`,
+      ultimaResp,
+    );
+    throw new Error(
+      `Falha ao enviar mensagem (HTTP ${ultimoStatus}): ${typeof ultimaResp === "string" ? ultimaResp : JSON.stringify(ultimaResp)}`,
+    );
+  });
+
 // ======================== EXCLUIR INSTÂNCIA ========================
 export const excluirInstanciaUazapi = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
