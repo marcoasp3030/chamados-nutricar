@@ -115,12 +115,30 @@ Deno.serve(async (req) => {
       });
     }
 
-    const senha = body.senha && body.senha.length >= 8 ? body.senha : gerarSenha();
-
-    const { error: updErr } = await admin.auth.admin.updateUserById(body.usuario_id, {
-      password: senha,
-    });
-    if (updErr) throw updErr;
+    let senha = body.senha && body.senha.length >= 8 ? body.senha : gerarSenha();
+    let tentativas = 0;
+    let updErr: { message?: string; code?: string } | null = null;
+    while (tentativas < 5) {
+      const r = await admin.auth.admin.updateUserById(body.usuario_id, { password: senha });
+      updErr = r.error as { message?: string; code?: string } | null;
+      if (!updErr) break;
+      // Se senha gerada caiu em base de vazadas, tenta outra automaticamente
+      if (!body.senha && (updErr as { code?: string }).code === "weak_password") {
+        senha = gerarSenha();
+        tentativas++;
+        continue;
+      }
+      break;
+    }
+    if (updErr) {
+      const msg = (updErr as { code?: string }).code === "weak_password"
+        ? "Senha rejeitada por ser comum/conhecida em vazamentos. Use outra mais forte."
+        : (updErr as { message?: string }).message ?? "Falha ao atualizar senha.";
+      return new Response(JSON.stringify({ error: msg }), {
+        status: 422,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     return new Response(
       JSON.stringify({ ok: true, senha }),
