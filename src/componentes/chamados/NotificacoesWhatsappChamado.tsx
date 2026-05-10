@@ -49,9 +49,13 @@ function rotuloEvento(evento: string): string {
 function explicarErro(status: number | null, erro: string | null): string {
   if (!erro && status == null) return "Sem detalhes";
   const ehHtml = !!erro && /<!doctype html|<html/i.test(erro);
-  // Uazapi costuma retornar 405 quando o número está fora do formato
+  // 400/422: número inválido ou payload rejeitado pelo Uazapi
+  if (status === 400 || status === 422) {
+    return `Uazapi rejeitou o envio (HTTP ${status}). Causa provável: número de telefone inválido ou inexistente no WhatsApp. Verifique o telefone do destinatário (DDI 55 + DDD + 9 + número). Resposta: ${erro ?? "sem detalhes"}`;
+  }
+  // 405: nenhum dos endpoints conhecidos aceitou o POST — geralmente URL/instância errada
   if (status === 405 || /"code"\s*:\s*405|method not allowed/i.test(erro ?? "")) {
-    return "Servidor Uazapi rejeitou (405). Causa mais provável: número de telefone em formato inválido. Confirme se o telefone do destinatário tem DDI 55, DDD e o 9 do celular (ex.: 5511987654321).";
+    return "Nenhum endpoint do Uazapi aceitou o envio (405). Verifique a URL do servidor e o nome da instância nas Configurações do WhatsApp.";
   }
   if (status === 404) {
     if (ehHtml) {
