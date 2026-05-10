@@ -109,6 +109,7 @@ export function AbaUsuarios() {
   const queryClient = useQueryClient();
   const { data: membros, isLoading: carregandoMembros } = useMembrosWorkspace(
     workspaceAtual?.id,
+    { incluirInativos: true },
   );
   const { data: departamentos } = useDepartamentos(workspaceAtual?.id);
 
