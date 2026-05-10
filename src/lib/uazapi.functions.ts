@@ -42,13 +42,23 @@ function extrairQR(data: any): string | null {
 
 function extrairStatus(data: any): string | null {
   if (!data) return null;
-  return (
-    data.status ??
-    data.connectionStatus ??
-    data.instance?.status ??
-    data.instance?.state ??
-    null
-  );
+  const candidatos = [
+    data.status,
+    data.connectionStatus,
+    data.state,
+    data.instance?.status,
+    data.instance?.state,
+    data.instance?.connectionStatus,
+  ];
+  for (const c of candidatos) {
+    if (typeof c === "string") return c;
+    if (c && typeof c === "object") {
+      // Ex: { state: "open" }
+      if (typeof c.state === "string") return c.state;
+      if (typeof c.status === "string") return c.status;
+    }
+  }
+  return null;
 }
 
 function extrairNumero(data: any): string | null {
@@ -75,6 +85,27 @@ function statusNormalizado(s: string | null): string {
   if (["disconnected", "closed", "logged_out", "logout", "offline"].some((k) => v.includes(k)))
     return "disconnected";
   return v;
+}
+
+// Tenta múltiplos endpoints de connect (varia entre versões da Uazapi).
+async function chamarConnect(serverUrl: string, instanceName: string, token: string) {
+  const tentativas: { method: "POST" | "GET"; path: string; body?: any }[] = [
+    { method: "POST", path: "/instance/connect", body: {} },
+    { method: "POST", path: `/instance/connect/${instanceName}`, body: {} },
+    { method: "POST", path: `/instance/connect?instance=${instanceName}`, body: {} },
+    { method: "GET", path: `/instance/connect/${instanceName}` },
+    { method: "GET", path: `/instance/connect?instance=${instanceName}` },
+  ];
+  let ultimo = { ok: false, status: 0, data: null as any, text: "" };
+  for (const t of tentativas) {
+    const r = await uazapiFetch(serverUrl, t.path, token, {
+      method: t.method,
+      ...(t.body ? { body: JSON.stringify(t.body) } : {}),
+    });
+    ultimo = r;
+    if (r.ok) return r;
+  }
+  return ultimo;
 }
 
 // ======================== SALVAR + VALIDAR ========================
@@ -209,10 +240,11 @@ export const obterStatusUazapi = createServerFn({ method: "POST" })
 
     const token = cfg.instance_token || cfg.admin_token!;
     const tentativas = [
+      `/instance/status`,
+      `/status`,
       `/instance/status?instance=${cfg.instance_name}`,
       `/instance/connectionState/${cfg.instance_name}`,
       `/instance/info`,
-      `/status`,
     ];
     let resp: any = null;
     let httpFinal = 0;
@@ -229,17 +261,22 @@ export const obterStatusUazapi = createServerFn({ method: "POST" })
     let statusBruto = extrairStatus(resp);
     let numero = extrairNumero(resp);
 
-    // Se ainda não conectado e sem QR, tenta /instance/connect para gerar
+    // Se ainda não conectado e sem QR, força connect para gerar QR
     if (statusNormalizado(statusBruto) !== "connected" && !qr) {
-      const conn = await uazapiFetch(
-        cfg.server_url!,
-        `/instance/connect?instance=${cfg.instance_name}`,
-        token,
-        { method: "GET" },
-      );
+      const conn = await chamarConnect(cfg.server_url!, cfg.instance_name, token);
       if (conn.ok) {
         qr = qr ?? extrairQR(conn.data);
         statusBruto = statusBruto ?? extrairStatus(conn.data);
+        numero = numero ?? extrairNumero(conn.data);
+      } else {
+        await registrarLogUazapi(
+          data.workspaceId,
+          "conectar",
+          false,
+          conn.status,
+          `Falha em /instance/connect`,
+          conn.data,
+        );
       }
     }
 
@@ -288,18 +325,20 @@ export const reconectarUazapi = createServerFn({ method: "POST" })
     const cfg = await carregarConfig(data.workspaceId);
     if (!cfg?.instance_name) throw new Error("Crie a instância antes.");
     const token = cfg.instance_token || cfg.admin_token!;
-    const r = await uazapiFetch(
-      cfg.server_url!,
-      `/instance/connect?instance=${cfg.instance_name}`,
-      token,
-      { method: "GET" },
-    );
+    const r = await chamarConnect(cfg.server_url!, cfg.instance_name, token);
     const qr = extrairQR(r.data);
     await supabaseAdmin
       .from("workspace_uazapi_config")
       .update({ status: "qr", qr_code: qr ?? null, ultima_sincronizacao: new Date().toISOString() })
       .eq("workspace_id", data.workspaceId);
-    await registrarLogUazapi(data.workspaceId, "conectar", r.ok, r.status, "Reconectar solicitado.");
+    await registrarLogUazapi(
+      data.workspaceId,
+      "conectar",
+      r.ok,
+      r.status,
+      r.ok ? "Reconectar solicitado." : `Falha em /instance/connect (HTTP ${r.status})`,
+      r.data,
+    );
     return { ok: true };
   });
 

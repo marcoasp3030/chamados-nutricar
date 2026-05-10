@@ -432,13 +432,14 @@ export function AbaUazapi() {
       )}
 
       {/* Envio de teste */}
-      {conectado && (
+      {temInstancia && (
         <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
           <h3 className="font-semibold flex items-center gap-2">
             <Send className="h-4 w-4" /> Enviar mensagem de teste
           </h3>
           <p className="text-xs text-muted-foreground">
             Use o número completo com DDI e DDD, somente dígitos. Ex: 5511999998888.
+            {!conectado && " Disponível apenas com WhatsApp conectado."}
           </p>
           <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
             <div className="space-y-2">
@@ -466,6 +467,7 @@ export function AbaUazapi() {
               onClick={() => mEnviarTeste.mutate()}
               disabled={
                 mEnviarTeste.isPending ||
+                !conectado ||
                 testeNumero.replace(/\D/g, "").length < 8 ||
                 !testeMensagem.trim()
               }
