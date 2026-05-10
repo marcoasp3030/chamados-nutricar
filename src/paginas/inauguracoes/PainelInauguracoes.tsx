@@ -289,11 +289,15 @@ function CartaoInauguracao({
   item,
   slug,
   coluna,
+  comentarios,
+  onComentarios,
   onConcluir,
 }: {
   item: CardInauguracao;
   slug: string;
   coluna: ColunaInauguracao;
+  comentarios: number;
+  onComentarios: () => void;
   onConcluir: () => void;
 }) {
   const titulo = item.razaoSocial ?? item.nome;
@@ -406,19 +410,34 @@ function CartaoInauguracao({
               <span className="italic">Sem responsável</span>
             )}
           </div>
-          {coluna !== "Inauguradas" && item.pct >= 80 && (
+          <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onConcluir();
+                onComentarios();
               }}
-              className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 transition-colors hover:bg-emerald-500/20 dark:text-emerald-300"
+              className="flex items-center gap-1 rounded-md border border-border/60 bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+              aria-label="Comentários"
             >
-              Inaugurar
+              <MessageSquare className="h-3 w-3" />
+              {comentarios > 0 ? comentarios : ""}
             </button>
-          )}
+            {coluna !== "Inauguradas" && item.pct >= 80 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onConcluir();
+                }}
+                className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 transition-colors hover:bg-emerald-500/20 dark:text-emerald-300"
+              >
+                Inaugurar
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </Link>
