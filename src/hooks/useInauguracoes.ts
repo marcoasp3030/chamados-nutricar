@@ -8,6 +8,8 @@ export type ColunaInauguracao =
   | "Atrasadas"
   | "Inauguradas";
 
+export type TipoCondominio = "Residencial" | "Corporativo" | "Evento" | null;
+
 export interface CardInauguracao {
   id: string;
   nome: string;
@@ -16,6 +18,7 @@ export interface CardInauguracao {
   status: string;
   responsavelTecnico: string | null;
   cidadeEstado: string | null;
+  tipoCondominio: TipoCondominio;
   pct: number;
   preenchidos: number;
   total: number;
@@ -29,6 +32,7 @@ const ROTULOS_DESTAQUE = [
   "Data prevista da inauguração",
   "Cidade / Estado",
   "Responsável técnico",
+  "Tipo de condomínio",
 ];
 
 export function useInauguracoes(workspaceId: string | undefined) {
