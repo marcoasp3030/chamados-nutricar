@@ -2,3 +2,6 @@ project_id = "aqsohuerdaxojevvrumj"
 
 [functions.ia-chamado]
 verify_jwt = true
+
+[functions.criar-usuario-direto]
+verify_jwt = true
