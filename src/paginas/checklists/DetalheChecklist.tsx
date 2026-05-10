@@ -212,6 +212,9 @@ export function DetalheChecklist({ checklistId }: Props) {
           <Button variant="outline" onClick={() => setHistoricoAberto(true)}>
             <History className="h-4 w-4" /> Histórico
           </Button>
+          <Button variant="outline" onClick={() => exportarPDF({ checklist, itens: itens ?? [], valores, pct, preenchidos, total })}>
+            <FileDown className="h-4 w-4" /> Exportar PDF
+          </Button>
           <Button
             onClick={() => salvar.mutate()}
             disabled={!dirty || salvar.isPending}
