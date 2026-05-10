@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_config: {
+        Row: {
+          atualizado_em: string
+          chave: string
+          valor: string
+        }
+        Insert: {
+          atualizado_em?: string
+          chave: string
+          valor: string
+        }
+        Update: {
+          atualizado_em?: string
+          chave?: string
+          valor?: string
+        }
+        Relationships: []
+      }
       categorias_chamado: {
         Row: {
           atualizado_em: string
@@ -324,6 +342,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      chamado_whatsapp_notificacoes: {
+        Row: {
+          chamado_id: string
+          criado_em: string
+          dedup_key: string
+          destinatario_perfil_id: string
+          erro: string | null
+          evento: string
+          id: string
+          mensagem: string | null
+          status_http: number | null
+          sucesso: boolean
+          telefone: string
+          workspace_id: string
+        }
+        Insert: {
+          chamado_id: string
+          criado_em?: string
+          dedup_key: string
+          destinatario_perfil_id: string
+          erro?: string | null
+          evento: string
+          id?: string
+          mensagem?: string | null
+          status_http?: number | null
+          sucesso?: boolean
+          telefone: string
+          workspace_id: string
+        }
+        Update: {
+          chamado_id?: string
+          criado_em?: string
+          dedup_key?: string
+          destinatario_perfil_id?: string
+          erro?: string | null
+          evento?: string
+          id?: string
+          mensagem?: string | null
+          status_http?: number | null
+          sucesso?: boolean
+          telefone?: string
+          workspace_id?: string
+        }
+        Relationships: []
       }
       chamados: {
         Row: {
@@ -1289,6 +1352,17 @@ export type Database = {
       departamentos_do_usuario: {
         Args: { _workspace_id: string }
         Returns: string[]
+      }
+      disparar_whatsapp_chamado: {
+        Args: {
+          _ator_id: string
+          _chamado_id: string
+          _comentario_id?: string
+          _detalhes?: Json
+          _evento: string
+          _workspace_id: string
+        }
+        Returns: undefined
       }
       pode_ver_todos_chamados: {
         Args: { _workspace_id: string }
