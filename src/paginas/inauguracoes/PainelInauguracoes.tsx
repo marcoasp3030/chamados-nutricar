@@ -249,6 +249,7 @@ export function PainelInauguracoes() {
             <PainelComentarios
               checklistId={comentariosDe.id}
               workspaceId={workspaceAtual.id}
+              nomeChecklist={comentariosDe.razaoSocial ?? comentariosDe.nome}
               className="mt-4 flex-1"
             />
           )}
