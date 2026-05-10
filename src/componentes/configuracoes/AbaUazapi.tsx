@@ -432,7 +432,7 @@ export function AbaUazapi() {
       )}
 
       {/* Envio de teste */}
-      {conectado && (
+      {temInstancia && (
         <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
           <h3 className="font-semibold flex items-center gap-2">
             <Send className="h-4 w-4" /> Enviar mensagem de teste
