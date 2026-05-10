@@ -42,13 +42,23 @@ function extrairQR(data: any): string | null {
 
 function extrairStatus(data: any): string | null {
   if (!data) return null;
-  return (
-    data.status ??
-    data.connectionStatus ??
-    data.instance?.status ??
-    data.instance?.state ??
-    null
-  );
+  const candidatos = [
+    data.status,
+    data.connectionStatus,
+    data.state,
+    data.instance?.status,
+    data.instance?.state,
+    data.instance?.connectionStatus,
+  ];
+  for (const c of candidatos) {
+    if (typeof c === "string") return c;
+    if (c && typeof c === "object") {
+      // Ex: { state: "open" }
+      if (typeof c.state === "string") return c.state;
+      if (typeof c.status === "string") return c.status;
+    }
+  }
+  return null;
 }
 
 function extrairNumero(data: any): string | null {
