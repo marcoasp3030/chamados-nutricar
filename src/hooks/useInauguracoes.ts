@@ -8,6 +8,8 @@ export type ColunaInauguracao =
   | "Atrasadas"
   | "Inauguradas";
 
+export type TipoCondominio = "Residencial" | "Corporativo" | "Evento" | null;
+
 export interface CardInauguracao {
   id: string;
   nome: string;
@@ -16,6 +18,7 @@ export interface CardInauguracao {
   status: string;
   responsavelTecnico: string | null;
   cidadeEstado: string | null;
+  tipoCondominio: TipoCondominio;
   pct: number;
   preenchidos: number;
   total: number;
@@ -29,6 +32,7 @@ const ROTULOS_DESTAQUE = [
   "Data prevista da inauguração",
   "Cidade / Estado",
   "Responsável técnico",
+  "Tipo de condomínio",
 ];
 
 export function useInauguracoes(workspaceId: string | undefined) {
@@ -134,6 +138,11 @@ export function useInauguracoes(workspaceId: string | undefined) {
         }
 
         const razao = (destaques["Razão social"] as string | undefined) ?? null;
+        const tipoRaw = destaques["Tipo de condomínio"] as string | undefined;
+        const tipoCondominio: TipoCondominio =
+          tipoRaw === "Residencial" || tipoRaw === "Corporativo" || tipoRaw === "Evento"
+            ? tipoRaw
+            : null;
 
         return {
           id: c.id,
@@ -144,6 +153,7 @@ export function useInauguracoes(workspaceId: string | undefined) {
           responsavelTecnico:
             (destaques["Responsável técnico"] as string | undefined) ?? null,
           cidadeEstado: (destaques["Cidade / Estado"] as string | undefined) ?? null,
+          tipoCondominio,
           pct,
           preenchidos,
           total,
