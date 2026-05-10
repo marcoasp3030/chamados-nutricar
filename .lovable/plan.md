@@ -1,95 +1,51 @@
-## Objetivo
+## Integração com Uazapi (WhatsApp)
 
-Restringir a visibilidade dos chamados por departamento e introduzir um fluxo de resolução com status obrigatórios e campos de justificativa.
+Adicionar uma nova aba **"WhatsApp (Uazapi)"** em Configurações, permitindo conectar uma instância da Uazapi por workspace.
 
----
+### O que será entregue
 
-## 1. Regras de visibilidade (RLS)
+**1. Aba de configuração**
+- Campos: Server URL e Admin Token (com mostrar/ocultar)
+- Botão **Salvar e validar** — testa a conexão e salva
+- Botão **Criar instância** (gera nome automático baseado no slug do workspace)
+- Exibição do QR Code (atualiza automaticamente a cada 30s ou quando expira)
+- Painel de status da instância:
+  - Nome da instância
+  - Status da conexão (badge: Desconectado / Aguardando QR / Conectando / Conectado)
+  - Número conectado (JID/telefone)
+  - Data/hora da conexão
+  - Última sincronização
+- Botões: **Reconectar**, **Desconectar**, **Excluir instância**
+- Indicadores visuais (ícones + cores semânticas)
+- Polling em tempo real (a cada 3s enquanto aguardando QR; 30s quando conectado)
+- Tratamento de erros com toast e mensagens claras
+- Tabela de **logs de integração** (últimos 50 eventos)
 
-Atualmente, qualquer membro com papel `Proprietario / Administrador / Gestor / Atendente` enxerga todos os chamados (`pode_ver_todos_chamados`). Vamos restringir:
+**2. Backend (Lovable Cloud)**
+- Tabela `workspace_uazapi_config` — guarda server_url, admin_token (criptografado a nível de RLS), instance_token, instance_name, status, número conectado, timestamps
+- Tabela `workspace_uazapi_logs` — histórico de chamadas (ação, status HTTP, mensagem, timestamp)
+- RLS: apenas Proprietário/Administrador acessa
+- **Server functions** (TanStack Start, em `src/lib/uazapi.functions.ts`):
+  - `validarUazapi` — testa Server URL + Admin Token
+  - `criarInstanciaUazapi` — cria instância via `/instance/init`, salva token
+  - `obterStatusUazapi` — consulta status + QR Code via `/instance/status` ou `/instance/connect`
+  - `desconectarUazapi` — `/instance/disconnect`
+  - `reconectarUazapi` — `/instance/connect` (gera novo QR)
+  - `excluirInstanciaUazapi` — remove instância e limpa config
+- Logs gravados a cada chamada para diagnóstico
 
-Um usuário poderá visualizar um chamado quando:
-- Ele é o solicitante OU criador OU responsável; **OU**
-- O chamado pertence (origem) a um departamento ao qual ele está vinculado (`workspace_membro_departamentos`); **OU**
-- O chamado é **destinado** a um departamento ao qual ele está vinculado.
+### Detalhes técnicos
 
-Para isso, o campo `chamados.departamento_id` passa a representar o **departamento destino** (já é como vem sendo usado). Vamos adicionar um novo campo `departamento_origem_id` para guardar o departamento do solicitante no momento da abertura (preenchido automaticamente).
+- Endpoints Uazapi usados: `POST /instance/init`, `GET /instance/status`, `GET /instance/connect`, `POST /instance/disconnect` (Authorization: admin token / instance token via header `token`)
+- Polling client-side via `useQuery` com `refetchInterval` dinâmico
+- QR Code renderizado a partir do base64 retornado pela API
+- Tokens armazenados apenas no servidor; nunca expostos ao cliente além do necessário para exibir status
+- UI segue design system existente (cards, badges, ícones lucide), padrão da `AbaVMPay`
 
-Proprietário e Administrador continuam vendo tudo (gestão).
+### Arquivos
 
-### Mudanças no banco
-- `ALTER TABLE chamados ADD COLUMN departamento_origem_id uuid`.
-- Trigger `before insert` em `chamados`: se `departamento_origem_id` for nulo, preencher com o primeiro departamento do solicitante.
-- Função `pode_ver_chamado(chamado_id)` (security definer) checando as regras acima.
-- Reescrever policies `chamados_selecionar` e `chamados_atualizar` (esta passa a permitir update por qualquer membro do depto destino — necessário para self-assign).
-- Atualizar policies de `chamado_comentarios`, `chamado_anexos`, `chamado_historico`, `chamado_ia_execucoes`, `chamado_requisicao_itens` para usar `pode_ver_chamado`.
-
----
-
-## 2. Self-assign
-
-Como qualquer membro do departamento destino poderá atualizar `responsavel_id`, basta um botão **"Atribuir a mim"** / **"Reassumir chamado"** no detalhe do chamado, visível quando o usuário pertence ao depto destino. O update já será permitido via RLS revisada.
-
----
-
-## 3. Novo fluxo de status
-
-Substituir/ajustar o enum `status_chamado` para o fluxo:
-
-```
-Aberto → Em andamento → (Agendado | Pausado) → Em andamento → Resolvido → Fechado
-                                                                ↘ Cancelado
-```
-
-Regras aplicadas no front (e validadas no back via trigger):
-- Sair de `Aberto` exige `responsavel_id` definido.
-- Mudar para `Agendado`: obrigatório `motivo_agendamento` + `agendado_para` (data).
-- Mudar para `Pausado`: obrigatório `motivo_pausa`.
-- Mudar para `Resolvido`: obrigatório `tratativa` (texto da resolução).
-
-### Mudanças no banco
-- Novas colunas em `chamados`: `motivo_agendamento text`, `agendado_para timestamptz`, `motivo_pausa text`, `tratativa text`.
-- Trigger `validar_transicao_status_chamado` (before update) que bloqueia transições inválidas e exige os campos.
-- Histórico já registra mudanças de status; adicionar registro específico quando motivo/tratativa forem informados.
-
----
-
-## 4. Frontend
-
-- **`FormularioChamado`**: ao abrir, mostrar select de "Departamento destino" (obrigatório).
-- **`DetalheChamado`**:
-  - Botão **"Atribuir a mim"** quando o usuário é do depto destino e não é o responsável.
-  - Ao trocar o status, abrir um Dialog específico:
-    - Para **Em andamento**: bloqueia se não houver responsável e oferece atribuir.
-    - **Agendado**: form com motivo + data/hora.
-    - **Pausado**: form com motivo.
-    - **Resolvido**: form com tratativa (textarea).
-  - Exibir banner com info atual (motivo/tratativa) quando aplicável.
-- **`useChamados` / `useChamado`**: nada além de buscar os novos campos (a RLS já filtra).
-- **`QuadroChamados`**: incluir colunas Agendado e Pausado se ainda não cobertas (já existe Aguardando — vamos manter os existentes e agregar; ou substituir? — manter os atuais e adicionar Agendado/Pausado ao enum como aliases não é trivial; vamos **adicionar** "Agendado" e "Pausado" ao enum, mantendo os antigos para compat).
-
-### Tipos
-- Atualizar `src/tipos/chamado.ts` com `Agendado | Pausado` e os novos campos.
-
----
-
-## 5. Detalhes técnicos
-
-- A função helper `pode_ver_chamado(_chamado_id uuid)` será SECURITY DEFINER, evitando recursão na policy do próprio `chamados`. Internamente checa:
-  - admins do workspace (via `tem_papel_workspace`),
-  - solicitante/criador/responsavel,
-  - depto origem ∈ deptos do usuário,
-  - depto destino ∈ deptos do usuário.
-- Para a **policy do próprio `chamados`** (não dá para chamar a função sobre a própria linha sem recursão) usaremos uma policy que repete a lógica diretamente sobre `OLD/NEW`, sem subselect em `chamados`.
-- Adicionar `Agendado` e `Pausado` ao enum `status_chamado` via `ALTER TYPE`.
-
----
-
-## 6. Ordem de execução
-
-1. Migração SQL (colunas, enum values, função helper, policies, triggers).
-2. Atualizar `src/tipos/chamado.ts`, traduções e cores (Kanban).
-3. Ajustar `FormularioChamado` para exigir depto destino.
-4. Implementar diálogos de transição de status em `DetalheChamado`.
-5. Botão "Atribuir a mim".
-6. Validar que listagem/quadro funcionam com a nova RLS.
+- **Migration:** cria `workspace_uazapi_config` + `workspace_uazapi_logs` + RLS + trigger de updated_at
+- **Novo:** `src/lib/uazapi.functions.ts` (server functions)
+- **Novo:** `src/lib/uazapi.server.ts` (helpers HTTP + logger)
+- **Novo:** `src/componentes/configuracoes/AbaUazapi.tsx`
+- **Editar:** `src/paginas/configuracoes/PaginaConfiguracoes.tsx` (adicionar tab)

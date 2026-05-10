@@ -1115,6 +1115,93 @@ export type Database = {
           },
         ]
       }
+      workspace_uazapi_config: {
+        Row: {
+          admin_token: string | null
+          ativo: boolean
+          atualizado_em: string
+          atualizado_por: string | null
+          conectado_em: string | null
+          criado_em: string
+          instance_id: string | null
+          instance_name: string | null
+          instance_token: string | null
+          numero_conectado: string | null
+          qr_code: string | null
+          server_url: string | null
+          status: string
+          ultima_sincronizacao: string | null
+          workspace_id: string
+        }
+        Insert: {
+          admin_token?: string | null
+          ativo?: boolean
+          atualizado_em?: string
+          atualizado_por?: string | null
+          conectado_em?: string | null
+          criado_em?: string
+          instance_id?: string | null
+          instance_name?: string | null
+          instance_token?: string | null
+          numero_conectado?: string | null
+          qr_code?: string | null
+          server_url?: string | null
+          status?: string
+          ultima_sincronizacao?: string | null
+          workspace_id: string
+        }
+        Update: {
+          admin_token?: string | null
+          ativo?: boolean
+          atualizado_em?: string
+          atualizado_por?: string | null
+          conectado_em?: string | null
+          criado_em?: string
+          instance_id?: string | null
+          instance_name?: string | null
+          instance_token?: string | null
+          numero_conectado?: string | null
+          qr_code?: string | null
+          server_url?: string | null
+          status?: string
+          ultima_sincronizacao?: string | null
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      workspace_uazapi_logs: {
+        Row: {
+          acao: string
+          criado_em: string
+          detalhes: Json | null
+          id: string
+          mensagem: string | null
+          status_http: number | null
+          sucesso: boolean
+          workspace_id: string
+        }
+        Insert: {
+          acao: string
+          criado_em?: string
+          detalhes?: Json | null
+          id?: string
+          mensagem?: string | null
+          status_http?: number | null
+          sucesso?: boolean
+          workspace_id: string
+        }
+        Update: {
+          acao?: string
+          criado_em?: string
+          detalhes?: Json | null
+          id?: string
+          mensagem?: string | null
+          status_http?: number | null
+          sucesso?: boolean
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       workspace_vmpay_config: {
         Row: {
           api_key: string | null
