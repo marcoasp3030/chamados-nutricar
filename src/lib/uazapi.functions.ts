@@ -240,13 +240,20 @@ export const obterStatusUazapi = createServerFn({ method: "POST" })
     const status = statusNormalizado(statusBruto);
     const conectadoAgora = status === "connected";
 
-    const update: Record<string, unknown> = {
+    const agora = new Date().toISOString();
+    const update: {
+      status: string;
+      qr_code: string | null;
+      ultima_sincronizacao: string;
+      conectado_em?: string;
+      numero_conectado?: string;
+    } = {
       status,
       qr_code: conectadoAgora ? null : qr,
-      ultima_sincronizacao: new Date().toISOString(),
+      ultima_sincronizacao: agora,
     };
     if (conectadoAgora) {
-      if (!cfg.conectado_em) update.conectado_em = new Date().toISOString();
+      if (!cfg.conectado_em) update.conectado_em = agora;
       if (numero) update.numero_conectado = numero;
     }
 

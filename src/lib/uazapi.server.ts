@@ -23,7 +23,7 @@ export async function registrarLogUazapi(
       sucesso,
       status_http: statusHttp,
       mensagem,
-      detalhes: detalhes ? (detalhes as object) : null,
+      detalhes: (detalhes ?? null) as never,
     });
   } catch {
     // best-effort
