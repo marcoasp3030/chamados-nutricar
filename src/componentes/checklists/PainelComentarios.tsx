@@ -187,12 +187,24 @@ export function PainelComentarios({
                   <p className="mt-1 whitespace-pre-wrap break-words text-sm">
                     {partes.map((p, i) =>
                       p.tipo === "mencao" ? (
-                        <span
-                          key={i}
-                          className="rounded bg-primary/10 px-1 font-medium text-primary"
-                        >
-                          {p.v}
-                        </span>
+                        workspaceAtual ? (
+                          <Link
+                            key={i}
+                            to="/w/$slug/membros/$usuarioId"
+                            params={{ slug: workspaceAtual.slug, usuarioId: p.id }}
+                            title={`Ver perfil de ${p.nome}`}
+                            className="rounded bg-primary/10 px-1 font-medium text-primary hover:bg-primary/20 hover:underline"
+                          >
+                            {p.v}
+                          </Link>
+                        ) : (
+                          <span
+                            key={i}
+                            className="rounded bg-primary/10 px-1 font-medium text-primary"
+                          >
+                            {p.v}
+                          </span>
+                        )
                       ) : (
                         <span key={i}>{p.v}</span>
                       ),
