@@ -17,6 +17,7 @@ import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
 import { Route as WSlugIndexRouteImport } from './routes/w.$slug.index'
 import { Route as WSlugProjetosRouteImport } from './routes/w.$slug.projetos'
 import { Route as WSlugPainelRouteImport } from './routes/w.$slug.painel'
+import { Route as WSlugInauguracoesRouteImport } from './routes/w.$slug.inauguracoes'
 import { Route as WSlugConfiguracoesRouteImport } from './routes/w.$slug.configuracoes'
 import { Route as WSlugChecklistsRouteImport } from './routes/w.$slug.checklists'
 import { Route as WSlugChamadosRouteImport } from './routes/w.$slug.chamados'
@@ -68,6 +69,11 @@ const WSlugProjetosRoute = WSlugProjetosRouteImport.update({
 const WSlugPainelRoute = WSlugPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
+  getParentRoute: () => WSlugRoute,
+} as any)
+const WSlugInauguracoesRoute = WSlugInauguracoesRouteImport.update({
+  id: '/inauguracoes',
+  path: '/inauguracoes',
   getParentRoute: () => WSlugRoute,
 } as any)
 const WSlugConfiguracoesRoute = WSlugConfiguracoesRouteImport.update({
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
   '/w/$slug/checklists': typeof WSlugChecklistsRouteWithChildren
   '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
+  '/w/$slug/inauguracoes': typeof WSlugInauguracoesRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug/projetos': typeof WSlugProjetosRouteWithChildren
   '/w/$slug/': typeof WSlugIndexRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
+  '/w/$slug/inauguracoes': typeof WSlugInauguracoesRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug': typeof WSlugIndexRoute
   '/w/$slug/chamados/$numero': typeof WSlugChamadosNumeroRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
   '/w/$slug/checklists': typeof WSlugChecklistsRouteWithChildren
   '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
+  '/w/$slug/inauguracoes': typeof WSlugInauguracoesRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug/projetos': typeof WSlugProjetosRouteWithChildren
   '/w/$slug/': typeof WSlugIndexRoute
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados'
     | '/w/$slug/checklists'
     | '/w/$slug/configuracoes'
+    | '/w/$slug/inauguracoes'
     | '/w/$slug/painel'
     | '/w/$slug/projetos'
     | '/w/$slug/'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/selecionar-empresa'
     | '/convite/$token'
     | '/w/$slug/configuracoes'
+    | '/w/$slug/inauguracoes'
     | '/w/$slug/painel'
     | '/w/$slug'
     | '/w/$slug/chamados/$numero'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados'
     | '/w/$slug/checklists'
     | '/w/$slug/configuracoes'
+    | '/w/$slug/inauguracoes'
     | '/w/$slug/painel'
     | '/w/$slug/projetos'
     | '/w/$slug/'
@@ -324,6 +336,13 @@ declare module '@tanstack/react-router' {
       path: '/painel'
       fullPath: '/w/$slug/painel'
       preLoaderRoute: typeof WSlugPainelRouteImport
+      parentRoute: typeof WSlugRoute
+    }
+    '/w/$slug/inauguracoes': {
+      id: '/w/$slug/inauguracoes'
+      path: '/inauguracoes'
+      fullPath: '/w/$slug/inauguracoes'
+      preLoaderRoute: typeof WSlugInauguracoesRouteImport
       parentRoute: typeof WSlugRoute
     }
     '/w/$slug/configuracoes': {
@@ -465,6 +484,7 @@ interface WSlugRouteChildren {
   WSlugChamadosRoute: typeof WSlugChamadosRouteWithChildren
   WSlugChecklistsRoute: typeof WSlugChecklistsRouteWithChildren
   WSlugConfiguracoesRoute: typeof WSlugConfiguracoesRoute
+  WSlugInauguracoesRoute: typeof WSlugInauguracoesRoute
   WSlugPainelRoute: typeof WSlugPainelRoute
   WSlugProjetosRoute: typeof WSlugProjetosRouteWithChildren
   WSlugIndexRoute: typeof WSlugIndexRoute
@@ -474,6 +494,7 @@ const WSlugRouteChildren: WSlugRouteChildren = {
   WSlugChamadosRoute: WSlugChamadosRouteWithChildren,
   WSlugChecklistsRoute: WSlugChecklistsRouteWithChildren,
   WSlugConfiguracoesRoute: WSlugConfiguracoesRoute,
+  WSlugInauguracoesRoute: WSlugInauguracoesRoute,
   WSlugPainelRoute: WSlugPainelRoute,
   WSlugProjetosRoute: WSlugProjetosRouteWithChildren,
   WSlugIndexRoute: WSlugIndexRoute,

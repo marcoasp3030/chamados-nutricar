@@ -4,6 +4,7 @@ import {
   Ticket,
   FolderKanban,
   CheckSquare,
+  PartyPopper,
   Users,
   BarChart3,
   Settings,
@@ -30,6 +31,7 @@ const itensPrincipais = [
   { rotulo: "Chamados", para: "/w/$slug/chamados" as const, icone: Ticket },
   { rotulo: "Projetos", para: "/w/$slug/projetos" as const, icone: FolderKanban },
   { rotulo: "Checklists", para: "/w/$slug/checklists" as const, icone: CheckSquare },
+  { rotulo: "Inaugurações", para: "/w/$slug/inauguracoes" as const, icone: PartyPopper },
 ];
 
 const itensGestao = [
