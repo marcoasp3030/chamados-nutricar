@@ -15,12 +15,25 @@ interface Payload {
 }
 
 function gerarSenha(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  let s = "";
-  const arr = new Uint8Array(14);
+  const maius = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const minus = "abcdefghjkmnpqrstuvwxyz";
+  const nums = "23456789";
+  const simb = "!@#$%&*?";
+  const todos = maius + minus + nums + simb;
+  const arr = new Uint8Array(20);
   crypto.getRandomValues(arr);
-  for (const n of arr) s += chars[n % chars.length];
-  return s + "@9";
+  let s = "";
+  for (const n of arr) s += todos[n % todos.length];
+  // Garante variedade exigida por políticas
+  const r = new Uint8Array(4);
+  crypto.getRandomValues(r);
+  return (
+    maius[r[0] % maius.length] +
+    minus[r[1] % minus.length] +
+    nums[r[2] % nums.length] +
+    simb[r[3] % simb.length] +
+    s
+  );
 }
 
 Deno.serve(async (req) => {
