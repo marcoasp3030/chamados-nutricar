@@ -55,7 +55,7 @@ export function Cabecalho() {
 
   const abrir = (link: string | null, id: string, lida: boolean) => {
     if (!lida) marcar.mutate([id]);
-    if (link) navigate({ to: link });
+    if (link) navigate({ to: link as never });
   };
 
   return (
