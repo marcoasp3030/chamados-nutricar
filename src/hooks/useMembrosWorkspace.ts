@@ -66,6 +66,7 @@ export function useMembrosWorkspace(
         papel: m.papel,
         cargo: m.cargo,
         departamento_id: m.departamento_id,
+        ativo: m.ativo,
         departamento_ids: mapaDeptos.get(m.id) ?? (m.departamento_id ? [m.departamento_id] : []),
         perfil: mapa.get(m.usuario_id) ?? {
           id: m.usuario_id,
