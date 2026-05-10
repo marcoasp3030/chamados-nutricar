@@ -429,6 +429,7 @@ export type Database = {
           conteudo: string
           criado_em: string
           id: string
+          mencionados: string[]
           workspace_id: string
         }
         Insert: {
@@ -438,6 +439,7 @@ export type Database = {
           conteudo: string
           criado_em?: string
           id?: string
+          mencionados?: string[]
           workspace_id: string
         }
         Update: {
@@ -447,6 +449,7 @@ export type Database = {
           conteudo?: string
           criado_em?: string
           id?: string
+          mencionados?: string[]
           workspace_id?: string
         }
         Relationships: []
@@ -702,6 +705,51 @@ export type Database = {
           descricao?: string | null
           id?: string
           nome?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      notificacoes: {
+        Row: {
+          ator_id: string | null
+          criado_em: string
+          destinatario_id: string
+          id: string
+          lida_em: string | null
+          link: string | null
+          mensagem: string | null
+          recurso_id: string | null
+          recurso_tipo: string | null
+          tipo: string
+          titulo: string
+          workspace_id: string
+        }
+        Insert: {
+          ator_id?: string | null
+          criado_em?: string
+          destinatario_id: string
+          id?: string
+          lida_em?: string | null
+          link?: string | null
+          mensagem?: string | null
+          recurso_id?: string | null
+          recurso_tipo?: string | null
+          tipo: string
+          titulo: string
+          workspace_id: string
+        }
+        Update: {
+          ator_id?: string | null
+          criado_em?: string
+          destinatario_id?: string
+          id?: string
+          lida_em?: string | null
+          link?: string | null
+          mensagem?: string | null
+          recurso_id?: string | null
+          recurso_tipo?: string | null
+          tipo?: string
+          titulo?: string
           workspace_id?: string
         }
         Relationships: []

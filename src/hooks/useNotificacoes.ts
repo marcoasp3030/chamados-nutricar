@@ -1,0 +1,68 @@
+import { useEffect } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface Notificacao {
+  id: string;
+  workspace_id: string;
+  destinatario_id: string;
+  ator_id: string | null;
+  tipo: string;
+  titulo: string;
+  mensagem: string | null;
+  link: string | null;
+  recurso_tipo: string | null;
+  recurso_id: string | null;
+  lida_em: string | null;
+  criado_em: string;
+}
+
+export function useNotificacoes(workspaceId: string | undefined) {
+  const qc = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ["notificacoes", workspaceId],
+    enabled: !!workspaceId,
+    queryFn: async (): Promise<Notificacao[]> => {
+      const { data, error } = await supabase
+        .from("notificacoes")
+        .select("*")
+        .eq("workspace_id", workspaceId!)
+        .order("criado_em", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return (data ?? []) as Notificacao[];
+    },
+  });
+
+  useEffect(() => {
+    if (!workspaceId) return;
+    const ch = supabase
+      .channel(`notif-${workspaceId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notificacoes", filter: `workspace_id=eq.${workspaceId}` },
+        () => qc.invalidateQueries({ queryKey: ["notificacoes", workspaceId] }),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [workspaceId, qc]);
+
+  return query;
+}
+
+export function useMarcarNotificacaoLida() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[] | "todas") => {
+      let q = supabase.from("notificacoes").update({ lida_em: new Date().toISOString() });
+      if (ids === "todas") q = q.is("lida_em", null);
+      else q = q.in("id", ids);
+      const { error } = await q;
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notificacoes"] }),
+  });
+}

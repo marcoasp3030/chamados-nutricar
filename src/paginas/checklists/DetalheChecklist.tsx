@@ -272,7 +272,11 @@ export function DetalheChecklist({ checklistId }: Props) {
           <p className="mb-3 text-xs text-muted-foreground">
             Compartilhe atualizações, riscos e decisões com a equipe sobre esta inauguração.
           </p>
-          <PainelComentarios checklistId={checklistId} workspaceId={workspaceAtual.id} />
+          <PainelComentarios
+            checklistId={checklistId}
+            workspaceId={workspaceAtual.id}
+            nomeChecklist={checklist.nome}
+          />
         </section>
       )}
       <Sheet open={historicoAberto} onOpenChange={setHistoricoAberto}>
