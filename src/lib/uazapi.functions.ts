@@ -87,6 +87,27 @@ function statusNormalizado(s: string | null): string {
   return v;
 }
 
+// Tenta múltiplos endpoints de connect (varia entre versões da Uazapi).
+async function chamarConnect(serverUrl: string, instanceName: string, token: string) {
+  const tentativas: { method: "POST" | "GET"; path: string; body?: any }[] = [
+    { method: "POST", path: "/instance/connect", body: {} },
+    { method: "POST", path: `/instance/connect/${instanceName}`, body: {} },
+    { method: "POST", path: `/instance/connect?instance=${instanceName}`, body: {} },
+    { method: "GET", path: `/instance/connect/${instanceName}` },
+    { method: "GET", path: `/instance/connect?instance=${instanceName}` },
+  ];
+  let ultimo = { ok: false, status: 0, data: null as any, text: "" };
+  for (const t of tentativas) {
+    const r = await uazapiFetch(serverUrl, t.path, token, {
+      method: t.method,
+      ...(t.body ? { body: JSON.stringify(t.body) } : {}),
+    });
+    ultimo = r;
+    if (r.ok) return r;
+  }
+  return ultimo;
+}
+
 // ======================== SALVAR + VALIDAR ========================
 export const salvarUazapiConfig = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
