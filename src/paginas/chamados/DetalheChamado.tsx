@@ -270,10 +270,16 @@ export function DetalheChamado({ numero }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
-          {podeAtender && (
+          {podeAssumir && (
+            <Button variant="default" size="sm" onClick={assumirChamado} disabled={atualizar.isPending}>
+              <UserPlus className="h-4 w-4" />
+              {chamado.responsavel_id ? "Reassumir chamado" : "Atribuir a mim"}
+            </Button>
+          )}
+          {(podeAtender || ehDoDeptoDestino) && (
             <Select
               value={chamado.status}
-              onValueChange={(v) => atualizar.mutate({ status: v as StatusChamado })}
+              onValueChange={(v) => iniciarTransicao(v as StatusChamado)}
             >
               <SelectTrigger className="w-[200px]">
                 <SelectValue />
@@ -304,6 +310,31 @@ export function DetalheChamado({ numero }: Props) {
           )}
         </div>
       </div>
+
+      {/* Banners contextuais de tratativa / motivos */}
+      {(chamado.status === "Agendado" && chamado.motivo_agendamento) && (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm dark:border-indigo-900 dark:bg-indigo-950/40">
+          <p className="font-semibold text-indigo-900 dark:text-indigo-100">Agendado</p>
+          <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">{chamado.motivo_agendamento}</p>
+          {chamado.agendado_para && (
+            <p className="mt-1 text-xs text-indigo-900/70 dark:text-indigo-100/70">
+              Para {format(new Date(chamado.agendado_para), "dd 'de' MMM yyyy 'às' HH:mm", { locale: ptBR })}
+            </p>
+          )}
+        </div>
+      )}
+      {(chamado.status === "Pausado" && chamado.motivo_pausa) && (
+        <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm dark:border-yellow-900 dark:bg-yellow-950/40">
+          <p className="font-semibold text-yellow-900 dark:text-yellow-100">Pausado</p>
+          <p className="mt-1 text-yellow-900/80 dark:text-yellow-100/80">{chamado.motivo_pausa}</p>
+        </div>
+      )}
+      {(chamado.status === "Resolvido" || chamado.status === "Fechado") && chamado.tratativa && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm dark:border-emerald-900 dark:bg-emerald-950/40">
+          <p className="font-semibold text-emerald-900 dark:text-emerald-100">Tratativa realizada</p>
+          <p className="mt-1 whitespace-pre-wrap text-emerald-900/80 dark:text-emerald-100/80">{chamado.tratativa}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-6">
