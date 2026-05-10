@@ -141,6 +141,36 @@ export function AbaUsuarios() {
   });
   const [errosMembro, setErrosMembro] = useState<Record<string, string>>({});
 
+  // Definir/redefinir senha
+  const [senhaMembro, setSenhaMembro] = useState<MembroAtivo | null>(null);
+  const [novaSenha, setNovaSenha] = useState("");
+  const [senhaGerada, setSenhaGerada] = useState<{ email: string; senha: string } | null>(null);
+
+  const definirSenha = useMutation({
+    mutationFn: async ({ usuarioId, senha }: { usuarioId: string; senha: string | null }) => {
+      if (!workspaceAtual) throw new Error("Workspace inválido");
+      const { data, error } = await supabase.functions.invoke("definir-senha-usuario", {
+        body: {
+          workspace_id: workspaceAtual.id,
+          usuario_id: usuarioId,
+          senha: senha || null,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as { senha: string };
+    },
+    onSuccess: (data) => {
+      const email = senhaMembro?.perfil.email ?? "";
+      setSenhaGerada({ email, senha: data.senha });
+      setSenhaMembro(null);
+      setNovaSenha("");
+      toast.success("Senha atualizada.");
+    },
+    onError: (e: Error) =>
+      toast.error("Não foi possível alterar a senha.", { description: e.message }),
+  });
+
   const podeAdministrar =
     workspaceAtual?.papel === "Proprietario" || workspaceAtual?.papel === "Administrador";
 
