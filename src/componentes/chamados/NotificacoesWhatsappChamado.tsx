@@ -53,9 +53,10 @@ function explicarErro(status: number | null, erro: string | null): string {
   if (status === 400 || status === 422) {
     return `Uazapi rejeitou o envio (HTTP ${status}). Causa provável: número de telefone inválido ou inexistente no WhatsApp. Verifique o telefone do destinatário (DDI 55 + DDD + 9 + número). Resposta: ${erro ?? "sem detalhes"}`;
   }
-  // 405: nenhum dos endpoints conhecidos aceitou o POST — geralmente URL/instância errada
+  // 405 do Uazapi: na prática significa número inexistente/inválido no WhatsApp
+  // (a API responde 405 em vez de 400 quando o número não tem conta WhatsApp ativa)
   if (status === 405 || /"code"\s*:\s*405|method not allowed/i.test(erro ?? "")) {
-    return "Nenhum endpoint do Uazapi aceitou o envio (405). Verifique a URL do servidor e o nome da instância nas Configurações do WhatsApp.";
+    return "Uazapi rejeitou o envio (405). Causa mais provável: o número informado não possui conta ativa no WhatsApp ou está em formato inválido. Atualize o telefone do destinatário no perfil (DDI 55 + DDD + 9 + 8 dígitos, ex.: 5511987654321).";
   }
   if (status === 404) {
     if (ehHtml) {
