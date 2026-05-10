@@ -225,6 +225,33 @@ export function PainelInauguracoes() {
   );
 }
 
+const ESTILO_TIPO: Record<
+  "Residencial" | "Corporativo" | "Evento",
+  { borda: string; fundo: string; barra: string; chip: string; rotulo: string }
+> = {
+  Residencial: {
+    borda: "border-blue-300 dark:border-blue-800",
+    fundo: "bg-blue-50/70 dark:bg-blue-950/30",
+    barra: "bg-blue-500",
+    chip: "bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200",
+    rotulo: "Residencial",
+  },
+  Corporativo: {
+    borda: "border-purple-300 dark:border-purple-800",
+    fundo: "bg-purple-50/70 dark:bg-purple-950/30",
+    barra: "bg-purple-500",
+    chip: "bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-200",
+    rotulo: "Corporativo",
+  },
+  Evento: {
+    borda: "border-emerald-300 dark:border-emerald-800",
+    fundo: "bg-emerald-50/70 dark:bg-emerald-950/30",
+    barra: "bg-emerald-500",
+    chip: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200",
+    rotulo: "Evento",
+  },
+};
+
 function CartaoInauguracao({
   item,
   slug,
@@ -238,13 +265,25 @@ function CartaoInauguracao({
 }) {
   const titulo = item.razaoSocial ?? item.nome;
   const subtitulo = item.razaoSocial ? item.nome : null;
+  const estilo = item.tipoCondominio ? ESTILO_TIPO[item.tipoCondominio] : null;
 
   return (
     <Link
       to="/w/$slug/checklists/$checklistId"
       params={{ slug, checklistId: item.id }}
-      className="group block overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+      className={cn(
+        "group relative block overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+        estilo
+          ? cn(estilo.borda, estilo.fundo, "hover:border-current")
+          : "border-border hover:border-primary/40",
+      )}
     >
+      {estilo && (
+        <span
+          className={cn("absolute inset-y-0 left-0 w-1", estilo.barra)}
+          aria-hidden
+        />
+      )}
       <div className="space-y-2.5 p-3">
         <div className="space-y-0.5">
           <p className="line-clamp-2 text-sm font-semibold leading-snug group-hover:text-primary">
