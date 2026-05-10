@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.seed_checklist_condominio(uuid, uuid) FROM PUBLIC, anon, authenticated;

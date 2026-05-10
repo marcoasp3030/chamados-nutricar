@@ -18,10 +18,14 @@ import { Route as WSlugIndexRouteImport } from './routes/w.$slug.index'
 import { Route as WSlugProjetosRouteImport } from './routes/w.$slug.projetos'
 import { Route as WSlugPainelRouteImport } from './routes/w.$slug.painel'
 import { Route as WSlugConfiguracoesRouteImport } from './routes/w.$slug.configuracoes'
+import { Route as WSlugChecklistsRouteImport } from './routes/w.$slug.checklists'
 import { Route as WSlugChamadosRouteImport } from './routes/w.$slug.chamados'
 import { Route as WSlugProjetosIndexRouteImport } from './routes/w.$slug.projetos.index'
+import { Route as WSlugChecklistsIndexRouteImport } from './routes/w.$slug.checklists.index'
 import { Route as WSlugChamadosIndexRouteImport } from './routes/w.$slug.chamados.index'
 import { Route as WSlugProjetosProjetoIdRouteImport } from './routes/w.$slug.projetos.$projetoId'
+import { Route as WSlugChecklistsTemplateRouteImport } from './routes/w.$slug.checklists.template'
+import { Route as WSlugChecklistsChecklistIdRouteImport } from './routes/w.$slug.checklists.$checklistId'
 import { Route as WSlugChamadosQuadroRouteImport } from './routes/w.$slug.chamados.quadro'
 import { Route as WSlugChamadosNovoRouteImport } from './routes/w.$slug.chamados.novo'
 import { Route as WSlugChamadosNumeroRouteImport } from './routes/w.$slug.chamados.$numero'
@@ -71,6 +75,11 @@ const WSlugConfiguracoesRoute = WSlugConfiguracoesRouteImport.update({
   path: '/configuracoes',
   getParentRoute: () => WSlugRoute,
 } as any)
+const WSlugChecklistsRoute = WSlugChecklistsRouteImport.update({
+  id: '/checklists',
+  path: '/checklists',
+  getParentRoute: () => WSlugRoute,
+} as any)
 const WSlugChamadosRoute = WSlugChamadosRouteImport.update({
   id: '/chamados',
   path: '/chamados',
@@ -80,6 +89,11 @@ const WSlugProjetosIndexRoute = WSlugProjetosIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => WSlugProjetosRoute,
+} as any)
+const WSlugChecklistsIndexRoute = WSlugChecklistsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WSlugChecklistsRoute,
 } as any)
 const WSlugChamadosIndexRoute = WSlugChamadosIndexRouteImport.update({
   id: '/',
@@ -91,6 +105,17 @@ const WSlugProjetosProjetoIdRoute = WSlugProjetosProjetoIdRouteImport.update({
   path: '/$projetoId',
   getParentRoute: () => WSlugProjetosRoute,
 } as any)
+const WSlugChecklistsTemplateRoute = WSlugChecklistsTemplateRouteImport.update({
+  id: '/template',
+  path: '/template',
+  getParentRoute: () => WSlugChecklistsRoute,
+} as any)
+const WSlugChecklistsChecklistIdRoute =
+  WSlugChecklistsChecklistIdRouteImport.update({
+    id: '/$checklistId',
+    path: '/$checklistId',
+    getParentRoute: () => WSlugChecklistsRoute,
+  } as any)
 const WSlugChamadosQuadroRoute = WSlugChamadosQuadroRouteImport.update({
   id: '/quadro',
   path: '/quadro',
@@ -114,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug': typeof WSlugRouteWithChildren
   '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
+  '/w/$slug/checklists': typeof WSlugChecklistsRouteWithChildren
   '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug/projetos': typeof WSlugProjetosRouteWithChildren
@@ -121,8 +147,11 @@ export interface FileRoutesByFullPath {
   '/w/$slug/chamados/$numero': typeof WSlugChamadosNumeroRoute
   '/w/$slug/chamados/novo': typeof WSlugChamadosNovoRoute
   '/w/$slug/chamados/quadro': typeof WSlugChamadosQuadroRoute
+  '/w/$slug/checklists/$checklistId': typeof WSlugChecklistsChecklistIdRoute
+  '/w/$slug/checklists/template': typeof WSlugChecklistsTemplateRoute
   '/w/$slug/projetos/$projetoId': typeof WSlugProjetosProjetoIdRoute
   '/w/$slug/chamados/': typeof WSlugChamadosIndexRoute
+  '/w/$slug/checklists/': typeof WSlugChecklistsIndexRoute
   '/w/$slug/projetos/': typeof WSlugProjetosIndexRoute
 }
 export interface FileRoutesByTo {
@@ -136,8 +165,11 @@ export interface FileRoutesByTo {
   '/w/$slug/chamados/$numero': typeof WSlugChamadosNumeroRoute
   '/w/$slug/chamados/novo': typeof WSlugChamadosNovoRoute
   '/w/$slug/chamados/quadro': typeof WSlugChamadosQuadroRoute
+  '/w/$slug/checklists/$checklistId': typeof WSlugChecklistsChecklistIdRoute
+  '/w/$slug/checklists/template': typeof WSlugChecklistsTemplateRoute
   '/w/$slug/projetos/$projetoId': typeof WSlugProjetosProjetoIdRoute
   '/w/$slug/chamados': typeof WSlugChamadosIndexRoute
+  '/w/$slug/checklists': typeof WSlugChecklistsIndexRoute
   '/w/$slug/projetos': typeof WSlugProjetosIndexRoute
 }
 export interface FileRoutesById {
@@ -148,6 +180,7 @@ export interface FileRoutesById {
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug': typeof WSlugRouteWithChildren
   '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
+  '/w/$slug/checklists': typeof WSlugChecklistsRouteWithChildren
   '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
   '/w/$slug/projetos': typeof WSlugProjetosRouteWithChildren
@@ -155,8 +188,11 @@ export interface FileRoutesById {
   '/w/$slug/chamados/$numero': typeof WSlugChamadosNumeroRoute
   '/w/$slug/chamados/novo': typeof WSlugChamadosNovoRoute
   '/w/$slug/chamados/quadro': typeof WSlugChamadosQuadroRoute
+  '/w/$slug/checklists/$checklistId': typeof WSlugChecklistsChecklistIdRoute
+  '/w/$slug/checklists/template': typeof WSlugChecklistsTemplateRoute
   '/w/$slug/projetos/$projetoId': typeof WSlugProjetosProjetoIdRoute
   '/w/$slug/chamados/': typeof WSlugChamadosIndexRoute
+  '/w/$slug/checklists/': typeof WSlugChecklistsIndexRoute
   '/w/$slug/projetos/': typeof WSlugProjetosIndexRoute
 }
 export interface FileRouteTypes {
@@ -168,6 +204,7 @@ export interface FileRouteTypes {
     | '/convite/$token'
     | '/w/$slug'
     | '/w/$slug/chamados'
+    | '/w/$slug/checklists'
     | '/w/$slug/configuracoes'
     | '/w/$slug/painel'
     | '/w/$slug/projetos'
@@ -175,8 +212,11 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados/$numero'
     | '/w/$slug/chamados/novo'
     | '/w/$slug/chamados/quadro'
+    | '/w/$slug/checklists/$checklistId'
+    | '/w/$slug/checklists/template'
     | '/w/$slug/projetos/$projetoId'
     | '/w/$slug/chamados/'
+    | '/w/$slug/checklists/'
     | '/w/$slug/projetos/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -190,8 +230,11 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados/$numero'
     | '/w/$slug/chamados/novo'
     | '/w/$slug/chamados/quadro'
+    | '/w/$slug/checklists/$checklistId'
+    | '/w/$slug/checklists/template'
     | '/w/$slug/projetos/$projetoId'
     | '/w/$slug/chamados'
+    | '/w/$slug/checklists'
     | '/w/$slug/projetos'
   id:
     | '__root__'
@@ -201,6 +244,7 @@ export interface FileRouteTypes {
     | '/convite/$token'
     | '/w/$slug'
     | '/w/$slug/chamados'
+    | '/w/$slug/checklists'
     | '/w/$slug/configuracoes'
     | '/w/$slug/painel'
     | '/w/$slug/projetos'
@@ -208,8 +252,11 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados/$numero'
     | '/w/$slug/chamados/novo'
     | '/w/$slug/chamados/quadro'
+    | '/w/$slug/checklists/$checklistId'
+    | '/w/$slug/checklists/template'
     | '/w/$slug/projetos/$projetoId'
     | '/w/$slug/chamados/'
+    | '/w/$slug/checklists/'
     | '/w/$slug/projetos/'
   fileRoutesById: FileRoutesById
 }
@@ -286,6 +333,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WSlugConfiguracoesRouteImport
       parentRoute: typeof WSlugRoute
     }
+    '/w/$slug/checklists': {
+      id: '/w/$slug/checklists'
+      path: '/checklists'
+      fullPath: '/w/$slug/checklists'
+      preLoaderRoute: typeof WSlugChecklistsRouteImport
+      parentRoute: typeof WSlugRoute
+    }
     '/w/$slug/chamados': {
       id: '/w/$slug/chamados'
       path: '/chamados'
@@ -300,6 +354,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WSlugProjetosIndexRouteImport
       parentRoute: typeof WSlugProjetosRoute
     }
+    '/w/$slug/checklists/': {
+      id: '/w/$slug/checklists/'
+      path: '/'
+      fullPath: '/w/$slug/checklists/'
+      preLoaderRoute: typeof WSlugChecklistsIndexRouteImport
+      parentRoute: typeof WSlugChecklistsRoute
+    }
     '/w/$slug/chamados/': {
       id: '/w/$slug/chamados/'
       path: '/'
@@ -313,6 +374,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/w/$slug/projetos/$projetoId'
       preLoaderRoute: typeof WSlugProjetosProjetoIdRouteImport
       parentRoute: typeof WSlugProjetosRoute
+    }
+    '/w/$slug/checklists/template': {
+      id: '/w/$slug/checklists/template'
+      path: '/template'
+      fullPath: '/w/$slug/checklists/template'
+      preLoaderRoute: typeof WSlugChecklistsTemplateRouteImport
+      parentRoute: typeof WSlugChecklistsRoute
+    }
+    '/w/$slug/checklists/$checklistId': {
+      id: '/w/$slug/checklists/$checklistId'
+      path: '/$checklistId'
+      fullPath: '/w/$slug/checklists/$checklistId'
+      preLoaderRoute: typeof WSlugChecklistsChecklistIdRouteImport
+      parentRoute: typeof WSlugChecklistsRoute
     }
     '/w/$slug/chamados/quadro': {
       id: '/w/$slug/chamados/quadro'
@@ -356,6 +431,22 @@ const WSlugChamadosRouteWithChildren = WSlugChamadosRoute._addFileChildren(
   WSlugChamadosRouteChildren,
 )
 
+interface WSlugChecklistsRouteChildren {
+  WSlugChecklistsChecklistIdRoute: typeof WSlugChecklistsChecklistIdRoute
+  WSlugChecklistsTemplateRoute: typeof WSlugChecklistsTemplateRoute
+  WSlugChecklistsIndexRoute: typeof WSlugChecklistsIndexRoute
+}
+
+const WSlugChecklistsRouteChildren: WSlugChecklistsRouteChildren = {
+  WSlugChecklistsChecklistIdRoute: WSlugChecklistsChecklistIdRoute,
+  WSlugChecklistsTemplateRoute: WSlugChecklistsTemplateRoute,
+  WSlugChecklistsIndexRoute: WSlugChecklistsIndexRoute,
+}
+
+const WSlugChecklistsRouteWithChildren = WSlugChecklistsRoute._addFileChildren(
+  WSlugChecklistsRouteChildren,
+)
+
 interface WSlugProjetosRouteChildren {
   WSlugProjetosProjetoIdRoute: typeof WSlugProjetosProjetoIdRoute
   WSlugProjetosIndexRoute: typeof WSlugProjetosIndexRoute
@@ -372,6 +463,7 @@ const WSlugProjetosRouteWithChildren = WSlugProjetosRoute._addFileChildren(
 
 interface WSlugRouteChildren {
   WSlugChamadosRoute: typeof WSlugChamadosRouteWithChildren
+  WSlugChecklistsRoute: typeof WSlugChecklistsRouteWithChildren
   WSlugConfiguracoesRoute: typeof WSlugConfiguracoesRoute
   WSlugPainelRoute: typeof WSlugPainelRoute
   WSlugProjetosRoute: typeof WSlugProjetosRouteWithChildren
@@ -380,6 +472,7 @@ interface WSlugRouteChildren {
 
 const WSlugRouteChildren: WSlugRouteChildren = {
   WSlugChamadosRoute: WSlugChamadosRouteWithChildren,
+  WSlugChecklistsRoute: WSlugChecklistsRouteWithChildren,
   WSlugConfiguracoesRoute: WSlugConfiguracoesRoute,
   WSlugPainelRoute: WSlugPainelRoute,
   WSlugProjetosRoute: WSlugProjetosRouteWithChildren,

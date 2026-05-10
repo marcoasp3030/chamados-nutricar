@@ -421,6 +421,231 @@ export type Database = {
           },
         ]
       }
+      checklist_historico: {
+        Row: {
+          acao: string
+          checklist_id: string
+          criado_em: string
+          id: string
+          item_id: string | null
+          rotulo: string | null
+          usuario_id: string | null
+          valor_anterior: Json | null
+          valor_novo: Json | null
+          workspace_id: string
+        }
+        Insert: {
+          acao: string
+          checklist_id: string
+          criado_em?: string
+          id?: string
+          item_id?: string | null
+          rotulo?: string | null
+          usuario_id?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json | null
+          workspace_id: string
+        }
+        Update: {
+          acao?: string
+          checklist_id?: string
+          criado_em?: string
+          id?: string
+          item_id?: string | null
+          rotulo?: string | null
+          usuario_id?: string | null
+          valor_anterior?: Json | null
+          valor_novo?: Json | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_historico_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "checklists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_respostas: {
+        Row: {
+          atualizado_em: string
+          atualizado_por: string | null
+          checklist_id: string
+          id: string
+          item_id: string
+          valor: Json | null
+          workspace_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          checklist_id: string
+          id?: string
+          item_id: string
+          valor?: Json | null
+          workspace_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          atualizado_por?: string | null
+          checklist_id?: string
+          id?: string
+          item_id?: string
+          valor?: Json | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_respostas_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "checklists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_respostas_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_template_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_template_itens: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          criado_em: string
+          id: string
+          obrigatorio: boolean
+          opcoes: Json | null
+          ordem: number
+          rotulo: string
+          secao: string
+          subsecao: string | null
+          template_id: string
+          tipo: string
+          workspace_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          obrigatorio?: boolean
+          opcoes?: Json | null
+          ordem?: number
+          rotulo: string
+          secao: string
+          subsecao?: string | null
+          template_id: string
+          tipo?: string
+          workspace_id: string
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          criado_em?: string
+          id?: string
+          obrigatorio?: boolean
+          opcoes?: Json | null
+          ordem?: number
+          rotulo?: string
+          secao?: string
+          subsecao?: string | null
+          template_id?: string
+          tipo?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_template_itens_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_templates: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          criado_por: string
+          descricao: string | null
+          id: string
+          nome: string
+          padrao: boolean
+          workspace_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          padrao?: boolean
+          workspace_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          padrao?: boolean
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      checklists: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          criado_por: string
+          id: string
+          nome: string
+          responsavel_id: string | null
+          status: string
+          template_id: string
+          workspace_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por: string
+          id?: string
+          nome: string
+          responsavel_id?: string | null
+          status?: string
+          template_id: string
+          workspace_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          id?: string
+          nome?: string
+          responsavel_id?: string | null
+          status?: string
+          template_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklists_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departamentos: {
         Row: {
           atualizado_em: string
@@ -884,6 +1109,10 @@ export type Database = {
       pode_ver_todos_chamados: {
         Args: { _workspace_id: string }
         Returns: boolean
+      }
+      seed_checklist_condominio: {
+        Args: { _criado_por: string; _workspace_id: string }
+        Returns: string
       }
       tem_papel_workspace: {
         Args: {
