@@ -103,16 +103,22 @@ async function enviarWhatsapp(cfg: any, numero: string, mensagem: string) {
     { path: `/message/sendText/${cfg.instance_name}`, body: { number: numero, text: mensagem } },
     { path: `/sendMessage/${cfg.instance_name}`, body: { number: numero, body: mensagem } },
   ];
-  let ultimo = { ok: false, status: 0, data: null as any };
+  let melhor: { ok: boolean; status: number; data: any } | null = null;
   for (const t of tentativas) {
     const r = await uazapiFetch(normalizeServerUrl(cfg.server_url), t.path, token, {
       method: "POST",
       body: JSON.stringify(t.body),
     });
-    ultimo = { ok: r.ok, status: r.status, data: r.data };
-    if (r.ok) return ultimo;
+    const atual = { ok: r.ok, status: r.status, data: r.data };
+    if (r.ok) return atual;
+    // Só seguir para o próximo path se o atual indicar "endpoint inexistente" (404/405).
+    // Para qualquer outro erro (400, 401, 403, 422, 5xx), retornar imediatamente —
+    // é o erro real do Uazapi (ex.: número inválido) e não adianta tentar outros paths.
+    if (r.status !== 404 && r.status !== 405) return atual;
+    // Guardar o último 404/405 caso nenhum path funcione
+    melhor = atual;
   }
-  return ultimo;
+  return melhor ?? { ok: false, status: 0, data: null };
 }
 
 async function handlePOST(request: Request): Promise<Response> {
