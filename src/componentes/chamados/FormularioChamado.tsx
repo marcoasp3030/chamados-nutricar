@@ -253,10 +253,15 @@ export function FormularioChamado({
       toast.error("Informe um título para o chamado.");
       return;
     }
+    if (!dados.departamento_id) {
+      toast.error("Selecione o departamento de destino do chamado.");
+      return;
+    }
     aoEnviar({ ...dados, titulo: dados.titulo.trim() });
   }
 
   const tituloInvalido = tentouEnviar && !dados.titulo.trim();
+  const deptoInvalido = tentouEnviar && !dados.departamento_id;
 
   return (
     <form onSubmit={submeter} className="space-y-5">
@@ -524,26 +529,27 @@ export function FormularioChamado({
           <Cartao titulo="Atribuição e prazo" icone={UserCircle2}>
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                <Building2 className="h-3 w-3" /> Departamento
+                <Building2 className="h-3 w-3" /> Departamento destino <span className="text-destructive">*</span>
               </Label>
               <Select
-                value={dados.departamento_id ?? "__nenhum__"}
+                value={dados.departamento_id ?? ""}
                 onValueChange={(v) => {
-                  const novo = v === "__nenhum__" ? null : v;
                   setDados((d) => ({
                     ...d,
-                    departamento_id: novo,
+                    departamento_id: v,
                     // Ao escolher um departamento, limpamos o responsável individual:
                     // todos os membros do departamento ficam vinculados.
-                    responsavel_id: novo ? null : d.responsavel_id,
+                    responsavel_id: null,
                   }));
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger
+                  className={cn(deptoInvalido && "border-destructive focus-visible:ring-destructive")}
+                  aria-invalid={deptoInvalido}
+                >
                   <SelectValue placeholder="Selecionar departamento" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__nenhum__">Sem departamento</SelectItem>
                   {(departamentos ?? []).map((d) => (
                     <SelectItem key={d.id} value={d.id}>
                       {d.nome}
@@ -551,11 +557,19 @@ export function FormularioChamado({
                   ))}
                 </SelectContent>
               </Select>
+              {deptoInvalido && (
+                <p className="flex items-center gap-1 text-xs text-destructive">
+                  <AlertCircle className="h-3 w-3" /> O chamado precisa ser destinado a um departamento.
+                </p>
+              )}
               {(!departamentos || departamentos.length === 0) && (
                 <p className="text-xs text-muted-foreground">
                   Cadastre departamentos em Configurações → Departamentos.
                 </p>
               )}
+              <p className="text-xs text-muted-foreground">
+                Todos os membros do departamento destino terão acesso ao chamado e poderão atribuí-lo.
+              </p>
             </div>
 
             <div className="space-y-2">
