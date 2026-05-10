@@ -485,6 +485,16 @@ export function AbaUsuarios() {
                           <Pencil className="h-4 w-4" />
                         </Button>
                       )}
+                      {podeAdministrar && !ehProprio && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => { setNovaSenha(""); setSenhaMembro(m); }}
+                          title="Definir senha"
+                        >
+                          <KeyRound className="h-4 w-4" />
+                        </Button>
+                      )}
                       {podeRemover && (
                         <Button
                           variant="ghost"
