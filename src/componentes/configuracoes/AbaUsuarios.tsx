@@ -896,6 +896,89 @@ export function AbaUsuarios() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog: Definir senha */}
+      <Dialog open={!!senhaMembro} onOpenChange={(o) => { if (!o) { setSenhaMembro(null); setNovaSenha(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Definir senha</DialogTitle>
+            <DialogDescription>
+              Defina uma nova senha para <strong>{senhaMembro?.perfil.nome}</strong> ({senhaMembro?.perfil.email}).
+              Deixe em branco para gerar uma senha automática.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="nova-senha">Nova senha</Label>
+            <Input
+              id="nova-senha"
+              type="text"
+              autoComplete="new-password"
+              placeholder="Mínimo 8 caracteres ou deixe em branco"
+              value={novaSenha}
+              onChange={(e) => setNovaSenha(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              A senha será atualizada imediatamente. Compartilhe-a de forma segura com o usuário.
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => { setSenhaMembro(null); setNovaSenha(""); }}
+              disabled={definirSenha.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                senhaMembro &&
+                definirSenha.mutate({ usuarioId: senhaMembro.usuario_id, senha: null })
+              }
+              disabled={definirSenha.isPending}
+            >
+              <RefreshCw className="h-4 w-4" /> Gerar automática
+            </Button>
+            <Button
+              onClick={() =>
+                senhaMembro &&
+                definirSenha.mutate({ usuarioId: senhaMembro.usuario_id, senha: novaSenha })
+              }
+              disabled={definirSenha.isPending || novaSenha.length < 8}
+            >
+              {definirSenha.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Salvar senha
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: senha gerada/atualizada */}
+      <Dialog open={!!senhaGerada} onOpenChange={(o) => !o && setSenhaGerada(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Senha atualizada</DialogTitle>
+            <DialogDescription>
+              Compartilhe a nova senha de <strong>{senhaGerada?.email}</strong> de forma segura.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Nova senha</Label>
+            <div className="flex gap-2">
+              <Input readOnly value={senhaGerada?.senha ?? ""} className="font-mono text-xs" />
+              <Button
+                variant="outline"
+                onClick={() => senhaGerada && copiar(senhaGerada.senha)}
+              >
+                <Copy className="h-4 w-4" /> Copiar
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setSenhaGerada(null)}>Concluir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
