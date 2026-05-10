@@ -3,7 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowLeft, FileDown, History, Loader2, Save } from "lucide-react";
+import { ArrowLeft, FileDown, History, Loader2, MessageSquare, Save } from "lucide-react";
+import { PainelComentarios } from "@/componentes/checklists/PainelComentarios";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -262,6 +263,18 @@ export function DetalheChecklist({ checklistId }: Props) {
         ))}
       </div>
 
+      {workspaceAtual && (
+        <section className="rounded-2xl border border-border bg-card p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-lg font-semibold">Comentários</h2>
+          </div>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Compartilhe atualizações, riscos e decisões com a equipe sobre esta inauguração.
+          </p>
+          <PainelComentarios checklistId={checklistId} workspaceId={workspaceAtual.id} />
+        </section>
+      )}
       <Sheet open={historicoAberto} onOpenChange={setHistoricoAberto}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
           <SheetHeader>

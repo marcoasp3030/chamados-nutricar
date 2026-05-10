@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Loader2,
   MapPin,
+  MessageSquare,
   PartyPopper,
   Search,
   Sparkles,
@@ -18,12 +19,20 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import {
   useInauguracoes,
   type CardInauguracao,
   type ColunaInauguracao,
 } from "@/hooks/useInauguracoes";
+import { useContagemComentarios } from "@/hooks/useComentariosChecklist";
+import { PainelComentarios } from "@/componentes/checklists/PainelComentarios";
 import { cn } from "@/lib/utils";
 
 interface DefColuna {
@@ -82,7 +91,9 @@ export function PainelInauguracoes() {
   const { workspaceAtual } = useWorkspaceStore();
   const queryClient = useQueryClient();
   const { data, isLoading } = useInauguracoes(workspaceAtual?.id);
+  const { data: contagemComentarios } = useContagemComentarios(workspaceAtual?.id);
   const [busca, setBusca] = useState("");
+  const [comentariosDe, setComentariosDe] = useState<CardInauguracao | null>(null);
 
   const concluir = useMutation({
     mutationFn: async (id: string) => {
@@ -211,6 +222,8 @@ export function PainelInauguracoes() {
                         item={c}
                         slug={workspaceAtual.slug}
                         coluna={def.id}
+                        comentarios={contagemComentarios?.get(c.id) ?? 0}
+                        onComentarios={() => setComentariosDe(c)}
                         onConcluir={() => concluir.mutate(c.id)}
                       />
                     ))
@@ -221,6 +234,26 @@ export function PainelInauguracoes() {
           })}
         </div>
       )}
+
+      <Sheet open={!!comentariosDe} onOpenChange={(o) => !o && setComentariosDe(null)}>
+        <SheetContent className="flex w-full flex-col sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle className="truncate text-left">
+              {comentariosDe?.razaoSocial ?? comentariosDe?.nome ?? "Comentários"}
+            </SheetTitle>
+            <p className="text-left text-xs text-muted-foreground">
+              Atualizações da equipe sobre esta inauguração
+            </p>
+          </SheetHeader>
+          {comentariosDe && workspaceAtual && (
+            <PainelComentarios
+              checklistId={comentariosDe.id}
+              workspaceId={workspaceAtual.id}
+              className="mt-4 flex-1"
+            />
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
@@ -256,11 +289,15 @@ function CartaoInauguracao({
   item,
   slug,
   coluna,
+  comentarios,
+  onComentarios,
   onConcluir,
 }: {
   item: CardInauguracao;
   slug: string;
   coluna: ColunaInauguracao;
+  comentarios: number;
+  onComentarios: () => void;
   onConcluir: () => void;
 }) {
   const titulo = item.razaoSocial ?? item.nome;
@@ -373,19 +410,34 @@ function CartaoInauguracao({
               <span className="italic">Sem responsável</span>
             )}
           </div>
-          {coluna !== "Inauguradas" && item.pct >= 80 && (
+          <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onConcluir();
+                onComentarios();
               }}
-              className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 transition-colors hover:bg-emerald-500/20 dark:text-emerald-300"
+              className="flex items-center gap-1 rounded-md border border-border/60 bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+              aria-label="Comentários"
             >
-              Inaugurar
+              <MessageSquare className="h-3 w-3" />
+              {comentarios > 0 ? comentarios : ""}
             </button>
-          )}
+            {coluna !== "Inauguradas" && item.pct >= 80 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onConcluir();
+                }}
+                className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 transition-colors hover:bg-emerald-500/20 dark:text-emerald-300"
+              >
+                Inaugurar
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </Link>
