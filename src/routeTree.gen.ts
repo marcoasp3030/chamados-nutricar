@@ -21,6 +21,7 @@ import { Route as WSlugInauguracoesRouteImport } from './routes/w.$slug.inaugura
 import { Route as WSlugConfiguracoesRouteImport } from './routes/w.$slug.configuracoes'
 import { Route as WSlugChecklistsRouteImport } from './routes/w.$slug.checklists'
 import { Route as WSlugChamadosRouteImport } from './routes/w.$slug.chamados'
+import { Route as ApiPublicWhatsappNotifyRouteImport } from './routes/api/public/whatsapp-notify'
 import { Route as WSlugProjetosIndexRouteImport } from './routes/w.$slug.projetos.index'
 import { Route as WSlugChecklistsIndexRouteImport } from './routes/w.$slug.checklists.index'
 import { Route as WSlugChamadosIndexRouteImport } from './routes/w.$slug.chamados.index'
@@ -92,6 +93,11 @@ const WSlugChamadosRoute = WSlugChamadosRouteImport.update({
   path: '/chamados',
   getParentRoute: () => WSlugRoute,
 } as any)
+const ApiPublicWhatsappNotifyRoute = ApiPublicWhatsappNotifyRouteImport.update({
+  id: '/api/public/whatsapp-notify',
+  path: '/api/public/whatsapp-notify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WSlugProjetosIndexRoute = WSlugProjetosIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug': typeof WSlugRouteWithChildren
+  '/api/public/whatsapp-notify': typeof ApiPublicWhatsappNotifyRoute
   '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
   '/w/$slug/checklists': typeof WSlugChecklistsRouteWithChildren
   '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/api/public/whatsapp-notify': typeof ApiPublicWhatsappNotifyRoute
   '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
   '/w/$slug/inauguracoes': typeof WSlugInauguracoesRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug': typeof WSlugRouteWithChildren
+  '/api/public/whatsapp-notify': typeof ApiPublicWhatsappNotifyRoute
   '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
   '/w/$slug/checklists': typeof WSlugChecklistsRouteWithChildren
   '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
     | '/selecionar-empresa'
     | '/convite/$token'
     | '/w/$slug'
+    | '/api/public/whatsapp-notify'
     | '/w/$slug/chamados'
     | '/w/$slug/checklists'
     | '/w/$slug/configuracoes'
@@ -244,6 +254,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/selecionar-empresa'
     | '/convite/$token'
+    | '/api/public/whatsapp-notify'
     | '/w/$slug/configuracoes'
     | '/w/$slug/inauguracoes'
     | '/w/$slug/painel'
@@ -265,6 +276,7 @@ export interface FileRouteTypes {
     | '/selecionar-empresa'
     | '/convite/$token'
     | '/w/$slug'
+    | '/api/public/whatsapp-notify'
     | '/w/$slug/chamados'
     | '/w/$slug/checklists'
     | '/w/$slug/configuracoes'
@@ -290,6 +302,7 @@ export interface RootRouteChildren {
   SelecionarEmpresaRoute: typeof SelecionarEmpresaRoute
   ConviteTokenRoute: typeof ConviteTokenRoute
   WSlugRoute: typeof WSlugRouteWithChildren
+  ApiPublicWhatsappNotifyRoute: typeof ApiPublicWhatsappNotifyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -377,6 +390,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/w/$slug/chamados'
       preLoaderRoute: typeof WSlugChamadosRouteImport
       parentRoute: typeof WSlugRoute
+    }
+    '/api/public/whatsapp-notify': {
+      id: '/api/public/whatsapp-notify'
+      path: '/api/public/whatsapp-notify'
+      fullPath: '/api/public/whatsapp-notify'
+      preLoaderRoute: typeof ApiPublicWhatsappNotifyRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/w/$slug/projetos/': {
       id: '/w/$slug/projetos/'
@@ -529,6 +549,7 @@ const rootRouteChildren: RootRouteChildren = {
   SelecionarEmpresaRoute: SelecionarEmpresaRoute,
   ConviteTokenRoute: ConviteTokenRoute,
   WSlugRoute: WSlugRouteWithChildren,
+  ApiPublicWhatsappNotifyRoute: ApiPublicWhatsappNotifyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
