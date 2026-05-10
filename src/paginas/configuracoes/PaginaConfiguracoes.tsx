@@ -1,4 +1,4 @@
-import { Building2, CreditCard, Network, Settings, Sparkles, Tag, Users } from "lucide-react";
+import { Building2, CreditCard, MessageCircle, Network, Settings, Sparkles, Tag, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { AbaIntegracaoIA } from "@/componentes/configuracoes/AbaIntegracaoIA";
@@ -7,6 +7,7 @@ import { AbaUsuarios } from "@/componentes/configuracoes/AbaUsuarios";
 import { AbaUsuariosDepartamentos } from "@/componentes/configuracoes/AbaUsuariosDepartamentos";
 import { AbaCategorias } from "@/componentes/configuracoes/AbaCategorias";
 import { AbaVMPay } from "@/componentes/configuracoes/AbaVMPay";
+import { AbaUazapi } from "@/componentes/configuracoes/AbaUazapi";
 
 export function PaginaConfiguracoes() {
   const { workspaceAtual } = useWorkspaceStore();
@@ -43,6 +44,9 @@ export function PaginaConfiguracoes() {
           </TabsTrigger>
           <TabsTrigger value="vmpay">
             <CreditCard className="h-4 w-4" /> VMPay
+          </TabsTrigger>
+          <TabsTrigger value="uazapi">
+            <MessageCircle className="h-4 w-4" /> WhatsApp
           </TabsTrigger>
         </TabsList>
 
@@ -92,6 +96,10 @@ export function PaginaConfiguracoes() {
 
         <TabsContent value="vmpay" className="mt-6">
           <AbaVMPay />
+        </TabsContent>
+
+        <TabsContent value="uazapi" className="mt-6">
+          <AbaUazapi />
         </TabsContent>
       </Tabs>
     </div>
