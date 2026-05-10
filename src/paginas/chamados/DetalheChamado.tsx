@@ -61,6 +61,7 @@ import { RequisicaoCompras } from "@/componentes/chamados/RequisicaoCompras";
 import { ArvoreSubchamados } from "@/componentes/chamados/ArvoreSubchamados";
 import { AcoesIAChamado } from "@/componentes/chamados/AcoesIAChamado";
 import { HistoricoIAChamado } from "@/componentes/chamados/HistoricoIAChamado";
+import { NotificacoesWhatsappChamado } from "@/componentes/chamados/NotificacoesWhatsappChamado";
 import {
   FormularioChamado,
   type DadosFormularioChamado,
