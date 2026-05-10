@@ -248,6 +248,23 @@ export function AbaUsuarios() {
       toast.error("Não foi possível remover.", { description: e.message }),
   });
 
+  const alternarAtivoMembro = useMutation({
+    mutationFn: async ({ membroId, ativo }: { membroId: string; ativo: boolean }) => {
+      const { error } = await supabase
+        .from("workspace_membros")
+        .update({ ativo })
+        .eq("id", membroId);
+      if (error) throw error;
+      return ativo;
+    },
+    onSuccess: (ativo) => {
+      queryClient.invalidateQueries({ queryKey: ["membros-workspace"] });
+      toast.success(ativo ? "Usuário ativado." : "Usuário inativado.");
+    },
+    onError: (e: Error) =>
+      toast.error("Não foi possível alterar o status.", { description: e.message }),
+  });
+
   const { data: convites, isLoading: carregandoConvites } = useQuery({
     queryKey: ["convites", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id,
