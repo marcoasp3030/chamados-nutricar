@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Copy, Loader2, Mail, Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { Copy, KeyRound, Loader2, Mail, Pencil, Plus, RefreshCw, Trash2, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
