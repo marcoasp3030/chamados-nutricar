@@ -15,12 +15,25 @@ interface Payload {
 }
 
 function gerarSenha(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  let s = "";
-  const arr = new Uint8Array(14);
+  const maius = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const minus = "abcdefghjkmnpqrstuvwxyz";
+  const nums = "23456789";
+  const simb = "!@#$%&*?";
+  const todos = maius + minus + nums + simb;
+  const arr = new Uint8Array(20);
   crypto.getRandomValues(arr);
-  for (const n of arr) s += chars[n % chars.length];
-  return s + "@9";
+  let s = "";
+  for (const n of arr) s += todos[n % todos.length];
+  // Garante variedade exigida por políticas
+  const r = new Uint8Array(4);
+  crypto.getRandomValues(r);
+  return (
+    maius[r[0] % maius.length] +
+    minus[r[1] % minus.length] +
+    nums[r[2] % nums.length] +
+    simb[r[3] % simb.length] +
+    s
+  );
 }
 
 Deno.serve(async (req) => {
@@ -102,12 +115,30 @@ Deno.serve(async (req) => {
       });
     }
 
-    const senha = body.senha && body.senha.length >= 8 ? body.senha : gerarSenha();
-
-    const { error: updErr } = await admin.auth.admin.updateUserById(body.usuario_id, {
-      password: senha,
-    });
-    if (updErr) throw updErr;
+    let senha = body.senha && body.senha.length >= 8 ? body.senha : gerarSenha();
+    let tentativas = 0;
+    let updErr: { message?: string; code?: string } | null = null;
+    while (tentativas < 5) {
+      const r = await admin.auth.admin.updateUserById(body.usuario_id, { password: senha });
+      updErr = r.error as { message?: string; code?: string } | null;
+      if (!updErr) break;
+      // Se senha gerada caiu em base de vazadas, tenta outra automaticamente
+      if (!body.senha && (updErr as { code?: string }).code === "weak_password") {
+        senha = gerarSenha();
+        tentativas++;
+        continue;
+      }
+      break;
+    }
+    if (updErr) {
+      const msg = (updErr as { code?: string }).code === "weak_password"
+        ? "Senha rejeitada por ser comum/conhecida em vazamentos. Use outra mais forte."
+        : (updErr as { message?: string }).message ?? "Falha ao atualizar senha.";
+      return new Response(JSON.stringify({ error: msg }), {
+        status: 422,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     return new Response(
       JSON.stringify({ ok: true, senha }),
