@@ -1,6 +1,8 @@
 export type StatusChamado =
   | "Aberto"
   | "Em andamento"
+  | "Agendado"
+  | "Pausado"
   | "Aguardando solicitante"
   | "Aguardando terceiros"
   | "Resolvido"
@@ -24,6 +26,11 @@ export interface Chamado {
   categoria: string | null;
   loja: string | null;
   departamento_id: string | null;
+  departamento_origem_id: string | null;
+  motivo_agendamento: string | null;
+  agendado_para: string | null;
+  motivo_pausa: string | null;
+  tratativa: string | null;
   tags: string[];
   solicitante_id: string;
   responsavel_id: string | null;
@@ -70,6 +77,8 @@ export interface HistoricoChamado {
 export const STATUS_CHAMADO: StatusChamado[] = [
   "Aberto",
   "Em andamento",
+  "Agendado",
+  "Pausado",
   "Aguardando solicitante",
   "Aguardando terceiros",
   "Resolvido",
@@ -90,6 +99,8 @@ export const TIPOS_CHAMADO: TipoChamado[] = [
 export const STATUS_KANBAN: StatusChamado[] = [
   "Aberto",
   "Em andamento",
+  "Agendado",
+  "Pausado",
   "Aguardando solicitante",
   "Aguardando terceiros",
   "Resolvido",

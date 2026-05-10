@@ -53,6 +53,8 @@ type Acumulador = Map<string, AcumuladorEntry>;
 const STATUS_VAZIO: Record<StatusChamado, number> = {
   Aberto: 0,
   "Em andamento": 0,
+  Agendado: 0,
+  Pausado: 0,
   "Aguardando solicitante": 0,
   "Aguardando terceiros": 0,
   Resolvido: 0,

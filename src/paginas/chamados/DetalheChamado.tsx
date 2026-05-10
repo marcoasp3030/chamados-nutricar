@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -9,14 +9,19 @@ import {
   Loader2,
   Pencil,
   Trash2,
+  UserPlus,
   User as UserIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -80,14 +85,36 @@ export function DetalheChamado({ numero }: Props) {
   const [editando, setEditando] = useState(false);
   const [novoSub, setNovoSub] = useState(false);
   const [confirmarExcluir, setConfirmarExcluir] = useState(false);
+  const [transicao, setTransicao] = useState<StatusChamado | null>(null);
+  const [motivoTexto, setMotivoTexto] = useState("");
+  const [agendadoPara, setAgendadoPara] = useState("");
+  const [usuarioId, setUsuarioId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUsuarioId(data.user?.id ?? null));
+  }, []);
 
   const podeAtender =
     workspaceAtual && ["Proprietario", "Administrador", "Gestor", "Atendente"].includes(workspaceAtual.papel);
   const podeExcluir =
     workspaceAtual && ["Proprietario", "Administrador"].includes(workspaceAtual.papel);
 
+  const meuMembro = (membros ?? []).find((m) => m.usuario_id === usuarioId);
+  const meusDeptoIds = meuMembro?.departamento_ids ?? [];
+  const ehDoDeptoDestino =
+    !!chamado?.departamento_id && meusDeptoIds.includes(chamado.departamento_id);
+  const podeAssumir =
+    !!usuarioId && ehDoDeptoDestino && chamado?.responsavel_id !== usuarioId;
+
   const atualizar = useMutation({
-    mutationFn: async (campos: { status?: StatusChamado; responsavel_id?: string | null }) => {
+    mutationFn: async (campos: Partial<{
+      status: StatusChamado;
+      responsavel_id: string | null;
+      motivo_agendamento: string | null;
+      agendado_para: string | null;
+      motivo_pausa: string | null;
+      tratativa: string | null;
+    }>) => {
       if (!chamado) throw new Error("Chamado não carregado");
       const { error } = await supabase.from("chamados").update(campos).eq("id", chamado.id);
       if (error) throw error;
@@ -99,6 +126,57 @@ export function DetalheChamado({ numero }: Props) {
     },
     onError: (e: Error) => toast.error("Falha ao atualizar.", { description: e.message }),
   });
+
+  function iniciarTransicao(novo: StatusChamado) {
+    if (!chamado || novo === chamado.status) return;
+    if (
+      chamado.status === "Aberto" &&
+      !["Aberto", "Cancelado", "Fechado"].includes(novo) &&
+      !chamado.responsavel_id
+    ) {
+      toast.error("Atribua um responsável antes de iniciar a resolução.", {
+        description: ehDoDeptoDestino
+          ? "Use o botão 'Atribuir a mim' ou selecione um responsável."
+          : undefined,
+      });
+      return;
+    }
+    if (novo === "Agendado" || novo === "Pausado" || novo === "Resolvido") {
+      setMotivoTexto("");
+      setAgendadoPara("");
+      setTransicao(novo);
+      return;
+    }
+    atualizar.mutate({ status: novo });
+  }
+
+  function confirmarTransicao() {
+    if (!transicao) return;
+    if (transicao === "Agendado") {
+      if (!motivoTexto.trim()) return toast.error("Informe o motivo do agendamento.");
+      if (!agendadoPara) return toast.error("Informe a data do agendamento.");
+      atualizar.mutate({
+        status: "Agendado",
+        motivo_agendamento: motivoTexto.trim(),
+        agendado_para: new Date(agendadoPara).toISOString(),
+      });
+    } else if (transicao === "Pausado") {
+      if (!motivoTexto.trim()) return toast.error("Informe o motivo da pausa.");
+      atualizar.mutate({ status: "Pausado", motivo_pausa: motivoTexto.trim() });
+    } else if (transicao === "Resolvido") {
+      if (!motivoTexto.trim()) return toast.error("Descreva a tratativa realizada.");
+      atualizar.mutate({ status: "Resolvido", tratativa: motivoTexto.trim() });
+    }
+    setTransicao(null);
+  }
+
+  function assumirChamado() {
+    if (!usuarioId) return;
+    atualizar.mutate(
+      { responsavel_id: usuarioId },
+      { onSuccess: () => toast.success("Chamado atribuído a você.") },
+    );
+  }
 
   const editar = useMutation({
     mutationFn: async (dados: DadosFormularioChamado) => {
@@ -192,10 +270,16 @@ export function DetalheChamado({ numero }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
-          {podeAtender && (
+          {podeAssumir && (
+            <Button variant="default" size="sm" onClick={assumirChamado} disabled={atualizar.isPending}>
+              <UserPlus className="h-4 w-4" />
+              {chamado.responsavel_id ? "Reassumir chamado" : "Atribuir a mim"}
+            </Button>
+          )}
+          {(podeAtender || ehDoDeptoDestino) && (
             <Select
               value={chamado.status}
-              onValueChange={(v) => atualizar.mutate({ status: v as StatusChamado })}
+              onValueChange={(v) => iniciarTransicao(v as StatusChamado)}
             >
               <SelectTrigger className="w-[200px]">
                 <SelectValue />
@@ -226,6 +310,31 @@ export function DetalheChamado({ numero }: Props) {
           )}
         </div>
       </div>
+
+      {/* Banners contextuais de tratativa / motivos */}
+      {(chamado.status === "Agendado" && chamado.motivo_agendamento) && (
+        <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm dark:border-indigo-900 dark:bg-indigo-950/40">
+          <p className="font-semibold text-indigo-900 dark:text-indigo-100">Agendado</p>
+          <p className="mt-1 text-indigo-900/80 dark:text-indigo-100/80">{chamado.motivo_agendamento}</p>
+          {chamado.agendado_para && (
+            <p className="mt-1 text-xs text-indigo-900/70 dark:text-indigo-100/70">
+              Para {format(new Date(chamado.agendado_para), "dd 'de' MMM yyyy 'às' HH:mm", { locale: ptBR })}
+            </p>
+          )}
+        </div>
+      )}
+      {(chamado.status === "Pausado" && chamado.motivo_pausa) && (
+        <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm dark:border-yellow-900 dark:bg-yellow-950/40">
+          <p className="font-semibold text-yellow-900 dark:text-yellow-100">Pausado</p>
+          <p className="mt-1 text-yellow-900/80 dark:text-yellow-100/80">{chamado.motivo_pausa}</p>
+        </div>
+      )}
+      {(chamado.status === "Resolvido" || chamado.status === "Fechado") && chamado.tratativa && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm dark:border-emerald-900 dark:bg-emerald-950/40">
+          <p className="font-semibold text-emerald-900 dark:text-emerald-100">Tratativa realizada</p>
+          <p className="mt-1 whitespace-pre-wrap text-emerald-900/80 dark:text-emerald-100/80">{chamado.tratativa}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-6">
@@ -373,6 +482,56 @@ export function DetalheChamado({ numero }: Props) {
           </div>
         </aside>
       </div>
+
+      <Dialog open={!!transicao} onOpenChange={(o) => !o && setTransicao(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {transicao === "Agendado" && "Agendar chamado"}
+              {transicao === "Pausado" && "Pausar chamado"}
+              {transicao === "Resolvido" && "Resolver chamado"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {transicao === "Agendado" && (
+              <div className="space-y-2">
+                <Label htmlFor="agendado-data">Data e hora do agendamento *</Label>
+                <Input
+                  id="agendado-data"
+                  type="datetime-local"
+                  value={agendadoPara}
+                  onChange={(e) => setAgendadoPara(e.target.value)}
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="motivo-texto">
+                {transicao === "Resolvido" ? "Tratativa realizada *" : "Motivo *"}
+              </Label>
+              <Textarea
+                id="motivo-texto"
+                rows={transicao === "Resolvido" ? 6 : 4}
+                value={motivoTexto}
+                onChange={(e) => setMotivoTexto(e.target.value)}
+                placeholder={
+                  transicao === "Agendado"
+                    ? "Por que este chamado precisa ser agendado?"
+                    : transicao === "Pausado"
+                    ? "Por que o chamado está sendo pausado?"
+                    : "Descreva como o chamado foi resolvido."
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTransicao(null)}>Cancelar</Button>
+            <Button onClick={confirmarTransicao} disabled={atualizar.isPending}>
+              {atualizar.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={editando} onOpenChange={setEditando}>
         <DialogContent className="max-w-2xl">

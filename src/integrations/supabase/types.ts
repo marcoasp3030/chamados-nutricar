@@ -327,6 +327,7 @@ export type Database = {
       }
       chamados: {
         Row: {
+          agendado_para: string | null
           atualizado_em: string
           categoria: string | null
           chamado_pai_id: string | null
@@ -334,10 +335,13 @@ export type Database = {
           criado_em: string
           criado_por: string
           departamento_id: string | null
+          departamento_origem_id: string | null
           descricao: string | null
           fechado_em: string | null
           id: string
           loja: string | null
+          motivo_agendamento: string | null
+          motivo_pausa: string | null
           numero: number
           prazo: string | null
           primeiro_resposta_em: string | null
@@ -350,9 +354,11 @@ export type Database = {
           tags: string[]
           tipo: Database["public"]["Enums"]["tipo_chamado"]
           titulo: string
+          tratativa: string | null
           workspace_id: string
         }
         Insert: {
+          agendado_para?: string | null
           atualizado_em?: string
           categoria?: string | null
           chamado_pai_id?: string | null
@@ -360,10 +366,13 @@ export type Database = {
           criado_em?: string
           criado_por: string
           departamento_id?: string | null
+          departamento_origem_id?: string | null
           descricao?: string | null
           fechado_em?: string | null
           id?: string
           loja?: string | null
+          motivo_agendamento?: string | null
+          motivo_pausa?: string | null
           numero: number
           prazo?: string | null
           primeiro_resposta_em?: string | null
@@ -376,9 +385,11 @@ export type Database = {
           tags?: string[]
           tipo?: Database["public"]["Enums"]["tipo_chamado"]
           titulo: string
+          tratativa?: string | null
           workspace_id: string
         }
         Update: {
+          agendado_para?: string | null
           atualizado_em?: string
           categoria?: string | null
           chamado_pai_id?: string | null
@@ -386,10 +397,13 @@ export type Database = {
           criado_em?: string
           criado_por?: string
           departamento_id?: string | null
+          departamento_origem_id?: string | null
           descricao?: string | null
           fechado_em?: string | null
           id?: string
           loja?: string | null
+          motivo_agendamento?: string | null
+          motivo_pausa?: string | null
           numero?: number
           prazo?: string | null
           primeiro_resposta_em?: string | null
@@ -402,6 +416,7 @@ export type Database = {
           tags?: string[]
           tipo?: Database["public"]["Enums"]["tipo_chamado"]
           titulo?: string
+          tratativa?: string | null
           workspace_id?: string
         }
         Relationships: [
@@ -1184,6 +1199,10 @@ export type Database = {
     }
     Functions: {
       calcular_sigla_workspace: { Args: { _nome: string }; Returns: string }
+      departamentos_do_usuario: {
+        Args: { _workspace_id: string }
+        Returns: string[]
+      }
       pode_ver_todos_chamados: {
         Args: { _workspace_id: string }
         Returns: boolean
@@ -1219,6 +1238,8 @@ export type Database = {
         | "Resolvido"
         | "Fechado"
         | "Cancelado"
+        | "Agendado"
+        | "Pausado"
       status_item_compra:
         | "Pendente"
         | "Cotando"
@@ -1380,6 +1401,8 @@ export const Constants = {
         "Resolvido",
         "Fechado",
         "Cancelado",
+        "Agendado",
+        "Pausado",
       ],
       status_item_compra: [
         "Pendente",

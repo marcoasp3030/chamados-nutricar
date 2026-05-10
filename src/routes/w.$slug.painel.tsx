@@ -152,6 +152,8 @@ function BarraProporcional({
 const CORES_STATUS: Record<StatusChamado, string> = {
   Aberto: "bg-blue-500",
   "Em andamento": "bg-amber-500",
+  Agendado: "bg-indigo-500",
+  Pausado: "bg-yellow-500",
   "Aguardando solicitante": "bg-purple-500",
   "Aguardando terceiros": "bg-pink-500",
   Resolvido: "bg-emerald-500",

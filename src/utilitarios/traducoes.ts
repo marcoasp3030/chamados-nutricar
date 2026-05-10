@@ -26,6 +26,8 @@ export const rotuloStatus: Record<StatusWorkspace, string> = {
 export const rotuloStatusChamado: Record<StatusChamado, string> = {
   Aberto: "Aberto",
   "Em andamento": "Em andamento",
+  Agendado: "Agendado",
+  Pausado: "Pausado",
   "Aguardando solicitante": "Aguardando solicitante",
   "Aguardando terceiros": "Aguardando terceiros",
   Resolvido: "Resolvido",
