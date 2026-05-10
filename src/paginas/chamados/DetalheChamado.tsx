@@ -483,6 +483,56 @@ export function DetalheChamado({ numero }: Props) {
         </aside>
       </div>
 
+      <Dialog open={!!transicao} onOpenChange={(o) => !o && setTransicao(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {transicao === "Agendado" && "Agendar chamado"}
+              {transicao === "Pausado" && "Pausar chamado"}
+              {transicao === "Resolvido" && "Resolver chamado"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {transicao === "Agendado" && (
+              <div className="space-y-2">
+                <Label htmlFor="agendado-data">Data e hora do agendamento *</Label>
+                <Input
+                  id="agendado-data"
+                  type="datetime-local"
+                  value={agendadoPara}
+                  onChange={(e) => setAgendadoPara(e.target.value)}
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="motivo-texto">
+                {transicao === "Resolvido" ? "Tratativa realizada *" : "Motivo *"}
+              </Label>
+              <Textarea
+                id="motivo-texto"
+                rows={transicao === "Resolvido" ? 6 : 4}
+                value={motivoTexto}
+                onChange={(e) => setMotivoTexto(e.target.value)}
+                placeholder={
+                  transicao === "Agendado"
+                    ? "Por que este chamado precisa ser agendado?"
+                    : transicao === "Pausado"
+                    ? "Por que o chamado está sendo pausado?"
+                    : "Descreva como o chamado foi resolvido."
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTransicao(null)}>Cancelar</Button>
+            <Button onClick={confirmarTransicao} disabled={atualizar.isPending}>
+              {atualizar.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={editando} onOpenChange={setEditando}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
