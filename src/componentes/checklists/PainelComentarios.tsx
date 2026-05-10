@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Loader2, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   useAdicionarComentario,
   useComentariosChecklist,
@@ -13,11 +12,15 @@ import {
 } from "@/hooks/useComentariosChecklist";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useWorkspaceStore } from "@/estado/workspaceStore";
+import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";
+import { EditorMencoes, extrairMencoes, type OpcaoMencao } from "@/componentes/comum/EditorMencoes";
 import { cn } from "@/lib/utils";
 
 interface Props {
   checklistId: string;
   workspaceId: string;
+  nomeChecklist?: string;
   className?: string;
   compact?: boolean;
 }
@@ -31,8 +34,47 @@ function iniciais(nome: string) {
     .join("");
 }
 
-export function PainelComentarios({ checklistId, workspaceId, className, compact }: Props) {
+function renderizarConteudo(texto: string, nomes: Set<string>) {
+  // Realça @nome quando bate com algum membro conhecido.
+  const norm = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const partes: Array<{ tipo: "texto" | "mencao"; v: string }> = [];
+  const regex = /@([\p{L}\p{N}._\-]+(?:\s+[\p{L}\p{N}._\-]+){0,3})/gu;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(texto)) !== null) {
+    const candidato = m[1];
+    // Tenta variantes de comprimento (do mais longo ao mais curto)
+    const palavras = candidato.split(/\s+/);
+    let casou: string | null = null;
+    for (let n = palavras.length; n >= 1; n--) {
+      const tentativa = palavras.slice(0, n).join(" ");
+      if (nomes.has(norm(tentativa))) {
+        casou = tentativa;
+        break;
+      }
+    }
+    if (casou) {
+      partes.push({ tipo: "texto", v: texto.slice(last, m.index) });
+      partes.push({ tipo: "mencao", v: "@" + casou });
+      last = m.index + 1 + casou.length;
+      regex.lastIndex = last;
+    }
+  }
+  partes.push({ tipo: "texto", v: texto.slice(last) });
+  return partes;
+}
+
+export function PainelComentarios({
+  checklistId,
+  workspaceId,
+  nomeChecklist,
+  className,
+  compact,
+}: Props) {
+  const { workspaceAtual } = useWorkspaceStore();
   const { data: comentarios, isLoading } = useComentariosChecklist(checklistId);
+  const { data: membros } = useMembrosWorkspace(workspaceId);
   const adicionar = useAdicionarComentario();
   const excluir = useExcluirComentario();
   const [conteudo, setConteudo] = useState("");
@@ -45,10 +87,34 @@ export function PainelComentarios({ checklistId, workspaceId, className, compact
     },
   });
 
+  const opcoes: OpcaoMencao[] = useMemo(
+    () =>
+      (membros ?? [])
+        .map((m) => ({ id: m.usuario_id, nome: m.perfil.nome, email: m.perfil.email }))
+        .filter((o) => o.id !== usuario),
+    [membros, usuario],
+  );
+
+  const nomesNorm = useMemo(() => {
+    const s = new Set<string>();
+    for (const m of membros ?? []) {
+      s.add(m.perfil.nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase());
+    }
+    return s;
+  }, [membros]);
+
   const enviar = () => {
     if (!conteudo.trim()) return;
+    const mencionados = extrairMencoes(conteudo, opcoes);
     adicionar.mutate(
-      { checklistId, workspaceId, conteudo },
+      {
+        checklistId,
+        workspaceId,
+        conteudo,
+        mencionados,
+        nomeChecklist,
+        slugWorkspace: workspaceAtual?.slug,
+      },
       {
         onSuccess: () => setConteudo(""),
         onError: (e: Error) =>
@@ -66,11 +132,12 @@ export function PainelComentarios({ checklistId, workspaceId, className, compact
           </div>
         ) : (comentarios ?? []).length === 0 ? (
           <p className="rounded-lg border border-dashed border-border/60 px-3 py-6 text-center text-xs text-muted-foreground">
-            Nenhum comentário ainda. Seja o primeiro a registrar o andamento.
+            Nenhum comentário ainda. Use @ para mencionar a equipe.
           </p>
         ) : (
           (comentarios ?? []).map((c) => {
             const meu = usuario === c.autor_id;
+            const partes = renderizarConteudo(c.conteudo, nomesNorm);
             return (
               <div key={c.id} className="flex gap-2.5">
                 <Avatar className="h-8 w-8 shrink-0">
@@ -102,7 +169,20 @@ export function PainelComentarios({ checklistId, workspaceId, className, compact
                       )}
                     </div>
                   </div>
-                  <p className="mt-1 whitespace-pre-wrap break-words text-sm">{c.conteudo}</p>
+                  <p className="mt-1 whitespace-pre-wrap break-words text-sm">
+                    {partes.map((p, i) =>
+                      p.tipo === "mencao" ? (
+                        <span
+                          key={i}
+                          className="rounded bg-primary/10 px-1 font-medium text-primary"
+                        >
+                          {p.v}
+                        </span>
+                      ) : (
+                        <span key={i}>{p.v}</span>
+                      ),
+                    )}
+                  </p>
                 </div>
               </div>
             );
@@ -111,20 +191,18 @@ export function PainelComentarios({ checklistId, workspaceId, className, compact
       </div>
 
       <div className="mt-3 space-y-2 border-t border-border/60 pt-3">
-        <Textarea
+        <EditorMencoes
           value={conteudo}
-          onChange={(e) => setConteudo(e.target.value)}
-          placeholder="Escreva uma atualização sobre esta inauguração..."
+          onChange={setConteudo}
+          onSubmit={enviar}
+          opcoes={opcoes}
+          placeholder="Escreva uma atualização. Use @ para mencionar alguém."
           rows={3}
-          onKeyDown={(e) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-              e.preventDefault();
-              enviar();
-            }
-          }}
         />
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-muted-foreground">Ctrl+Enter para enviar</span>
+          <span className="text-[10px] text-muted-foreground">
+            @ menciona · Ctrl+Enter envia
+          </span>
           <Button size="sm" onClick={enviar} disabled={!conteudo.trim() || adicionar.isPending}>
             {adicionar.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />

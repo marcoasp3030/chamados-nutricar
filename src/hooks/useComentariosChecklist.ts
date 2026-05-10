@@ -67,20 +67,64 @@ export function useAdicionarComentario() {
       checklistId: string;
       workspaceId: string;
       conteudo: string;
+      mencionados?: string[];
+      nomeChecklist?: string;
+      destinatariosExtras?: string[];
+      slugWorkspace?: string;
     }) => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Não autenticado");
+      const conteudo = vars.conteudo.trim();
+      const mencionados = Array.from(new Set(vars.mencionados ?? []));
       const { error } = await supabase.from("checklist_comentarios").insert({
         checklist_id: vars.checklistId,
         workspace_id: vars.workspaceId,
         autor_id: u.user.id,
-        conteudo: vars.conteudo.trim(),
+        conteudo,
+        mencionados,
       });
       if (error) throw error;
+
+      // Carregar nome do autor
+      const { data: perfil } = await supabase
+        .from("perfis")
+        .select("nome")
+        .eq("id", u.user.id)
+        .maybeSingle();
+      const autorNome = perfil?.nome ?? "Alguém";
+      const titulo = vars.nomeChecklist
+        ? `${autorNome} comentou em ${vars.nomeChecklist}`
+        : `${autorNome} comentou em uma inauguração`;
+      const link = vars.slugWorkspace
+        ? `/w/${vars.slugWorkspace}/checklists/${vars.checklistId}`
+        : null;
+
+      const destinatarios = new Set<string>([
+        ...mencionados,
+        ...(vars.destinatariosExtras ?? []),
+      ]);
+      destinatarios.delete(u.user.id);
+      if (destinatarios.size > 0) {
+        const linhas = Array.from(destinatarios).map((dest) => ({
+          workspace_id: vars.workspaceId,
+          destinatario_id: dest,
+          ator_id: u.user.id,
+          tipo: mencionados.includes(dest) ? "mencao_comentario" : "novo_comentario",
+          titulo: mencionados.includes(dest)
+            ? `${autorNome} mencionou você`
+            : titulo,
+          mensagem: conteudo.slice(0, 220),
+          link,
+          recurso_tipo: "checklist",
+          recurso_id: vars.checklistId,
+        }));
+        await supabase.from("notificacoes").insert(linhas);
+      }
     },
     onSuccess: (_d, v) => {
       qc.invalidateQueries({ queryKey: ["checklist-comentarios", v.checklistId] });
       qc.invalidateQueries({ queryKey: ["checklist-comentarios-contagem"] });
+      qc.invalidateQueries({ queryKey: ["notificacoes"] });
     },
   });
 }
