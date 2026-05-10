@@ -426,7 +426,23 @@ export function AbaUsuarios() {
                       ) : null,
                     )}
                     <Badge>{rotuloPapel[m.papel as Papel] ?? m.papel}</Badge>
+                    {!m.ativo && <Badge variant="destructive">Inativo</Badge>}
                   </div>
+                  {podeAdministrar && !ehProprietario && !ehProprio && (
+                    <div className="flex shrink-0 items-center gap-2 px-1">
+                      <Switch
+                        checked={m.ativo}
+                        disabled={alternarAtivoMembro.isPending}
+                        onCheckedChange={(v) =>
+                          alternarAtivoMembro.mutate({ membroId: m.id, ativo: v })
+                        }
+                        title={m.ativo ? "Inativar usuário" : "Ativar usuário"}
+                      />
+                      <span className="text-xs text-muted-foreground w-12">
+                        {m.ativo ? "Ativo" : "Inativo"}
+                      </span>
+                    </div>
+                  )}
                   {(podeEditar || podeRemover) && (
                     <div className="flex shrink-0 gap-1">
                       {podeEditar && (
