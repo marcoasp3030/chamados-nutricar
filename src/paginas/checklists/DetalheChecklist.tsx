@@ -305,6 +305,135 @@ function formatarValor(v: unknown): string {
   return String(v);
 }
 
+function formatarValorCampo(item: ItemTemplate, v: Valor): string {
+  if (v === null || v === undefined || v === "") return "—";
+  if (item.tipo === "checkbox") return v ? "Sim" : "Não";
+  if (item.tipo === "sim_nao") return v === "sim" ? "Sim" : v === "nao" ? "Não" : "—";
+  if (item.tipo === "data" && typeof v === "string") {
+    try {
+      return format(new Date(v + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR });
+    } catch {
+      return String(v);
+    }
+  }
+  return String(v);
+}
+
+function exportarPDF({
+  checklist,
+  itens,
+  valores,
+  pct,
+  preenchidos,
+  total,
+}: {
+  checklist: { nome: string; status: string; criado_em: string };
+  itens: ItemTemplate[];
+  valores: Record<string, Valor>;
+  pct: number;
+  preenchidos: number;
+  total: number;
+}) {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 40;
+  let y = margin;
+
+  const ensureSpace = (h: number) => {
+    if (y + h > pageH - margin) {
+      doc.addPage();
+      y = margin;
+    }
+  };
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text(checklist.nome, margin, y);
+  y += 20;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(110);
+  doc.text(
+    `Status: ${checklist.status}  ·  Preenchimento: ${preenchidos}/${total} (${pct}%)  ·  Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`,
+    margin,
+    y,
+  );
+  y += 18;
+  doc.setTextColor(0);
+  doc.setDrawColor(220);
+  doc.line(margin, y, pageW - margin, y);
+  y += 14;
+
+  // Group by section/subsection
+  const grupos = new Map<string, Map<string, ItemTemplate[]>>();
+  for (const it of itens) {
+    if (!grupos.has(it.secao)) grupos.set(it.secao, new Map());
+    const sub = it.subsecao ?? "_";
+    const subMap = grupos.get(it.secao)!;
+    if (!subMap.has(sub)) subMap.set(sub, []);
+    subMap.get(sub)!.push(it);
+  }
+
+  const labelW = 220;
+  const valueW = pageW - margin * 2 - labelW - 10;
+
+  for (const [secao, subs] of grupos.entries()) {
+    ensureSpace(28);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setFillColor(245, 245, 245);
+    doc.rect(margin, y - 2, pageW - margin * 2, 18, "F");
+    doc.text(secao, margin + 6, y + 11);
+    y += 24;
+
+    for (const [sub, lista] of subs.entries()) {
+      if (sub !== "_") {
+        ensureSpace(18);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(90);
+        doc.text(sub, margin, y);
+        doc.setTextColor(0);
+        y += 14;
+      }
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      for (const it of lista) {
+        const valorTxt = formatarValorCampo(it, valores[it.id] ?? null);
+        const labelLines = doc.splitTextToSize(it.rotulo, labelW);
+        const valueLines = doc.splitTextToSize(valorTxt, valueW);
+        const rowH = Math.max(labelLines.length, valueLines.length) * 12 + 6;
+        ensureSpace(rowH);
+        doc.setTextColor(80);
+        doc.text(labelLines, margin, y + 10);
+        doc.setTextColor(0);
+        doc.setFont("helvetica", "bold");
+        doc.text(valueLines, margin + labelW + 10, y + 10);
+        doc.setFont("helvetica", "normal");
+        y += rowH;
+        doc.setDrawColor(240);
+        doc.line(margin, y, pageW - margin, y);
+        y += 4;
+      }
+      y += 4;
+    }
+    y += 6;
+  }
+
+  const total2 = doc.getNumberOfPages();
+  for (let i = 1; i <= total2; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(`Página ${i} de ${total2}`, pageW - margin, pageH - 20, { align: "right" });
+  }
+
+  const safe = checklist.nome.replace(/[^\w\-]+/g, "_").slice(0, 60);
+  doc.save(`${safe || "checklist"}.pdf`);
+}
+
 function CampoItem({
   item,
   valor,
