@@ -16,11 +16,13 @@ import {
   AlertCircle,
   Smartphone,
   Plug,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
@@ -31,6 +33,7 @@ import {
   reconectarUazapi,
   desconectarUazapi,
   excluirInstanciaUazapi,
+  enviarMensagemTesteUazapi,
 } from "@/lib/uazapi.functions";
 
 interface ConfigRow {
@@ -77,7 +80,7 @@ export function AbaUazapi() {
   const reconectar = useServerFn(reconectarUazapi);
   const desconectar = useServerFn(desconectarUazapi);
   const excluir = useServerFn(excluirInstanciaUazapi);
-
+  const enviarTeste = useServerFn(enviarMensagemTesteUazapi);
   const { data: cfg, isLoading } = useQuery({
     queryKey: ["uazapi-config", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id && !!podeAdmin,
@@ -126,6 +129,8 @@ export function AbaUazapi() {
   const [serverUrl, setServerUrl] = useState("");
   const [adminToken, setAdminToken] = useState("");
   const [mostrar, setMostrar] = useState(false);
+  const [testeNumero, setTesteNumero] = useState("");
+  const [testeMensagem, setTesteMensagem] = useState("Mensagem de teste do sistema ✅");
 
   useEffect(() => {
     setServerUrl(cfg?.server_url ?? "");
@@ -193,6 +198,23 @@ export function AbaUazapi() {
       qc.invalidateQueries({ queryKey: ["uazapi-config"] });
     },
     onError: (e: Error) => toast.error("Falha ao excluir", { description: e.message }),
+  });
+
+  const mEnviarTeste = useMutation({
+    mutationFn: async () => {
+      await enviarTeste({
+        data: {
+          workspaceId: workspaceAtual!.id,
+          numero: testeNumero,
+          mensagem: testeMensagem,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Mensagem de teste enviada.");
+      qc.invalidateQueries({ queryKey: ["uazapi-logs"] });
+    },
+    onError: (e: Error) => toast.error("Falha ao enviar", { description: e.message }),
   });
 
   if (!podeAdmin) {
@@ -406,6 +428,56 @@ export function AbaUazapi() {
               </div>
             </>
           )}
+        </div>
+      )}
+
+      {/* Envio de teste */}
+      {conectado && (
+        <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Send className="h-4 w-4" /> Enviar mensagem de teste
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Use o número completo com DDI e DDD, somente dígitos. Ex: 5511999998888.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
+            <div className="space-y-2">
+              <Label htmlFor="teste-numero">Número</Label>
+              <Input
+                id="teste-numero"
+                placeholder="5511999998888"
+                value={testeNumero}
+                onChange={(e) => setTesteNumero(e.target.value)}
+                inputMode="numeric"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="teste-mensagem">Mensagem</Label>
+              <Textarea
+                id="teste-mensagem"
+                rows={3}
+                value={testeMensagem}
+                onChange={(e) => setTesteMensagem(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end border-t border-border pt-4">
+            <Button
+              onClick={() => mEnviarTeste.mutate()}
+              disabled={
+                mEnviarTeste.isPending ||
+                testeNumero.replace(/\D/g, "").length < 8 ||
+                !testeMensagem.trim()
+              }
+            >
+              {mEnviarTeste.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              Enviar teste
+            </Button>
+          </div>
         </div>
       )}
 
