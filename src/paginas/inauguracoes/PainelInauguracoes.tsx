@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Loader2,
   MapPin,
+  MessageSquare,
   PartyPopper,
   Search,
   Sparkles,
@@ -18,12 +19,20 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import {
   useInauguracoes,
   type CardInauguracao,
   type ColunaInauguracao,
 } from "@/hooks/useInauguracoes";
+import { useContagemComentarios } from "@/hooks/useComentariosChecklist";
+import { PainelComentarios } from "@/componentes/checklists/PainelComentarios";
 import { cn } from "@/lib/utils";
 
 interface DefColuna {
