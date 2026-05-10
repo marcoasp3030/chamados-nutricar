@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Copy, Loader2, Mail, Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { Copy, KeyRound, Loader2, Mail, Pencil, Plus, RefreshCw, Trash2, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
@@ -140,6 +140,36 @@ export function AbaUsuarios() {
     departamento_ids: [] as string[],
   });
   const [errosMembro, setErrosMembro] = useState<Record<string, string>>({});
+
+  // Definir/redefinir senha
+  const [senhaMembro, setSenhaMembro] = useState<MembroAtivo | null>(null);
+  const [novaSenha, setNovaSenha] = useState("");
+  const [senhaGerada, setSenhaGerada] = useState<{ email: string; senha: string } | null>(null);
+
+  const definirSenha = useMutation({
+    mutationFn: async ({ usuarioId, senha }: { usuarioId: string; senha: string | null }) => {
+      if (!workspaceAtual) throw new Error("Workspace inválido");
+      const { data, error } = await supabase.functions.invoke("definir-senha-usuario", {
+        body: {
+          workspace_id: workspaceAtual.id,
+          usuario_id: usuarioId,
+          senha: senha || null,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as { senha: string };
+    },
+    onSuccess: (data) => {
+      const email = senhaMembro?.perfil.email ?? "";
+      setSenhaGerada({ email, senha: data.senha });
+      setSenhaMembro(null);
+      setNovaSenha("");
+      toast.success("Senha atualizada.");
+    },
+    onError: (e: Error) =>
+      toast.error("Não foi possível alterar a senha.", { description: e.message }),
+  });
 
   const podeAdministrar =
     workspaceAtual?.papel === "Proprietario" || workspaceAtual?.papel === "Administrador";
@@ -453,6 +483,16 @@ export function AbaUsuarios() {
                           title="Editar membro"
                         >
                           <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {podeAdministrar && !ehProprio && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => { setNovaSenha(""); setSenhaMembro(m); }}
+                          title="Definir senha"
+                        >
+                          <KeyRound className="h-4 w-4" />
                         </Button>
                       )}
                       {podeRemover && (
@@ -856,6 +896,89 @@ export function AbaUsuarios() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog: Definir senha */}
+      <Dialog open={!!senhaMembro} onOpenChange={(o) => { if (!o) { setSenhaMembro(null); setNovaSenha(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Definir senha</DialogTitle>
+            <DialogDescription>
+              Defina uma nova senha para <strong>{senhaMembro?.perfil.nome}</strong> ({senhaMembro?.perfil.email}).
+              Deixe em branco para gerar uma senha automática.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="nova-senha">Nova senha</Label>
+            <Input
+              id="nova-senha"
+              type="text"
+              autoComplete="new-password"
+              placeholder="Mínimo 8 caracteres ou deixe em branco"
+              value={novaSenha}
+              onChange={(e) => setNovaSenha(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              A senha será atualizada imediatamente. Compartilhe-a de forma segura com o usuário.
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => { setSenhaMembro(null); setNovaSenha(""); }}
+              disabled={definirSenha.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                senhaMembro &&
+                definirSenha.mutate({ usuarioId: senhaMembro.usuario_id, senha: null })
+              }
+              disabled={definirSenha.isPending}
+            >
+              <RefreshCw className="h-4 w-4" /> Gerar automática
+            </Button>
+            <Button
+              onClick={() =>
+                senhaMembro &&
+                definirSenha.mutate({ usuarioId: senhaMembro.usuario_id, senha: novaSenha })
+              }
+              disabled={definirSenha.isPending || novaSenha.length < 8}
+            >
+              {definirSenha.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Salvar senha
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: senha gerada/atualizada */}
+      <Dialog open={!!senhaGerada} onOpenChange={(o) => !o && setSenhaGerada(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Senha atualizada</DialogTitle>
+            <DialogDescription>
+              Compartilhe a nova senha de <strong>{senhaGerada?.email}</strong> de forma segura.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Nova senha</Label>
+            <div className="flex gap-2">
+              <Input readOnly value={senhaGerada?.senha ?? ""} className="font-mono text-xs" />
+              <Button
+                variant="outline"
+                onClick={() => senhaGerada && copiar(senhaGerada.senha)}
+              >
+                <Copy className="h-4 w-4" /> Copiar
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setSenhaGerada(null)}>Concluir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

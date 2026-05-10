@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.criar-usuario-direto]
 verify_jwt = true
+
+[functions.definir-senha-usuario]
+verify_jwt = true
