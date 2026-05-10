@@ -626,41 +626,44 @@ export function AbaUsuarios() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAberto(false)} disabled={criarConvite.isPending}>
+            <Button variant="outline" onClick={() => setAberto(false)} disabled={criarUsuario.isPending}>
               Cancelar
             </Button>
-            <Button onClick={() => criarConvite.mutate()} disabled={criarConvite.isPending}>
-              {criarConvite.isPending ? (
+            <Button onClick={() => criarUsuario.mutate()} disabled={criarUsuario.isPending}>
+              {criarUsuario.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Plus className="h-4 w-4" />
               )}
-              Gerar convite
+              Criar usuário
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: convite pronto com link */}
-      <Dialog open={!!convitePronto} onOpenChange={(o) => !o && setConvitePronto(null)}>
+      {/* Dialog: usuário criado com senha temporária */}
+      <Dialog open={!!usuarioCriado} onOpenChange={(o) => !o && setUsuarioCriado(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Convite gerado</DialogTitle>
+            <DialogTitle>Usuário criado</DialogTitle>
             <DialogDescription>
-              Compartilhe este link com {convitePronto?.email}. Ele expira em 7 dias.
+              O usuário <strong>{usuarioCriado?.email}</strong> já está ativo. Compartilhe a senha temporária abaixo para o primeiro acesso.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex gap-2">
-            <Input readOnly value={convitePronto?.url ?? ""} className="font-mono text-xs" />
-            <Button
-              variant="outline"
-              onClick={() => convitePronto && copiar(convitePronto.url)}
-            >
-              <Copy className="h-4 w-4" /> Copiar
-            </Button>
+          <div className="space-y-2">
+            <Label>Senha temporária</Label>
+            <div className="flex gap-2">
+              <Input readOnly value={usuarioCriado?.senha ?? ""} className="font-mono text-xs" />
+              <Button
+                variant="outline"
+                onClick={() => usuarioCriado && copiar(usuarioCriado.senha)}
+              >
+                <Copy className="h-4 w-4" /> Copiar
+              </Button>
+            </div>
           </div>
           <DialogFooter>
-            <Button onClick={() => setConvitePronto(null)}>Concluir</Button>
+            <Button onClick={() => setUsuarioCriado(null)}>Concluir</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
