@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 const corColuna: Record<StatusChamado, { ponto: string; topo: string }> = {
   Aberto: { ponto: "bg-blue-500", topo: "from-blue-500/60" },
   "Em andamento": { ponto: "bg-amber-500", topo: "from-amber-500/60" },
+  Agendado: { ponto: "bg-indigo-500", topo: "from-indigo-500/60" },
+  Pausado: { ponto: "bg-yellow-500", topo: "from-yellow-500/60" },
   "Aguardando solicitante": { ponto: "bg-purple-500", topo: "from-purple-500/60" },
   "Aguardando terceiros": { ponto: "bg-pink-500", topo: "from-pink-500/60" },
   Resolvido: { ponto: "bg-emerald-500", topo: "from-emerald-500/60" },
