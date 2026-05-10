@@ -33,6 +33,7 @@ import {
   reconectarUazapi,
   desconectarUazapi,
   excluirInstanciaUazapi,
+  enviarMensagemTesteUazapi,
 } from "@/lib/uazapi.functions";
 
 interface ConfigRow {
