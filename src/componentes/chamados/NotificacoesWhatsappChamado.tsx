@@ -48,16 +48,19 @@ function rotuloEvento(evento: string): string {
 
 function explicarErro(status: number | null, erro: string | null): string {
   if (!erro && status == null) return "Sem detalhes";
-  // Detecta HTML (404 do servidor SSR / app não publicado)
   const ehHtml = !!erro && /<!doctype html|<html/i.test(erro);
+  // Uazapi costuma retornar 405 quando o número está fora do formato
+  if (status === 405 || /"code"\s*:\s*405|method not allowed/i.test(erro ?? "")) {
+    return "Servidor Uazapi rejeitou (405). Causa mais provável: número de telefone em formato inválido. Confirme se o telefone do destinatário tem DDI 55, DDD e o 9 do celular (ex.: 5511987654321).";
+  }
   if (status === 404) {
     if (ehHtml) {
-      return "Endpoint /api/public/whatsapp-notify retornou 404 (HTML). Possível causa: a rota ainda não está no deploy chamado pela URL configurada (publicado vs preview). Publique o app ou aponte a URL de notificação para o ambiente correto.";
+      return "Endpoint /api/public/whatsapp-notify retornou 404 (HTML). A rota não existe no deploy chamado pela URL configurada — publique o app ou aponte a URL para o ambiente correto.";
     }
-    return "Recurso 404 no servidor Uazapi. Verifique se o caminho de envio (/send/text, /message/sendText/{instance}) está correto para a versão da API.";
+    return "Recurso 404 no servidor Uazapi. Verifique se o caminho de envio está correto para a versão da API.";
   }
   if (status === 401 || status === 403) {
-    return "Não autorizado. Verifique o segredo do webhook (Bearer token) ou o token da instância Uazapi.";
+    return "Não autorizado. Verifique o segredo do webhook (Bearer) ou o token da instância Uazapi.";
   }
   if (status === 0 || status == null) {
     return erro || "Sem resposta do servidor (timeout ou rede).";
