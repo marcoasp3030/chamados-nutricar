@@ -33,7 +33,6 @@ Deno.serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     const auth = req.headers.get("Authorization") ?? "";
     if (!auth.startsWith("Bearer ")) {
@@ -42,12 +41,10 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const token = auth.slice("Bearer ".length);
 
-    // Cliente do solicitante (para validar identidade e papel via RLS)
-    const supabaseUser = createClient(SUPABASE_URL, ANON, {
-      global: { headers: { Authorization: auth } },
-    });
-    const { data: userData, error: userErr } = await supabaseUser.auth.getUser();
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const { data: userData, error: userErr } = await admin.auth.getUser(token);
     if (userErr || !userData.user) {
       return new Response(JSON.stringify({ error: "Sessão inválida." }), {
         status: 401,
