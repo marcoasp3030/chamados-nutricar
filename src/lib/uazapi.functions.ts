@@ -325,18 +325,20 @@ export const reconectarUazapi = createServerFn({ method: "POST" })
     const cfg = await carregarConfig(data.workspaceId);
     if (!cfg?.instance_name) throw new Error("Crie a instância antes.");
     const token = cfg.instance_token || cfg.admin_token!;
-    const r = await uazapiFetch(
-      cfg.server_url!,
-      `/instance/connect?instance=${cfg.instance_name}`,
-      token,
-      { method: "GET" },
-    );
+    const r = await chamarConnect(cfg.server_url!, cfg.instance_name, token);
     const qr = extrairQR(r.data);
     await supabaseAdmin
       .from("workspace_uazapi_config")
       .update({ status: "qr", qr_code: qr ?? null, ultima_sincronizacao: new Date().toISOString() })
       .eq("workspace_id", data.workspaceId);
-    await registrarLogUazapi(data.workspaceId, "conectar", r.ok, r.status, "Reconectar solicitado.");
+    await registrarLogUazapi(
+      data.workspaceId,
+      "conectar",
+      r.ok,
+      r.status,
+      r.ok ? "Reconectar solicitado." : `Falha em /instance/connect (HTTP ${r.status})`,
+      r.data,
+    );
     return { ok: true };
   });
 
