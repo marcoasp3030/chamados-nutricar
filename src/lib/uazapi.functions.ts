@@ -107,7 +107,7 @@ export const salvarUazapiConfig = createServerFn({ method: "POST" })
     let ultimaMsg = "";
     for (const p of tentativas) {
       try {
-        const r = await uazapiFetch(serverUrl, p, data.adminToken, { method: "GET" });
+        const r = await uazapiFetch(serverUrl, p, token, { method: "GET" });
         ultimoStatus = r.status;
         if (r.ok || r.status === 404) {
           validouOk = r.status !== 401 && r.status !== 403;
@@ -136,7 +136,7 @@ export const salvarUazapiConfig = createServerFn({ method: "POST" })
       {
         workspace_id: data.workspaceId,
         server_url: serverUrl,
-        admin_token: data.adminToken,
+        admin_token: token,
         atualizado_por: userId,
         ativo: true,
       },
