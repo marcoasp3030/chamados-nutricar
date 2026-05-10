@@ -431,6 +431,56 @@ export function AbaUazapi() {
         </div>
       )}
 
+      {/* Envio de teste */}
+      {conectado && (
+        <div className="rounded-2xl border border-border bg-card p-6 space-y-4">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Send className="h-4 w-4" /> Enviar mensagem de teste
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            Use o número completo com DDI e DDD, somente dígitos. Ex: 5511999998888.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
+            <div className="space-y-2">
+              <Label htmlFor="teste-numero">Número</Label>
+              <Input
+                id="teste-numero"
+                placeholder="5511999998888"
+                value={testeNumero}
+                onChange={(e) => setTesteNumero(e.target.value)}
+                inputMode="numeric"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="teste-mensagem">Mensagem</Label>
+              <Textarea
+                id="teste-mensagem"
+                rows={3}
+                value={testeMensagem}
+                onChange={(e) => setTesteMensagem(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end border-t border-border pt-4">
+            <Button
+              onClick={() => mEnviarTeste.mutate()}
+              disabled={
+                mEnviarTeste.isPending ||
+                testeNumero.replace(/\D/g, "").length < 8 ||
+                !testeMensagem.trim()
+              }
+            >
+              {mEnviarTeste.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              Enviar teste
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Logs */}
       {temConfig && (
         <div className="rounded-2xl border border-border bg-card p-6 space-y-3">
