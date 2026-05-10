@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Loader2, Send, Trash2 } from "lucide-react";
@@ -25,6 +26,11 @@ interface Props {
   compact?: boolean;
 }
 
+interface MembroMencionavel {
+  id: string;
+  nome: string;
+}
+
 function iniciais(nome: string) {
   return nome
     .split(/\s+/)
@@ -34,34 +40,42 @@ function iniciais(nome: string) {
     .join("");
 }
 
-function renderizarConteudo(texto: string, nomes: Set<string>) {
-  // Realça @nome quando bate com algum membro conhecido.
+type ParteConteudo =
+  | { tipo: "texto"; v: string }
+  | { tipo: "mencao"; v: string; id: string; nome: string };
+
+function renderizarConteudo(
+  texto: string,
+  membrosPorNome: Map<string, MembroMencionavel>,
+): ParteConteudo[] {
   const norm = (s: string) =>
     s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const partes: Array<{ tipo: "texto" | "mencao"; v: string }> = [];
+  const partes: ParteConteudo[] = [];
   const regex = /@([\p{L}\p{N}._\-]+(?:\s+[\p{L}\p{N}._\-]+){0,3})/gu;
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = regex.exec(texto)) !== null) {
     const candidato = m[1];
-    // Tenta variantes de comprimento (do mais longo ao mais curto)
     const palavras = candidato.split(/\s+/);
-    let casou: string | null = null;
+    let casou: MembroMencionavel | null = null;
+    let comprimentoCasou = 0;
     for (let n = palavras.length; n >= 1; n--) {
       const tentativa = palavras.slice(0, n).join(" ");
-      if (nomes.has(norm(tentativa))) {
-        casou = tentativa;
+      const membro = membrosPorNome.get(norm(tentativa));
+      if (membro) {
+        casou = membro;
+        comprimentoCasou = tentativa.length;
         break;
       }
     }
     if (casou) {
-      partes.push({ tipo: "texto", v: texto.slice(last, m.index) });
-      partes.push({ tipo: "mencao", v: "@" + casou });
-      last = m.index + 1 + casou.length;
+      if (m.index > last) partes.push({ tipo: "texto", v: texto.slice(last, m.index) });
+      partes.push({ tipo: "mencao", v: "@" + casou.nome, id: casou.id, nome: casou.nome });
+      last = m.index + 1 + comprimentoCasou;
       regex.lastIndex = last;
     }
   }
-  partes.push({ tipo: "texto", v: texto.slice(last) });
+  if (last < texto.length) partes.push({ tipo: "texto", v: texto.slice(last) });
   return partes;
 }
 
@@ -95,12 +109,13 @@ export function PainelComentarios({
     [membros, usuario],
   );
 
-  const nomesNorm = useMemo(() => {
-    const s = new Set<string>();
-    for (const m of membros ?? []) {
-      s.add(m.perfil.nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase());
+  const membrosPorNome = useMemo(() => {
+    const m = new Map<string, MembroMencionavel>();
+    for (const x of membros ?? []) {
+      const chave = x.perfil.nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      m.set(chave, { id: x.usuario_id, nome: x.perfil.nome });
     }
-    return s;
+    return m;
   }, [membros]);
 
   const enviar = () => {
@@ -137,7 +152,7 @@ export function PainelComentarios({
         ) : (
           (comentarios ?? []).map((c) => {
             const meu = usuario === c.autor_id;
-            const partes = renderizarConteudo(c.conteudo, nomesNorm);
+            const partes = renderizarConteudo(c.conteudo, membrosPorNome);
             return (
               <div key={c.id} className="flex gap-2.5">
                 <Avatar className="h-8 w-8 shrink-0">
@@ -172,12 +187,24 @@ export function PainelComentarios({
                   <p className="mt-1 whitespace-pre-wrap break-words text-sm">
                     {partes.map((p, i) =>
                       p.tipo === "mencao" ? (
-                        <span
-                          key={i}
-                          className="rounded bg-primary/10 px-1 font-medium text-primary"
-                        >
-                          {p.v}
-                        </span>
+                        workspaceAtual ? (
+                          <Link
+                            key={i}
+                            to="/w/$slug/membros/$usuarioId"
+                            params={{ slug: workspaceAtual.slug, usuarioId: p.id }}
+                            title={`Ver perfil de ${p.nome}`}
+                            className="rounded bg-primary/10 px-1 font-medium text-primary hover:bg-primary/20 hover:underline"
+                          >
+                            {p.v}
+                          </Link>
+                        ) : (
+                          <span
+                            key={i}
+                            className="rounded bg-primary/10 px-1 font-medium text-primary"
+                          >
+                            {p.v}
+                          </span>
+                        )
                       ) : (
                         <span key={i}>{p.v}</span>
                       ),
