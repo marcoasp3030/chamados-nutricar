@@ -200,6 +200,23 @@ export function AbaUazapi() {
     onError: (e: Error) => toast.error("Falha ao excluir", { description: e.message }),
   });
 
+  const mEnviarTeste = useMutation({
+    mutationFn: async () => {
+      await enviarTeste({
+        data: {
+          workspaceId: workspaceAtual!.id,
+          numero: testeNumero,
+          mensagem: testeMensagem,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Mensagem de teste enviada.");
+      qc.invalidateQueries({ queryKey: ["uazapi-logs"] });
+    },
+    onError: (e: Error) => toast.error("Falha ao enviar", { description: e.message }),
+  });
+
   if (!podeAdmin) {
     return (
       <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
