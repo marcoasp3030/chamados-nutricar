@@ -284,11 +284,23 @@ function CartaoInauguracao({
           aria-hidden
         />
       )}
-      <div className="space-y-2.5 p-3">
+      <div className={cn("space-y-2.5 p-3", estilo && "pl-4")}>
         <div className="space-y-0.5">
-          <p className="line-clamp-2 text-sm font-semibold leading-snug group-hover:text-primary">
-            {titulo}
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <p className="line-clamp-2 flex-1 text-sm font-semibold leading-snug group-hover:text-primary">
+              {titulo}
+            </p>
+            {estilo && (
+              <span
+                className={cn(
+                  "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                  estilo.chip,
+                )}
+              >
+                {estilo.rotulo}
+              </span>
+            )}
+          </div>
           {subtitulo && (
             <p className="truncate text-[11px] text-muted-foreground">{subtitulo}</p>
           )}
