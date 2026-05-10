@@ -54,7 +54,7 @@ const COLUNAS: DefColuna[] = [
   },
   {
     id: "Proximas",
-    rotulo: "Próximas",
+    rotulo: "Standby",
     descricao: "Nos próximos 30 dias",
     ponto: "bg-amber-500",
     topo: "from-amber-500/60",
@@ -70,7 +70,7 @@ const COLUNAS: DefColuna[] = [
   },
   {
     id: "Inauguradas",
-    rotulo: "Inauguradas",
+    rotulo: "Concluído",
     descricao: "Concluídas",
     ponto: "bg-emerald-500",
     topo: "from-emerald-500/60",
