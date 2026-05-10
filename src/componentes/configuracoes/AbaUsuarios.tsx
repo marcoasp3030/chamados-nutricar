@@ -508,7 +508,7 @@ export function AbaUsuarios() {
           <DialogHeader>
             <DialogTitle>Novo usuário</DialogTitle>
             <DialogDescription>
-              É gerado um convite com link de acesso. O usuário define a senha ao aceitar.
+              O usuário é criado já ativo na empresa. Uma senha temporária será gerada para você compartilhar com ele.
             </DialogDescription>
           </DialogHeader>
 
