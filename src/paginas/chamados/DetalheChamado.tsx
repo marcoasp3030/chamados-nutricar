@@ -372,6 +372,7 @@ export function DetalheChamado({ numero }: Props) {
                 <TabsTrigger value="anexos">Anexos</TabsTrigger>
                 <TabsTrigger value="historico">Histórico</TabsTrigger>
                 <TabsTrigger value="ia">IA</TabsTrigger>
+                {podeExcluir && <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>}
               </TabsList>
               <TabsContent value="linha-tempo" className="pt-4">
                 <LinhaTempoChamado chamadoId={chamado.id} numeroPrincipal={chamado.numero} />
@@ -396,6 +397,11 @@ export function DetalheChamado({ numero }: Props) {
               <TabsContent value="ia" className="pt-4">
                 <HistoricoIAChamado chamadoId={chamado.id} />
               </TabsContent>
+              {podeExcluir && (
+                <TabsContent value="whatsapp" className="pt-4">
+                  <NotificacoesWhatsappChamado chamadoId={chamado.id} />
+                </TabsContent>
+              )}
             </Tabs>
           </section>
         </div>
