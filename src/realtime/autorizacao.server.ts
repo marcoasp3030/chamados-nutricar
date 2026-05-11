@@ -6,7 +6,16 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { chamados } from "@/db/schema";
-import { ehMembroWorkspace } from "@/db/autorizacao";
+import { exigirMembroWorkspace } from "@/db/autorizacao";
+
+async function ehMembro(userId: string, workspaceId: string): Promise<boolean> {
+  try {
+    await exigirMembroWorkspace(userId, workspaceId);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export async function autorizarCanal(
   canal: string,
