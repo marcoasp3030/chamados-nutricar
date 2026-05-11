@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { obterUsuarioAtual } from "@/auth/atual";
+import { db } from "@/dados/atual";
 
 interface ConfigVMPay {
   workspace_id: string;
@@ -26,7 +27,7 @@ export function AbaVMPay() {
     queryKey: ["vmpay-config", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id && !!podeAdmin,
     queryFn: async () => {
-      const { data, error } = await dados
+      const { data, error } = await db
         .from("workspace_vmpay_config")
         .select("*")
         .eq("workspace_id", workspaceAtual!.id)
@@ -58,7 +59,7 @@ export function AbaVMPay() {
         atualizado_por: u.user?.id ?? null,
         ...(chave.trim() ? { api_key: chave.trim() } : {}),
       };
-      const { error } = await dados
+      const { error } = await db
         .from("workspace_vmpay_config")
         .upsert(payload, { onConflict: "workspace_id" });
       if (error) throw error;
@@ -74,7 +75,7 @@ export function AbaVMPay() {
   const remover = useMutation({
     mutationFn: async () => {
       if (!workspaceAtual) return;
-      const { error } = await dados
+      const { error } = await db
         .from("workspace_vmpay_config")
         .delete()
         .eq("workspace_id", workspaceAtual.id);

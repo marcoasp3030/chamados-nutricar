@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { WorkspaceComPapel, PapelMembro } from "@/tipos/workspace";
 import { obterSessao } from "@/auth/atual";
+import { db } from "@/dados/atual";
 
 interface LinhaMembro {
   papel: PapelMembro;
@@ -14,7 +15,7 @@ export function useMeusWorkspaces() {
       const sessao = await obterSessao().then((s) => ({ session: s.usuario ? { user: s.usuario } : null }));
       if (!sessao.session) return [];
 
-      const { data, error } = await dados
+      const { data, error } = await db
         .from("workspace_membros")
         .select("papel, workspace:workspaces(*)")
         .eq("usuario_id", sessao.session.user.id)

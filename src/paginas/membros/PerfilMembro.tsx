@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";
 import { rotuloPapel } from "@/utilitarios/traducoes";
+import { db } from "@/dados/atual";
 
 interface Props {
   usuarioId: string;
@@ -23,7 +24,7 @@ export function PerfilMembro({ usuarioId }: Props) {
     queryKey: ["departamentos", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id,
     queryFn: async () => {
-      const { data, error } = await dados
+      const { data, error } = await db
         .from("departamentos")
         .select("id, nome")
         .eq("workspace_id", workspaceAtual!.id);

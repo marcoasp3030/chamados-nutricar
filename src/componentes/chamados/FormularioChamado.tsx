@@ -55,6 +55,7 @@ import {
   type ItemRequisicao,
 } from "@/componentes/chamados/ItensRequisicao";
 import { Switch } from "@/components/ui/switch";
+import { db } from "@/dados/atual";
 import {
   PRIORIDADES_CHAMADO,
   STATUS_CHAMADO,
@@ -176,7 +177,7 @@ export function FormularioChamado({
     queryKey: ["chamado-pai-para-form", chamadoPaiId],
     enabled: !!chamadoPaiId,
     queryFn: async () => {
-      const { data, error } = await dados
+      const { data, error } = await db
         .from("chamados")
         .select("categoria, prazo")
         .eq("id", chamadoPaiId!)

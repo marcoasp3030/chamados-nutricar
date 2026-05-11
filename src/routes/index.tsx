@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { obterSessao } from "@/auth/atual";
+import { db } from "@/dados/atual";
 
 export const Route = createFileRoute("/")({
   component: PaginaInicial,
@@ -19,7 +20,7 @@ function PaginaInicial() {
       }
 
       // Busca empresas do usuário
-      const { data, error } = await dados
+      const { data, error } = await db
         .from("workspace_membros")
         .select("workspace:workspaces(slug)")
         .eq("usuario_id", sessao.session.user.id)

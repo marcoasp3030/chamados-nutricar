@@ -6,6 +6,7 @@ import { ptBR } from "date-fns/locale";
 import { ChevronDown, ChevronRight, Loader2, Sparkles, AlertCircle, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { db } from "@/dados/atual";
 
 interface Props {
   chamadoId: string;
@@ -35,7 +36,7 @@ export function HistoricoIAChamado({ chamadoId }: Props) {
   const { data, isLoading } = useQuery({
     queryKey: ["ia-execucoes", chamadoId],
     queryFn: async () => {
-      const { data, error } = await dados
+      const { data, error } = await db
         .from("chamado_ia_execucoes")
         .select("*")
         .eq("chamado_id", chamadoId)
@@ -44,7 +45,7 @@ export function HistoricoIAChamado({ chamadoId }: Props) {
       const execs = (data ?? []) as ExecucaoIA[];
       const ids = Array.from(new Set(execs.map((e) => e.usuario_id).filter(Boolean))) as string[];
       if (ids.length > 0) {
-        const { data: perfis } = await dados
+        const { data: perfis } = await db
           .from("perfis")
           .select("id, nome")
           .in("id", ids);

@@ -7,6 +7,7 @@ import { Cabecalho } from "@/componentes/layout/Cabecalho";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import type { PapelMembro, WorkspaceComPapel } from "@/tipos/workspace";
 import { obterSessao } from "@/auth/atual";
+import { db } from "@/dados/atual";
 
 export const Route = createFileRoute("/w/$slug")({
   component: LayoutWorkspace,
@@ -34,7 +35,7 @@ function LayoutWorkspace() {
         return;
       }
 
-      const { data, error } = await dados
+      const { data, error } = await db
         .from("workspace_membros")
         .select("papel, workspace:workspaces!inner(*)")
         .eq("usuario_id", sessao.session.user.id)

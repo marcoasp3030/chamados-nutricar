@@ -67,6 +67,7 @@ import {
 } from "@/tipos/chamado";
 import { rotuloPrioridade, rotuloStatusChamado } from "@/utilitarios/traducoes";
 import { cn } from "@/lib/utils";
+import { db } from "@/dados/atual";
 
 function iniciais(nome?: string | null) {
   if (!nome) return "?";
@@ -226,7 +227,7 @@ export function ListaChamados() {
     enabled: !!workspaceAtual?.id,
     staleTime: 60_000,
     queryFn: async () => {
-      const { data } = await dados
+      const { data } = await db
         .from("chamados")
         .select("chamado_pai_id")
         .eq("workspace_id", workspaceAtual!.id)

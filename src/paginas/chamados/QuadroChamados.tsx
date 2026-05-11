@@ -9,6 +9,7 @@ import { CartaoChamado } from "@/componentes/chamados/CartaoChamado";
 import { STATUS_KANBAN, type StatusChamado, type ChamadoComPessoas } from "@/tipos/chamado";
 import { rotuloStatusChamado } from "@/utilitarios/traducoes";
 import { cn } from "@/lib/utils";
+import { db } from "@/dados/atual";
 
 const corColuna: Record<StatusChamado, { ponto: string; topo: string }> = {
   Aberto: { ponto: "bg-blue-500", topo: "from-blue-500/60" },
@@ -39,7 +40,7 @@ export function QuadroChamados() {
 
   const moverStatus = useMutation({
     mutationFn: async (vars: { id: string; status: StatusChamado }) => {
-      const { error } = await dados
+      const { error } = await db
         .from("chamados")
         .update({ status: vars.status })
         .eq("id", vars.id);
