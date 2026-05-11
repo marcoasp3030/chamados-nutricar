@@ -13,19 +13,28 @@
 
 ## Inventário do que precisa ser substituído
 
-Rode na VPS (ou local) para listar tudo que ainda depende do Supabase:
+### ✅ Auth — JÁ ABSTRAÍDO (camada `@/auth/atual`)
+
+Todas as 23 telas/hooks que usavam `supabase.auth.*` agora consomem
+`@/auth/atual` (`obterUsuarioAtual`, `obterUsuarioAtualId`, `obterSessao`,
+`entrarComSenha`, `sair`, `useUsuarioAtual`).
+
+**Cutover de auth = 1 comando:**
 
 ```bash
-rg -l "@supabase/supabase-js|@/integrations/supabase" src
+cp src/auth/atual.adapter.proprio.ts src/auth/atual.adapter.ts
 ```
+
+Isso troca o backend de Supabase para o auth próprio (Fase 2) sem tocar em
+nenhuma tela. Reverter é igual: trocar o adapter de volta.
+
+### ⏳ Dados, Storage, Realtime e Edge Fns — ainda diretos no Supabase
 
 Padrões e seus substitutos:
 
 | Antes (Supabase) | Depois (backend próprio) |
 |---|---|
 | `supabase.from("chamados").select(...)` | server fn que chama `chamadosRepo.listar(...)` (Fase 3) |
-| `supabase.auth.signInWithPassword(...)` | `login(...)` de `src/auth/auth.functions.ts` (Fase 2) |
-| `supabase.auth.getSession()` | `obterSessaoAtual()` de `src/auth/client.ts` (Fase 2) |
 | `supabase.storage.from(b).upload(...)` | `storage.from(b).upload(...)` de `src/storage/client.ts` (Fase 4) |
 | `supabase.channel(...).on("postgres_changes", ...)` | `realtime.canal(...).on("INSERT", ...)` de `src/realtime/client.ts` (Fase 6) |
 | `supabase.functions.invoke("ia-chamado", ...)` | server fn `iaChamado(...)` de `src/lib/ia-chamado.functions.ts` (Fase 5) |
