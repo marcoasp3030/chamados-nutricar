@@ -28,8 +28,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
-import {
 import { obterUsuarioAtual } from "@/auth/atual";
+import {
   useChecklist,
   useHistoricoChecklist,
   useItensTemplate,
