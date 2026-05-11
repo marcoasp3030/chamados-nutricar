@@ -18,7 +18,7 @@ export function useComentariosChecklist(checklistId: string | undefined) {
     queryKey: ["checklist-comentarios", checklistId],
     enabled: !!checklistId,
     queryFn: async (): Promise<ComentarioChecklist[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("checklist_comentarios")
         .select("*")
         .eq("checklist_id", checklistId!)
@@ -28,7 +28,7 @@ export function useComentariosChecklist(checklistId: string | undefined) {
       const ids = Array.from(new Set(lista.map((c) => c.autor_id)));
       const nomes = new Map<string, string>();
       if (ids.length > 0) {
-        const { data: perfis } = await supabase
+        const { data: perfis } = await dados
           .from("perfis")
           .select("id, nome")
           .in("id", ids);
@@ -47,7 +47,7 @@ export function useContagemComentarios(workspaceId: string | undefined) {
     queryKey: ["checklist-comentarios-contagem", workspaceId],
     enabled: !!workspaceId,
     queryFn: async (): Promise<Map<string, number>> => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("checklist_comentarios")
         .select("checklist_id")
         .eq("workspace_id", workspaceId!);
@@ -87,7 +87,7 @@ export function useAdicionarComentario() {
       if (error) throw error;
 
       // Carregar nome do autor
-      const { data: perfil } = await supabase
+      const { data: perfil } = await dados
         .from("perfis")
         .select("nome")
         .eq("id", u.user!.id)
@@ -134,7 +134,7 @@ export function useExcluirComentario() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await dados
         .from("checklist_comentarios")
         .delete()
         .eq("id", id);

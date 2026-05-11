@@ -19,7 +19,7 @@ function PaginaInicial() {
       }
 
       // Busca empresas do usuário
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("workspace_membros")
         .select("workspace:workspaces(slug)")
         .eq("usuario_id", sessao.session.user.id)

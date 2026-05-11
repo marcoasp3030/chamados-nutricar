@@ -60,7 +60,7 @@ export function useChecklistTemplates(workspaceId: string | undefined) {
     queryKey: ["checklist-templates", workspaceId],
     enabled: !!workspaceId,
     queryFn: async (): Promise<ChecklistTemplate[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("checklist_templates")
         .select("*")
         .eq("workspace_id", workspaceId!)
@@ -77,7 +77,7 @@ export function useItensTemplate(templateId: string | undefined) {
     queryKey: ["checklist-itens-template", templateId],
     enabled: !!templateId,
     queryFn: async (): Promise<ItemTemplate[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("checklist_template_itens")
         .select("*")
         .eq("template_id", templateId!)
@@ -94,7 +94,7 @@ export function useChecklists(workspaceId: string | undefined) {
     queryKey: ["checklists", workspaceId],
     enabled: !!workspaceId,
     queryFn: async (): Promise<Checklist[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("checklists")
         .select("*")
         .eq("workspace_id", workspaceId!)
@@ -110,7 +110,7 @@ export function useChecklist(checklistId: string | undefined) {
     queryKey: ["checklist", checklistId],
     enabled: !!checklistId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("checklists")
         .select("*")
         .eq("id", checklistId!)
@@ -126,7 +126,7 @@ export function useRespostasChecklist(checklistId: string | undefined) {
     queryKey: ["checklist-respostas", checklistId],
     enabled: !!checklistId,
     queryFn: async (): Promise<RespostaChecklist[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("checklist_respostas")
         .select("*")
         .eq("checklist_id", checklistId!);
@@ -141,7 +141,7 @@ export function useHistoricoChecklist(checklistId: string | undefined) {
     queryKey: ["checklist-historico", checklistId],
     enabled: !!checklistId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("checklist_historico")
         .select("*")
         .eq("checklist_id", checklistId!)

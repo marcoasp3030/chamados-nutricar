@@ -34,7 +34,7 @@ function LayoutWorkspace() {
         return;
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("workspace_membros")
         .select("papel, workspace:workspaces!inner(*)")
         .eq("usuario_id", sessao.session.user.id)

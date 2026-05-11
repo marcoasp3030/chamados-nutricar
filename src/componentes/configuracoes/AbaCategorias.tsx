@@ -57,7 +57,7 @@ export function useCategoriasChamado(workspaceId: string | undefined) {
     queryKey: ["categorias-chamado", workspaceId],
     enabled: !!workspaceId,
     queryFn: async (): Promise<CategoriaChamado[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("categorias_chamado")
         .select("id, nome, descricao, cor, workspace_id, criado_em, sla_resposta_horas, sla_resolucao_horas")
         .eq("workspace_id", workspaceId!)
@@ -140,7 +140,7 @@ export function AbaCategorias() {
       };
 
       if (editando) {
-        const { error } = await supabase
+        const { error } = await dados
           .from("categorias_chamado")
           .update(payload)
           .eq("id", editando.id);

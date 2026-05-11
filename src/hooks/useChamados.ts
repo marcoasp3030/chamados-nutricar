@@ -15,7 +15,7 @@ export interface FiltrosChamados {
 
 async function buscarPerfisPorIds(ids: string[]) {
   if (ids.length === 0) return new Map<string, { id: string; nome: string; email: string }>();
-  const { data } = await supabase
+  const { data } = await dados
     .from("perfis")
     .select("id, nome, email")
     .in("id", ids);
@@ -29,7 +29,7 @@ export function useChamados(workspaceId: string | undefined, filtros: FiltrosCha
     staleTime: 30_000,
     placeholderData: (prev) => prev,
     queryFn: async (): Promise<ChamadoComPessoas[]> => {
-      let q = supabase
+      let q = dados
         .from("chamados")
         .select("*")
         .eq("workspace_id", workspaceId!)

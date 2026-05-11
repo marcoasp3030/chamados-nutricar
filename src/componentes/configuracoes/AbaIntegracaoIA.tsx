@@ -41,7 +41,7 @@ export function AbaIntegracaoIA() {
     queryKey: ["ia-config", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id && !!podeAdmin,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("workspace_ia_config")
         .select("*")
         .eq("workspace_id", workspaceAtual!.id)
@@ -85,7 +85,7 @@ export function AbaIntegracaoIA() {
         ...(chave.trim() ? { openai_api_key: chave.trim() } : {}),
       };
 
-      const { error } = await supabase
+      const { error } = await dados
         .from("workspace_ia_config")
         .upsert(payload, { onConflict: "workspace_id" });
       if (error) throw error;
@@ -101,7 +101,7 @@ export function AbaIntegracaoIA() {
   const remover = useMutation({
     mutationFn: async () => {
       if (!workspaceAtual) return;
-      const { error } = await supabase
+      const { error } = await dados
         .from("workspace_ia_config")
         .delete()
         .eq("workspace_id", workspaceAtual.id);

@@ -90,20 +90,20 @@ export function AbaUsuariosDepartamentos() {
     mutationFn: async () => {
       if (!membroAtual || !workspaceAtual) throw new Error("Selecione um usuário");
 
-      const { error: erroMembro } = await supabase
+      const { error: erroMembro } = await dados
         .from("workspace_membros")
         .update({ departamento_id: selecionados[0] ?? null })
         .eq("id", membroAtual.id);
       if (erroMembro) throw erroMembro;
 
-      const { error: erroDel } = await supabase
+      const { error: erroDel } = await dados
         .from("workspace_membro_departamentos")
         .delete()
         .eq("membro_id", membroAtual.id);
       if (erroDel) throw erroDel;
 
       if (selecionados.length > 0) {
-        const { error: erroIns } = await supabase
+        const { error: erroIns } = await dados
           .from("workspace_membro_departamentos")
           .insert(
             selecionados.map((d) => ({

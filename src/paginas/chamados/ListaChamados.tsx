@@ -226,7 +226,7 @@ export function ListaChamados() {
     enabled: !!workspaceAtual?.id,
     staleTime: 60_000,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await dados
         .from("chamados")
         .select("chamado_pai_id")
         .eq("workspace_id", workspaceAtual!.id)

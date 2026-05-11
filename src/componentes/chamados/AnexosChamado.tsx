@@ -56,7 +56,7 @@ export function AnexosChamado({ chamadoId, workspaceId, podeExcluirTodos = false
   const lista = useQuery({
     queryKey: ["anexos", chamadoId],
     queryFn: async (): Promise<AnexoRegistro[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("chamado_anexos")
         .select("id, nome_arquivo, caminho_storage, tipo_mime, tamanho_bytes, enviado_por, criado_em")
         .eq("chamado_id", chamadoId)

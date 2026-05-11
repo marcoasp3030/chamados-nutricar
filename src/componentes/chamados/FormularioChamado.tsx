@@ -176,7 +176,7 @@ export function FormularioChamado({
     queryKey: ["chamado-pai-para-form", chamadoPaiId],
     enabled: !!chamadoPaiId,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("chamados")
         .select("categoria, prazo")
         .eq("id", chamadoPaiId!)

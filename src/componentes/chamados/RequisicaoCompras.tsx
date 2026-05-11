@@ -108,7 +108,7 @@ export function RequisicaoCompras({ chamadoId, codigoChamado, tituloChamado }: P
   const { data, isLoading } = useQuery({
     queryKey: ["requisicao-itens", chamadoId],
     queryFn: async (): Promise<ItemReq[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("chamado_requisicao_itens")
         .select(
           "id, ordem, quantidade, unidade, descricao, referencia, data_necessidade, prioridade, status_compra, observacao_compra, atualizado_compra_em",
@@ -128,7 +128,7 @@ export function RequisicaoCompras({ chamadoId, codigoChamado, tituloChamado }: P
     }) => {
       const { id, ...campos } = vars;
       const auth = { user: await obterUsuarioAtual() };
-      const { error } = await supabase
+      const { error } = await dados
         .from("chamado_requisicao_itens")
         .update({
           ...campos,

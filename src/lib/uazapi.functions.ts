@@ -5,7 +5,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { registrarLogUazapi, uazapiFetch, normalizeServerUrl } from "./uazapi.server";
 
 async function garantirAdmin(supabase: any, workspaceId: string, userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await dados
     .from("workspace_membros")
     .select("papel")
     .eq("workspace_id", workspaceId)

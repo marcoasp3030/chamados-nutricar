@@ -14,7 +14,7 @@ export function useProjetos(workspaceId: string | undefined) {
     queryKey: ["projetos", workspaceId],
     enabled: !!workspaceId,
     queryFn: async (): Promise<ProjetoComResumo[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("projetos")
         .select("*")
         .eq("workspace_id", workspaceId!)
@@ -27,7 +27,7 @@ export function useProjetos(workspaceId: string | undefined) {
       // Resumos de tarefas por projeto
       const resumos = new Map<string, { total: number; concluidas: number }>();
       if (ids.length > 0) {
-        const { data: tarefas } = await supabase
+        const { data: tarefas } = await dados
           .from("tarefas")
           .select("projeto_id, status")
           .in("projeto_id", ids);
@@ -56,7 +56,7 @@ export function useProjeto(projetoId: string | undefined) {
     queryKey: ["projeto", projetoId],
     enabled: !!projetoId,
     queryFn: async (): Promise<ProjetoComResumo | null> => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("projetos")
         .select("*")
         .eq("id", projetoId!)
@@ -77,7 +77,7 @@ export function useTarefasProjeto(projetoId: string | undefined) {
     queryKey: ["tarefas", projetoId],
     enabled: !!projetoId,
     queryFn: async (): Promise<TarefaComPessoa[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("tarefas")
         .select("*")
         .eq("projeto_id", projetoId!)

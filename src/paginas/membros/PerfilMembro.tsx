@@ -23,7 +23,7 @@ export function PerfilMembro({ usuarioId }: Props) {
     queryKey: ["departamentos", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("departamentos")
         .select("id, nome")
         .eq("workspace_id", workspaceAtual!.id);

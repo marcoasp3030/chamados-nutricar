@@ -39,7 +39,7 @@ export function useInauguracoes(workspaceId: string | undefined) {
     queryKey: ["inauguracoes", workspaceId],
     enabled: !!workspaceId,
     queryFn: async (): Promise<CardInauguracao[]> => {
-      const { data: checklists, error } = await supabase
+      const { data: checklists, error } = await dados
         .from("checklists")
         .select("*")
         .eq("workspace_id", workspaceId!)
@@ -52,18 +52,18 @@ export function useInauguracoes(workspaceId: string | undefined) {
       const templateIds = Array.from(new Set(lista.map((c) => c.template_id)));
 
       const [{ data: itens }, { data: respostas }] = await Promise.all([
-        supabase
+        dados
           .from("checklist_template_itens")
           .select("id, template_id, rotulo")
           .in("template_id", templateIds),
-        supabase
+        dados
           .from("checklist_respostas")
           .select("checklist_id, item_id, valor")
           .in("checklist_id", checklistIds),
       ]);
 
       // total de itens ativos por template (para %)
-      const { data: itensAtivos } = await supabase
+      const { data: itensAtivos } = await dados
         .from("checklist_template_itens")
         .select("template_id, id")
         .in("template_id", templateIds)

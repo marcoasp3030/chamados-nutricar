@@ -24,7 +24,7 @@ export function useNotificacoes(workspaceId: string | undefined) {
     queryKey: ["notificacoes", workspaceId],
     enabled: !!workspaceId,
     queryFn: async (): Promise<Notificacao[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("notificacoes")
         .select("*")
         .eq("workspace_id", workspaceId!)

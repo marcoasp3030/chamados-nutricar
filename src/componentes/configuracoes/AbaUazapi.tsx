@@ -84,7 +84,7 @@ export function AbaUazapi() {
     queryKey: ["uazapi-config", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id && !!podeAdmin,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("workspace_uazapi_config")
         .select("workspace_id,server_url,instance_name,status,qr_code,numero_conectado,conectado_em,ultima_sincronizacao")
         .eq("workspace_id", workspaceAtual!.id)
@@ -98,7 +98,7 @@ export function AbaUazapi() {
     queryKey: ["uazapi-logs", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id && !!podeAdmin,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("workspace_uazapi_logs")
         .select("id,acao,sucesso,status_http,mensagem,criado_em")
         .eq("workspace_id", workspaceAtual!.id)

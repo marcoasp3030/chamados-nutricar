@@ -39,7 +39,7 @@ export function QuadroChamados() {
 
   const moverStatus = useMutation({
     mutationFn: async (vars: { id: string; status: StatusChamado }) => {
-      const { error } = await supabase
+      const { error } = await dados
         .from("chamados")
         .update({ status: vars.status })
         .eq("id", vars.id);

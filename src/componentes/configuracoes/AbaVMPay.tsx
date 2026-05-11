@@ -26,7 +26,7 @@ export function AbaVMPay() {
     queryKey: ["vmpay-config", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id && !!podeAdmin,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("workspace_vmpay_config")
         .select("*")
         .eq("workspace_id", workspaceAtual!.id)
@@ -58,7 +58,7 @@ export function AbaVMPay() {
         atualizado_por: u.user?.id ?? null,
         ...(chave.trim() ? { api_key: chave.trim() } : {}),
       };
-      const { error } = await supabase
+      const { error } = await dados
         .from("workspace_vmpay_config")
         .upsert(payload, { onConflict: "workspace_id" });
       if (error) throw error;
@@ -74,7 +74,7 @@ export function AbaVMPay() {
   const remover = useMutation({
     mutationFn: async () => {
       if (!workspaceAtual) return;
-      const { error } = await supabase
+      const { error } = await dados
         .from("workspace_vmpay_config")
         .delete()
         .eq("workspace_id", workspaceAtual.id);

@@ -36,7 +36,7 @@ export function AceitarConvite({ token }: { token: string }) {
       }
       setEmailUsuario(sessao.session.user.email ?? null);
 
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("workspace_convites")
         .select("id, workspace_id, email, papel, expira_em, aceito, workspace:workspaces(nome, slug, cor_primaria)")
         .eq("token", token)
@@ -76,7 +76,7 @@ export function AceitarConvite({ token }: { token: string }) {
       return;
     }
 
-    await supabase
+    await dados
       .from("workspace_convites")
       .update({ aceito: true })
       .eq("id", convite.id);

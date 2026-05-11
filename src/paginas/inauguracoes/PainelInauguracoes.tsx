@@ -96,7 +96,7 @@ export function PainelInauguracoes() {
 
   const concluir = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await dados
         .from("checklists")
         .update({ status: "Concluído" })
         .eq("id", id);

@@ -30,7 +30,7 @@ export function NovoChamado({ chamadoPaiId }: Props) {
       const u = { user: await obterUsuarioAtual() };
       if (!u.user || !workspaceAtual) throw new Error("Sessão expirada");
 
-      const { data, error } = await supabase
+      const { data, error } = await dados
         .from("chamados")
         .insert({
           workspace_id: workspaceAtual.id,
