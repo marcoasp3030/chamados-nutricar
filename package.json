@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run scripts/migrate.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "vps:migrar-storage": "bun run scripts/migrar-storage.ts"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",

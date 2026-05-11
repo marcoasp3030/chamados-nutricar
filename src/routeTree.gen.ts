@@ -32,6 +32,7 @@ import { Route as WSlugChecklistsChecklistIdRouteImport } from './routes/w.$slug
 import { Route as WSlugChamadosQuadroRouteImport } from './routes/w.$slug.chamados.quadro'
 import { Route as WSlugChamadosNovoRouteImport } from './routes/w.$slug.chamados.novo'
 import { Route as WSlugChamadosNumeroRouteImport } from './routes/w.$slug.chamados.$numero'
+import { Route as ApiPublicStorageBucketSplatRouteImport } from './routes/api/public/storage/$bucket/$'
 
 const SelecionarEmpresaRoute = SelecionarEmpresaRouteImport.update({
   id: '/selecionar-empresa',
@@ -149,6 +150,12 @@ const WSlugChamadosNumeroRoute = WSlugChamadosNumeroRouteImport.update({
   path: '/$numero',
   getParentRoute: () => WSlugChamadosRoute,
 } as any)
+const ApiPublicStorageBucketSplatRoute =
+  ApiPublicStorageBucketSplatRouteImport.update({
+    id: '/api/public/storage/$bucket/$',
+    path: '/api/public/storage/$bucket/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/w/$slug/chamados/': typeof WSlugChamadosIndexRoute
   '/w/$slug/checklists/': typeof WSlugChecklistsIndexRoute
   '/w/$slug/projetos/': typeof WSlugProjetosIndexRoute
+  '/api/public/storage/$bucket/$': typeof ApiPublicStorageBucketSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -195,6 +203,7 @@ export interface FileRoutesByTo {
   '/w/$slug/chamados': typeof WSlugChamadosIndexRoute
   '/w/$slug/checklists': typeof WSlugChecklistsIndexRoute
   '/w/$slug/projetos': typeof WSlugProjetosIndexRoute
+  '/api/public/storage/$bucket/$': typeof ApiPublicStorageBucketSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -221,6 +230,7 @@ export interface FileRoutesById {
   '/w/$slug/chamados/': typeof WSlugChamadosIndexRoute
   '/w/$slug/checklists/': typeof WSlugChecklistsIndexRoute
   '/w/$slug/projetos/': typeof WSlugProjetosIndexRoute
+  '/api/public/storage/$bucket/$': typeof ApiPublicStorageBucketSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados/'
     | '/w/$slug/checklists/'
     | '/w/$slug/projetos/'
+    | '/api/public/storage/$bucket/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados'
     | '/w/$slug/checklists'
     | '/w/$slug/projetos'
+    | '/api/public/storage/$bucket/$'
   id:
     | '__root__'
     | '/'
@@ -294,6 +306,7 @@ export interface FileRouteTypes {
     | '/w/$slug/chamados/'
     | '/w/$slug/checklists/'
     | '/w/$slug/projetos/'
+    | '/api/public/storage/$bucket/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -303,6 +316,7 @@ export interface RootRouteChildren {
   ConviteTokenRoute: typeof ConviteTokenRoute
   WSlugRoute: typeof WSlugRouteWithChildren
   ApiPublicWhatsappNotifyRoute: typeof ApiPublicWhatsappNotifyRoute
+  ApiPublicStorageBucketSplatRoute: typeof ApiPublicStorageBucketSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -468,6 +482,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WSlugChamadosNumeroRouteImport
       parentRoute: typeof WSlugChamadosRoute
     }
+    '/api/public/storage/$bucket/$': {
+      id: '/api/public/storage/$bucket/$'
+      path: '/api/public/storage/$bucket/$'
+      fullPath: '/api/public/storage/$bucket/$'
+      preLoaderRoute: typeof ApiPublicStorageBucketSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -550,6 +571,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConviteTokenRoute: ConviteTokenRoute,
   WSlugRoute: WSlugRouteWithChildren,
   ApiPublicWhatsappNotifyRoute: ApiPublicWhatsappNotifyRoute,
+  ApiPublicStorageBucketSplatRoute: ApiPublicStorageBucketSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
