@@ -10,6 +10,7 @@ import {
   FormularioChamado,
   type DadosFormularioChamado,
 } from "@/componentes/chamados/FormularioChamado";
+import { storage } from "@/storage/atual";
 
 interface Props {
   chamadoPaiId?: string | null;
@@ -85,8 +86,7 @@ export function NovoChamado({ chamadoPaiId }: Props) {
         for (const arquivo of dados.anexos) {
           const nomeSeguro = arquivo.name.replace(/[^\w.\-]+/g, "_");
           const caminho = `${workspaceAtual.id}/${data.id}/${crypto.randomUUID()}-${nomeSeguro}`;
-          const up = await supabase.storage
-            .from("chamado-anexos")
+          const up = await storage.from("chamado-anexos")
             .upload(caminho, arquivo, { contentType: arquivo.type || undefined });
           if (up.error) {
             falhas.push(arquivo.name);

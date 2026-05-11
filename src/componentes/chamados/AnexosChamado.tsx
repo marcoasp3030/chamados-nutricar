@@ -41,8 +41,7 @@ function formatarTamanho(bytes: number) {
 }
 
 async function gerarUrlAssinada(caminho: string, expiraSegundos = 3600) {
-  const { data, error } = await supabase.storage
-    .from("chamado-anexos")
+  const { data, error } = await storage.from("chamado-anexos")
     .createSignedUrl(caminho, expiraSegundos);
   if (error) throw error;
   return data.signedUrl;
@@ -97,8 +96,7 @@ export function AnexosChamado({ chamadoId, workspaceId, podeExcluirTodos = false
       for (const arquivo of arquivos) {
         const nomeSeguro = arquivo.name.replace(/[^\w.\-]+/g, "_");
         const caminho = `${workspaceId}/${chamadoId}/${crypto.randomUUID()}-${nomeSeguro}`;
-        const up = await supabase.storage
-          .from("chamado-anexos")
+        const up = await storage.from("chamado-anexos")
           .upload(caminho, arquivo, { contentType: arquivo.type || undefined });
         if (up.error) {
           falhas.push(arquivo.name);
@@ -158,8 +156,7 @@ export function AnexosChamado({ chamadoId, workspaceId, podeExcluirTodos = false
 
   async function baixar(anexo: AnexoRegistro) {
     try {
-      const { data, error } = await supabase.storage
-        .from("chamado-anexos")
+      const { data, error } = await storage.from("chamado-anexos")
         .download(anexo.caminho_storage);
       if (error) throw error;
       const url = URL.createObjectURL(data);
