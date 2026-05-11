@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dialog";
 import { obterUsuarioAtual } from "@/auth/atual";
 import {
-import { dados } from "@/dados/atual";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -28,6 +27,7 @@ import { dados } from "@/dados/atual";
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { dados } from "@/dados/atual";
 
 export interface Departamento {
   id: string;

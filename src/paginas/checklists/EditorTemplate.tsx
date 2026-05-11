@@ -22,11 +22,11 @@ import {
 } from "@/components/ui/select";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import {
-import { dados } from "@/dados/atual";
   useChecklistTemplates,
   type ItemTemplate,
   type TipoItemChecklist,
 } from "@/hooks/useChecklists";
+import { dados } from "@/dados/atual";
 
 const TIPOS: { v: TipoItemChecklist; r: string }[] = [
   { v: "checkbox", r: "Caixa de seleção" },

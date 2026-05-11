@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/dialog";
 import { obterUsuarioAtualId } from "@/auth/atual";
 import {
-import { dados } from "@/dados/atual";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -41,6 +40,7 @@ import { dados } from "@/dados/atual";
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { dados } from "@/dados/atual";
 
 const CARGOS = ["Funcionario", "Supervisor", "Gestor", "Gerente"] as const;
 type Cargo = (typeof CARGOS)[number];

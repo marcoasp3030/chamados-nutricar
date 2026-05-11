@@ -29,13 +29,13 @@ import {
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { obterUsuarioAtual } from "@/auth/atual";
 import {
-import { dados } from "@/dados/atual";
   useChecklist,
   useHistoricoChecklist,
   useItensTemplate,
   useRespostasChecklist,
   type ItemTemplate,
 } from "@/hooks/useChecklists";
+import { dados } from "@/dados/atual";
 
 interface Props {
   checklistId: string;

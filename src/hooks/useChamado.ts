@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import type {
-import { dados } from "@/dados/atual";
   ChamadoComPessoas,
   ComentarioChamado,
   HistoricoChamado,
 } from "@/tipos/chamado";
+import { dados } from "@/dados/atual";
 
 async function carregarPerfis(ids: string[]) {
   const unicos = [...new Set(ids.filter(Boolean))];
