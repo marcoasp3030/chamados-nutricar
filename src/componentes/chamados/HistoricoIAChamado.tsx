@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { Canais, useInscricaoRealtime } from "@/realtime/atual";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronDown, ChevronRight, Loader2, Sparkles, AlertCircle, Copy } from "lucide-react";
@@ -58,24 +59,11 @@ export function HistoricoIAChamado({ chamadoId }: Props) {
   });
 
   // Atualiza quando uma nova execução é registrada
-  useEffect(() => {
-    const canal = supabase
-      .channel(`ia-exec-${chamadoId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "chamado_ia_execucoes",
-          filter: `chamado_id=eq.${chamadoId}`,
-        },
-        () => queryClient.invalidateQueries({ queryKey: ["ia-execucoes", chamadoId] }),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(canal);
-    };
-  }, [chamadoId, queryClient]);
+  useInscricaoRealtime(
+    Canais.iaExecucoes(chamadoId),
+    () => queryClient.invalidateQueries({ queryKey: ["ia-execucoes", chamadoId] }),
+    [chamadoId, queryClient],
+  );
 
   function alternar(id: string) {
     setExpandidos((s) => {

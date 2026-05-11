@@ -1,6 +1,6 @@
-import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Canais, useInscricaoRealtime } from "@/realtime/atual";
 
 export interface Notificacao {
   id: string;
@@ -35,20 +35,11 @@ export function useNotificacoes(workspaceId: string | undefined) {
     },
   });
 
-  useEffect(() => {
-    if (!workspaceId) return;
-    const ch = supabase
-      .channel(`notif-${workspaceId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "notificacoes", filter: `workspace_id=eq.${workspaceId}` },
-        () => qc.invalidateQueries({ queryKey: ["notificacoes", workspaceId] }),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [workspaceId, qc]);
+  useInscricaoRealtime(
+    workspaceId ? Canais.notificacoes(workspaceId) : null,
+    () => qc.invalidateQueries({ queryKey: ["notificacoes", workspaceId] }),
+    [workspaceId, qc],
+  );
 
   return query;
 }

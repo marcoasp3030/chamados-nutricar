@@ -73,6 +73,7 @@ import {
 } from "@/tipos/chamado";
 import { rotuloStatusChamado, rotuloTipoChamado } from "@/utilitarios/traducoes";
 import { obterUsuarioAtual, obterUsuarioAtualId } from "@/auth/atual";
+import { storage } from "@/storage/atual";
 
 interface Props {
   numero: number;
@@ -637,8 +638,7 @@ function NovoChamadoEmbutido({
         for (const arquivo of dados.anexos) {
           const nomeSeguro = arquivo.name.replace(/[^\w.\-]+/g, "_");
           const caminho = `${workspaceAtual.id}/${novo.id}/${crypto.randomUUID()}-${nomeSeguro}`;
-          const up = await supabase.storage
-            .from("chamado-anexos")
+          const up = await storage.from("chamado-anexos")
             .upload(caminho, arquivo, { contentType: arquivo.type || undefined });
           if (up.error) {
             falhas.push(arquivo.name);
