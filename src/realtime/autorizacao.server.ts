@@ -29,7 +29,7 @@ export async function autorizarCanal(
 
   switch (tipo) {
     case "notif":
-      return ehMembroWorkspace(userId, id);
+      return ehMembro(userId, id);
     case "ia-exec":
     case "chamado":
     case "chamado-coment": {
@@ -39,7 +39,7 @@ export async function autorizarCanal(
         .where(eq(chamados.id, id))
         .limit(1);
       if (!c) return false;
-      return ehMembroWorkspace(userId, c.workspaceId);
+      return ehMembro(userId, c.workspaceId);
     }
     default:
       return false;
