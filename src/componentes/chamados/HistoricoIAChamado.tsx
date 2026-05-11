@@ -59,24 +59,11 @@ export function HistoricoIAChamado({ chamadoId }: Props) {
   });
 
   // Atualiza quando uma nova execução é registrada
-  useEffect(() => {
-    const canal = supabase
-      .channel(`ia-exec-${chamadoId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "chamado_ia_execucoes",
-          filter: `chamado_id=eq.${chamadoId}`,
-        },
-        () => queryClient.invalidateQueries({ queryKey: ["ia-execucoes", chamadoId] }),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(canal);
-    };
-  }, [chamadoId, queryClient]);
+  useInscricaoRealtime(
+    Canais.iaExecucoes(chamadoId),
+    () => queryClient.invalidateQueries({ queryKey: ["ia-execucoes", chamadoId] }),
+    [chamadoId, queryClient],
+  );
 
   function alternar(id: string) {
     setExpandidos((s) => {
