@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { obterUsuarioAtual } from "@/auth/atual";
 
 export interface ComentarioChecklist {
   id: string;
@@ -72,7 +73,7 @@ export function useAdicionarComentario() {
       destinatariosExtras?: string[];
       slugWorkspace?: string;
     }) => {
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!u.user) throw new Error("Não autenticado");
       const conteudo = vars.conteudo.trim();
       const mencionados = Array.from(new Set(vars.mencionados ?? []));

@@ -72,6 +72,7 @@ import {
   type StatusChamado,
 } from "@/tipos/chamado";
 import { rotuloStatusChamado, rotuloTipoChamado } from "@/utilitarios/traducoes";
+import { obterUsuarioAtual, obterUsuarioAtualId } from "@/auth/atual";
 
 interface Props {
   numero: number;
@@ -92,7 +93,7 @@ export function DetalheChamado({ numero }: Props) {
   const [usuarioId, setUsuarioId] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUsuarioId(data.user?.id ?? null));
+    obterUsuarioAtualId().then(setUsuarioId);
   }, []);
 
   const podeAtender =
@@ -607,7 +608,7 @@ function NovoChamadoEmbutido({
 
   const criar = useMutation({
     mutationFn: async (dados: DadosFormularioChamado) => {
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!u.user || !workspaceAtual) throw new Error("Sessão expirada");
       const { data: novo, error } = await supabase
         .from("chamados")

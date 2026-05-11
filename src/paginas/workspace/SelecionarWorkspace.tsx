@@ -6,13 +6,14 @@ import { useMeusWorkspaces } from "@/hooks/useMeusWorkspaces";
 import { rotuloPapel } from "@/utilitarios/traducoes";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { sair } from "@/auth/atual";
 
 export function SelecionarWorkspace() {
   const navigate = useNavigate();
   const { data: workspaces = [], isLoading } = useMeusWorkspaces();
 
   const sair = async () => {
-    await supabase.auth.signOut();
+    await sair();
     toast.success("Sessão encerrada.");
     navigate({ to: "/login" });
   };

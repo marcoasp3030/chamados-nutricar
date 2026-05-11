@@ -17,6 +17,7 @@ import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";
 import { EditorMencoes, extrairMencoes, type OpcaoMencao } from "@/componentes/comum/EditorMencoes";
 import { cn } from "@/lib/utils";
+import { obterUsuarioAtual } from "@/auth/atual";
 
 interface Props {
   checklistId: string;
@@ -96,7 +97,7 @@ export function PainelComentarios({
   const { data: usuario } = useQuery({
     queryKey: ["auth-user-id"],
     queryFn: async () => {
-      const { data } = await supabase.auth.getUser();
+      const data = { user: await obterUsuarioAtual() };
       return data.user?.id ?? null;
     },
   });

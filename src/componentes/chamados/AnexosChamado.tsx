@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { SeletorAnexos } from "./SeletorAnexos";
+import { obterUsuarioAtual, obterUsuarioAtualId } from "@/auth/atual";
 
 interface Props {
   chamadoId: string;
@@ -89,7 +90,7 @@ export function AnexosChamado({ chamadoId, workspaceId, podeExcluirTodos = false
     mutationFn: async (arquivos: File[]) => {
       if (arquivos.length === 0) return;
       setEnviando(true);
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!u.user) throw new Error("Sessão expirada");
       const falhas: string[] = [];
       for (const arquivo of arquivos) {
@@ -178,7 +179,7 @@ export function AnexosChamado({ chamadoId, workspaceId, podeExcluirTodos = false
   const itens = lista.data ?? [];
   const usuarioAtual = useQuery({
     queryKey: ["auth-user-id"],
-    queryFn: async () => (await supabase.auth.getUser()).data.user?.id ?? null,
+    queryFn: async () => await obterUsuarioAtualId(),
     staleTime: 5 * 60 * 1000,
   });
   const usuarioId = usuarioAtual.data;

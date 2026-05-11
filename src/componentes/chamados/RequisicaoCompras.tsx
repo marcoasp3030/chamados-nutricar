@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/table";
 import { rotuloPrioridade } from "@/utilitarios/traducoes";
 import type { PrioridadeChamado } from "@/tipos/chamado";
+import { obterUsuarioAtual } from "@/auth/atual";
 
 interface Props {
   chamadoId: string;
@@ -127,7 +128,7 @@ export function RequisicaoCompras({ chamadoId, codigoChamado, tituloChamado }: P
       observacao_compra?: string | null;
     }) => {
       const { id, ...campos } = vars;
-      const { data: auth } = await supabase.auth.getUser();
+      const auth = { user: await obterUsuarioAtual() };
       const { error } = await supabase
         .from("chamado_requisicao_itens")
         .update({

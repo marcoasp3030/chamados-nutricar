@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+import { obterUsuarioAtual } from "@/auth/atual";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -90,7 +91,7 @@ export function AbaDepartamentos() {
         throw new Error("Verifique os campos");
       }
       if (!workspaceAtual) throw new Error("Workspace inválido");
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!u.user) throw new Error("Sessão expirada");
 
       const payload = {

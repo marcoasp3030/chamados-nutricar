@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { WorkspaceComPapel, PapelMembro } from "@/tipos/workspace";
+import { obterSessao } from "@/auth/atual";
 
 interface LinhaMembro {
   papel: PapelMembro;
@@ -11,7 +12,7 @@ export function useMeusWorkspaces() {
   return useQuery({
     queryKey: ["meus-workspaces"],
     queryFn: async (): Promise<WorkspaceComPapel[]> => {
-      const { data: sessao } = await supabase.auth.getSession();
+      const sessao = await obterSessao().then((s) => ({ session: s.usuario ? { user: s.usuario } : null }));
       if (!sessao.session) return [];
 
       const { data, error } = await supabase

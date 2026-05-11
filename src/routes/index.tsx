@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { obterSessao } from "@/auth/atual";
 
 export const Route = createFileRoute("/")({
   component: PaginaInicial,
@@ -12,7 +13,7 @@ function PaginaInicial() {
 
   useEffect(() => {
     (async () => {
-      const { data: sessao } = await supabase.auth.getSession();
+      const sessao = await obterSessao().then((s) => ({ session: s.usuario ? { user: s.usuario } : null }));
       if (!sessao.session) {
         navigate({ to: "/login", replace: true });
         return;

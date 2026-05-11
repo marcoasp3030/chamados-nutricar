@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/sheet";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import {
+import { obterUsuarioAtual } from "@/auth/atual";
   useChecklist,
   useHistoricoChecklist,
   useItensTemplate,
@@ -85,7 +86,7 @@ export function DetalheChecklist({ checklistId }: Props) {
 
   const salvar = useMutation({
     mutationFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!u.user || !checklist) throw new Error("Sessão expirada");
       const alterados: { item_id: string; rotulo: string; antes: Valor; depois: Valor }[] = [];
       const upserts: {
@@ -149,7 +150,7 @@ export function DetalheChecklist({ checklistId }: Props) {
         .update({ status })
         .eq("id", checklist.id);
       if (error) throw error;
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       await supabase.from("checklist_historico").insert({
         checklist_id: checklist.id,
         workspace_id: checklist.workspace_id,

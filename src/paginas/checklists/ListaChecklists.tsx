@@ -30,6 +30,7 @@ import {
   useChecklistTemplates,
 } from "@/hooks/useChecklists";
 import { ITENS_TEMPLATE_PADRAO } from "@/utilitarios/templateChecklistPadrao";
+import { obterUsuarioAtual } from "@/auth/atual";
 
 export function ListaChecklists() {
   const { workspaceAtual } = useWorkspaceStore();
@@ -48,7 +49,7 @@ export function ListaChecklists() {
 
   const criarTemplatePadrao = useMutation({
     mutationFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!u.user || !workspaceAtual) throw new Error("Sessão expirada");
       const { data: t, error } = await supabase
         .from("checklist_templates")
@@ -92,7 +93,7 @@ export function ListaChecklists() {
       if (!nome.trim()) throw new Error("Informe um nome.");
       const tplId = templateId || padrao?.id;
       if (!tplId) throw new Error("Crie um template antes.");
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!u.user || !workspaceAtual) throw new Error("Sessão expirada");
       const { data, error } = await supabase
         .from("checklists")

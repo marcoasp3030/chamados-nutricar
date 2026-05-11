@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
+import { obterUsuarioAtual } from "@/auth/atual";
 
 interface ConfigVMPay {
   workspace_id: string;
@@ -47,7 +48,7 @@ export function AbaVMPay() {
   const salvar = useMutation({
     mutationFn: async () => {
       if (!workspaceAtual) throw new Error("Workspace inválido.");
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!config && !chave.trim()) {
         throw new Error("Informe a chave da API VMPay.");
       }

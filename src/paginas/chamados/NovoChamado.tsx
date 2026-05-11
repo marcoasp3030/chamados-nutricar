@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import {
+import { obterUsuarioAtual } from "@/auth/atual";
   FormularioChamado,
   type DadosFormularioChamado,
 } from "@/componentes/chamados/FormularioChamado";
@@ -25,7 +26,7 @@ export function NovoChamado({ chamadoPaiId }: Props) {
 
   const criar = useMutation({
     mutationFn: async (dados: DadosFormularioChamado) => {
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!u.user || !workspaceAtual) throw new Error("Sessão expirada");
 
       const { data, error } = await supabase

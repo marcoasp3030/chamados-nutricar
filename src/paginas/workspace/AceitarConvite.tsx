@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { rotuloPapel } from "@/utilitarios/traducoes";
 import type { PapelMembro } from "@/tipos/workspace";
+import { obterSessao } from "@/auth/atual";
 
 interface ConviteCarregado {
   id: string;
@@ -28,7 +29,7 @@ export function AceitarConvite({ token }: { token: string }) {
 
   useEffect(() => {
     (async () => {
-      const { data: sessao } = await supabase.auth.getSession();
+      const sessao = await obterSessao().then((s) => ({ session: s.usuario ? { user: s.usuario } : null }));
       if (!sessao.session) {
         navigate({ to: "/login" });
         return;
@@ -55,7 +56,7 @@ export function AceitarConvite({ token }: { token: string }) {
     if (!convite) return;
     setAceitando(true);
 
-    const { data: sessao } = await supabase.auth.getSession();
+    const sessao = await obterSessao().then((s) => ({ session: s.usuario ? { user: s.usuario } : null }));
     if (!sessao.session) {
       navigate({ to: "/login" });
       return;

@@ -49,6 +49,7 @@ import {
 } from "@/tipos/projeto";
 import { rotuloStatusTarefa } from "@/utilitarios/traducoes";
 import { cn } from "@/lib/utils";
+import { obterUsuarioAtual } from "@/auth/atual";
 
 interface Props {
   projetoId: string;
@@ -119,7 +120,7 @@ export function DetalheProjeto({ projetoId }: Props) {
 
   const criarTarefa = useMutation({
     mutationFn: async (d: DadosTarefa) => {
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!u.user || !projeto) throw new Error("Sessão expirada");
       const ordem = (tarefas ?? []).filter((t) => t.status === d.status).length;
       const { error } = await supabase.from("tarefas").insert({

@@ -30,6 +30,7 @@ import {
 } from "@/componentes/projetos/FormularioProjeto";
 import { STATUS_PROJETO, type StatusProjeto } from "@/tipos/projeto";
 import { rotuloStatusProjeto } from "@/utilitarios/traducoes";
+import { obterUsuarioAtual } from "@/auth/atual";
 
 export function ListaProjetos() {
   const { workspaceAtual } = useWorkspaceStore();
@@ -41,7 +42,7 @@ export function ListaProjetos() {
 
   const criar = useMutation({
     mutationFn: async (dados: DadosProjeto) => {
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!u.user || !workspaceAtual) throw new Error("Sessão expirada");
       const { error } = await supabase.from("projetos").insert({
         workspace_id: workspaceAtual.id,
