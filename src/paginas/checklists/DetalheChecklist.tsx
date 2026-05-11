@@ -7,7 +7,6 @@ import { ArrowLeft, FileDown, History, Loader2, MessageSquare, Save } from "luci
 import { PainelComentarios } from "@/componentes/checklists/PainelComentarios";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,6 +35,7 @@ import {
   useRespostasChecklist,
   type ItemTemplate,
 } from "@/hooks/useChecklists";
+import { db } from "@/dados/atual";
 
 interface Props {
   checklistId: string;
@@ -110,12 +110,12 @@ export function DetalheChecklist({ checklistId }: Props) {
         });
       }
       if (upserts.length === 0) return { count: 0 };
-      const { error } = await supabase
+      const { error } = await db
         .from("checklist_respostas")
         .upsert(upserts, { onConflict: "checklist_id,item_id" });
       if (error) throw error;
 
-      await supabase.from("checklist_historico").insert(
+      await db.from("checklist_historico").insert(
         alterados.map((a) => ({
           checklist_id: checklist.id,
           workspace_id: checklist.workspace_id,
@@ -127,7 +127,7 @@ export function DetalheChecklist({ checklistId }: Props) {
           valor_novo: { v: a.depois },
         })),
       );
-      await supabase
+      await db
         .from("checklists")
         .update({ atualizado_em: new Date().toISOString() })
         .eq("id", checklist.id);
@@ -145,13 +145,13 @@ export function DetalheChecklist({ checklistId }: Props) {
   const alterarStatus = useMutation({
     mutationFn: async (status: string) => {
       if (!checklist) return;
-      const { error } = await supabase
+      const { error } = await db
         .from("checklists")
         .update({ status })
         .eq("id", checklist.id);
       if (error) throw error;
       const u = { user: await obterUsuarioAtual() };
-      await supabase.from("checklist_historico").insert({
+      await db.from("checklist_historico").insert({
         checklist_id: checklist.id,
         workspace_id: checklist.workspace_id,
         usuario_id: u.user?.id ?? null,

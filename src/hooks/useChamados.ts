@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import type { ChamadoComPessoas, StatusChamado, PrioridadeChamado } from "@/tipos/chamado";
 import { obterUsuarioAtual } from "@/auth/atual";
+import { db } from "@/dados/atual";
 
 export interface FiltrosChamados {
   status?: StatusChamado | "Todos";
@@ -16,7 +16,7 @@ export interface FiltrosChamados {
 
 async function buscarPerfisPorIds(ids: string[]) {
   if (ids.length === 0) return new Map<string, { id: string; nome: string; email: string }>();
-  const { data } = await supabase
+  const { data } = await db
     .from("perfis")
     .select("id, nome, email")
     .in("id", ids);
@@ -30,7 +30,7 @@ export function useChamados(workspaceId: string | undefined, filtros: FiltrosCha
     staleTime: 30_000,
     placeholderData: (prev) => prev,
     queryFn: async (): Promise<ChamadoComPessoas[]> => {
-      let q = supabase
+      let q = db
         .from("chamados")
         .select("*")
         .eq("workspace_id", workspaceId!)

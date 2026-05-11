@@ -3,13 +3,13 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { useChamados } from "@/hooks/useChamados";
 import { CartaoChamado } from "@/componentes/chamados/CartaoChamado";
 import { STATUS_KANBAN, type StatusChamado, type ChamadoComPessoas } from "@/tipos/chamado";
 import { rotuloStatusChamado } from "@/utilitarios/traducoes";
 import { cn } from "@/lib/utils";
+import { db } from "@/dados/atual";
 
 const corColuna: Record<StatusChamado, { ponto: string; topo: string }> = {
   Aberto: { ponto: "bg-blue-500", topo: "from-blue-500/60" },
@@ -40,7 +40,7 @@ export function QuadroChamados() {
 
   const moverStatus = useMutation({
     mutationFn: async (vars: { id: string; status: StatusChamado }) => {
-      const { error } = await supabase
+      const { error } = await db
         .from("chamados")
         .update({ status: vars.status })
         .eq("id", vars.id);

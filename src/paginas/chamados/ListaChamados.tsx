@@ -53,7 +53,6 @@ import {
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { useChamados, type FiltrosChamados } from "@/hooks/useChamados";
 import { BadgeStatus } from "@/componentes/chamados/BadgeStatus";
@@ -68,6 +67,7 @@ import {
 } from "@/tipos/chamado";
 import { rotuloPrioridade, rotuloStatusChamado } from "@/utilitarios/traducoes";
 import { cn } from "@/lib/utils";
+import { db } from "@/dados/atual";
 
 function iniciais(nome?: string | null) {
   if (!nome) return "?";
@@ -227,7 +227,7 @@ export function ListaChamados() {
     enabled: !!workspaceAtual?.id,
     staleTime: 60_000,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await db
         .from("chamados")
         .select("chamado_pai_id")
         .eq("workspace_id", workspaceAtual!.id)

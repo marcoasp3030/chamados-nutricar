@@ -1,15 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import type {
   ChamadoComPessoas,
   ComentarioChamado,
   HistoricoChamado,
 } from "@/tipos/chamado";
+import { db } from "@/dados/atual";
 
 async function carregarPerfis(ids: string[]) {
   const unicos = [...new Set(ids.filter(Boolean))];
   if (unicos.length === 0) return new Map<string, { id: string; nome: string; email: string }>();
-  const { data } = await supabase.from("perfis").select("id, nome, email").in("id", unicos);
+  const { data } = await db.from("perfis").select("id, nome, email").in("id", unicos);
   return new Map((data ?? []).map((p) => [p.id, p]));
 }
 
@@ -18,7 +18,7 @@ export function useChamadoPorNumero(workspaceId: string | undefined, numero: num
     queryKey: ["chamado", workspaceId, numero],
     enabled: !!workspaceId && Number.isFinite(numero),
     queryFn: async (): Promise<ChamadoComPessoas | null> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("chamados")
         .select("*")
         .eq("workspace_id", workspaceId!)
@@ -41,7 +41,7 @@ export function useSubchamados(chamadoPaiId: string | undefined) {
     queryKey: ["subchamados", chamadoPaiId],
     enabled: !!chamadoPaiId,
     queryFn: async (): Promise<ChamadoComPessoas[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("chamados")
         .select("*")
         .eq("chamado_pai_id", chamadoPaiId!)
@@ -67,7 +67,7 @@ export function useComentariosChamado(chamadoId: string | undefined) {
     queryKey: ["comentarios", chamadoId],
     enabled: !!chamadoId,
     queryFn: async (): Promise<ComentarioChamado[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("chamado_comentarios")
         .select("*")
         .eq("chamado_id", chamadoId!)
@@ -84,7 +84,7 @@ export function useHistoricoChamado(chamadoId: string | undefined) {
     queryKey: ["historico", chamadoId],
     enabled: !!chamadoId,
     queryFn: async (): Promise<HistoricoChamado[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("chamado_historico")
         .select("*")
         .eq("chamado_id", chamadoId!)

@@ -5,7 +5,6 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CheckSquare, Loader2, Plus, Search, Settings2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +30,7 @@ import {
 } from "@/hooks/useChecklists";
 import { ITENS_TEMPLATE_PADRAO } from "@/utilitarios/templateChecklistPadrao";
 import { obterUsuarioAtual } from "@/auth/atual";
+import { db } from "@/dados/atual";
 
 export function ListaChecklists() {
   const { workspaceAtual } = useWorkspaceStore();
@@ -51,7 +51,7 @@ export function ListaChecklists() {
     mutationFn: async () => {
       const u = { user: await obterUsuarioAtual() };
       if (!u.user || !workspaceAtual) throw new Error("Sessão expirada");
-      const { data: t, error } = await supabase
+      const { data: t, error } = await db
         .from("checklist_templates")
         .insert({
           workspace_id: workspaceAtual.id,
@@ -73,7 +73,7 @@ export function ListaChecklists() {
         opcoes: it.opcoes ?? null,
         ordem: idx + 1,
       }));
-      const { error: e2 } = await supabase.from("checklist_template_itens").insert(itens);
+      const { error: e2 } = await db.from("checklist_template_itens").insert(itens);
       if (e2) throw e2;
     },
     onSuccess: () => {
@@ -95,7 +95,7 @@ export function ListaChecklists() {
       if (!tplId) throw new Error("Crie um template antes.");
       const u = { user: await obterUsuarioAtual() };
       if (!u.user || !workspaceAtual) throw new Error("Sessão expirada");
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("checklists")
         .insert({
           workspace_id: workspaceAtual.id,
@@ -107,7 +107,7 @@ export function ListaChecklists() {
         .select("id, workspace_id")
         .single();
       if (error) throw error;
-      await supabase.from("checklist_historico").insert({
+      await db.from("checklist_historico").insert({
         checklist_id: data.id,
         workspace_id: data.workspace_id,
         usuario_id: u.user.id,

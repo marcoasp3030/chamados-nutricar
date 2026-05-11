@@ -4,10 +4,10 @@ import { ArrowLeft, Loader2, Mail, Phone, Shield } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";
 import { rotuloPapel } from "@/utilitarios/traducoes";
+import { db } from "@/dados/atual";
 
 interface Props {
   usuarioId: string;
@@ -24,7 +24,7 @@ export function PerfilMembro({ usuarioId }: Props) {
     queryKey: ["departamentos", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("departamentos")
         .select("id, nome")
         .eq("workspace_id", workspaceAtual!.id);

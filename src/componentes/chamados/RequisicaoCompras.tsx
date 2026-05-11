@@ -15,7 +15,6 @@ import {
   Download,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,6 +37,7 @@ import {
 import { rotuloPrioridade } from "@/utilitarios/traducoes";
 import type { PrioridadeChamado } from "@/tipos/chamado";
 import { obterUsuarioAtual } from "@/auth/atual";
+import { db } from "@/dados/atual";
 
 interface Props {
   chamadoId: string;
@@ -109,7 +109,7 @@ export function RequisicaoCompras({ chamadoId, codigoChamado, tituloChamado }: P
   const { data, isLoading } = useQuery({
     queryKey: ["requisicao-itens", chamadoId],
     queryFn: async (): Promise<ItemReq[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("chamado_requisicao_itens")
         .select(
           "id, ordem, quantidade, unidade, descricao, referencia, data_necessidade, prioridade, status_compra, observacao_compra, atualizado_compra_em",
@@ -129,7 +129,7 @@ export function RequisicaoCompras({ chamadoId, codigoChamado, tituloChamado }: P
     }) => {
       const { id, ...campos } = vars;
       const auth = { user: await obterUsuarioAtual() };
-      const { error } = await supabase
+      const { error } = await db
         .from("chamado_requisicao_itens")
         .update({
           ...campos,

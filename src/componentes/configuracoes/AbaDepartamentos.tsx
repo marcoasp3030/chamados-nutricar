@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { Building2, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { db } from "@/dados/atual";
 
 export interface Departamento {
   id: string;
@@ -47,7 +47,7 @@ export function useDepartamentos(workspaceId: string | undefined) {
     queryKey: ["departamentos", workspaceId],
     enabled: !!workspaceId,
     queryFn: async (): Promise<Departamento[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("departamentos")
         .select("id, nome, descricao, workspace_id, criado_em")
         .eq("workspace_id", workspaceId!)
@@ -100,13 +100,13 @@ export function AbaDepartamentos() {
       };
 
       if (editando) {
-        const { error } = await supabase
+        const { error } = await db
           .from("departamentos")
           .update(payload)
           .eq("id", editando.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("departamentos").insert({
+        const { error } = await db.from("departamentos").insert({
           ...payload,
           workspace_id: workspaceAtual.id,
           criado_por: u.user.id,
@@ -128,7 +128,7 @@ export function AbaDepartamentos() {
 
   const remover = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("departamentos").delete().eq("id", id);
+      const { error } = await db.from("departamentos").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

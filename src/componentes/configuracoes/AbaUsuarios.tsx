@@ -40,6 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { db } from "@/dados/atual";
 
 const CARGOS = ["Funcionario", "Supervisor", "Gestor", "Gerente"] as const;
 type Cargo = (typeof CARGOS)[number];
@@ -210,7 +211,7 @@ export function AbaUsuarios() {
         throw new Error("Verifique os campos");
       }
 
-      const { error: erroPerfil } = await supabase
+      const { error: erroPerfil } = await db
         .from("perfis")
         .update({
           nome: parse.data.nome,
@@ -220,7 +221,7 @@ export function AbaUsuarios() {
       if (erroPerfil) throw erroPerfil;
 
       const novosDeptos = parse.data.departamento_ids;
-      const { error: erroMembro } = await supabase
+      const { error: erroMembro } = await db
         .from("workspace_membros")
         .update({
           cargo: parse.data.cargo as Cargo,
@@ -231,14 +232,14 @@ export function AbaUsuarios() {
       if (erroMembro) throw erroMembro;
 
       // Sincroniza vínculos N:N
-      const { error: erroDel } = await supabase
+      const { error: erroDel } = await db
         .from("workspace_membro_departamentos")
         .delete()
         .eq("membro_id", editandoMembro.id);
       if (erroDel) throw erroDel;
 
       if (novosDeptos.length > 0 && workspaceAtual) {
-        const { error: erroIns } = await supabase
+        const { error: erroIns } = await db
           .from("workspace_membro_departamentos")
           .insert(
             novosDeptos.map((d) => ({
@@ -264,7 +265,7 @@ export function AbaUsuarios() {
 
   const desativarMembro = useMutation({
     mutationFn: async (membroId: string) => {
-      const { error } = await supabase
+      const { error } = await db
         .from("workspace_membros")
         .update({ ativo: false })
         .eq("id", membroId);
@@ -281,7 +282,7 @@ export function AbaUsuarios() {
 
   const alternarAtivoMembro = useMutation({
     mutationFn: async ({ membroId, ativo }: { membroId: string; ativo: boolean }) => {
-      const { error } = await supabase
+      const { error } = await db
         .from("workspace_membros")
         .update({ ativo })
         .eq("id", membroId);
@@ -300,7 +301,7 @@ export function AbaUsuarios() {
     queryKey: ["convites", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id,
     queryFn: async (): Promise<Convite[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("workspace_convites")
         .select(
           "id, email, nome, telefone, papel, cargo, departamento_id, token, aceito, expira_em, criado_em",
@@ -374,7 +375,7 @@ export function AbaUsuarios() {
 
   const excluirConvite = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("workspace_convites").delete().eq("id", id);
+      const { error } = await db.from("workspace_convites").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Save, Sparkles, Eye, EyeOff, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { obterUsuarioAtual } from "@/auth/atual";
+import { db } from "@/dados/atual";
 
 const MODELOS = [
   { valor: "gpt-5-mini", rotulo: "GPT-5 mini (rápido e barato)" },
@@ -42,7 +42,7 @@ export function AbaIntegracaoIA() {
     queryKey: ["ia-config", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id && !!podeAdmin,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("workspace_ia_config")
         .select("*")
         .eq("workspace_id", workspaceAtual!.id)
@@ -86,7 +86,7 @@ export function AbaIntegracaoIA() {
         ...(chave.trim() ? { openai_api_key: chave.trim() } : {}),
       };
 
-      const { error } = await supabase
+      const { error } = await db
         .from("workspace_ia_config")
         .upsert(payload, { onConflict: "workspace_id" });
       if (error) throw error;
@@ -102,7 +102,7 @@ export function AbaIntegracaoIA() {
   const remover = useMutation({
     mutationFn: async () => {
       if (!workspaceAtual) return;
-      const { error } = await supabase
+      const { error } = await db
         .from("workspace_ia_config")
         .delete()
         .eq("workspace_id", workspaceAtual.id);

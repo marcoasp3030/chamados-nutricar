@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import type { ProjetoComResumo, TarefaComPessoa } from "@/tipos/projeto";
+import { db } from "@/dados/atual";
 
 async function buscarPerfis(ids: string[]) {
   const unicos = [...new Set(ids.filter(Boolean))];
   if (unicos.length === 0) return new Map<string, { id: string; nome: string }>();
-  const { data } = await supabase.from("perfis").select("id, nome").in("id", unicos);
+  const { data } = await db.from("perfis").select("id, nome").in("id", unicos);
   return new Map((data ?? []).map((p) => [p.id, p]));
 }
 
@@ -14,7 +14,7 @@ export function useProjetos(workspaceId: string | undefined) {
     queryKey: ["projetos", workspaceId],
     enabled: !!workspaceId,
     queryFn: async (): Promise<ProjetoComResumo[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("projetos")
         .select("*")
         .eq("workspace_id", workspaceId!)
@@ -27,7 +27,7 @@ export function useProjetos(workspaceId: string | undefined) {
       // Resumos de tarefas por projeto
       const resumos = new Map<string, { total: number; concluidas: number }>();
       if (ids.length > 0) {
-        const { data: tarefas } = await supabase
+        const { data: tarefas } = await db
           .from("tarefas")
           .select("projeto_id, status")
           .in("projeto_id", ids);
@@ -56,7 +56,7 @@ export function useProjeto(projetoId: string | undefined) {
     queryKey: ["projeto", projetoId],
     enabled: !!projetoId,
     queryFn: async (): Promise<ProjetoComResumo | null> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("projetos")
         .select("*")
         .eq("id", projetoId!)
@@ -77,7 +77,7 @@ export function useTarefasProjeto(projetoId: string | undefined) {
     queryKey: ["tarefas", projetoId],
     enabled: !!projetoId,
     queryFn: async (): Promise<TarefaComPessoa[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("tarefas")
         .select("*")
         .eq("projeto_id", projetoId!)

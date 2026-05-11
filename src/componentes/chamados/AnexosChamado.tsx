@@ -4,7 +4,6 @@ import { Loader2, Download, Trash2, FileIcon, ImageIcon, Eye, Upload } from "luc
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,6 +14,7 @@ import {
 import { SeletorAnexos } from "./SeletorAnexos";
 import { obterUsuarioAtual, obterUsuarioAtualId } from "@/auth/atual";
 import { storage } from "@/storage/atual";
+import { db } from "@/dados/atual";
 
 interface Props {
   chamadoId: string;
@@ -56,7 +56,7 @@ export function AnexosChamado({ chamadoId, workspaceId, podeExcluirTodos = false
   const lista = useQuery({
     queryKey: ["anexos", chamadoId],
     queryFn: async (): Promise<AnexoRegistro[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("chamado_anexos")
         .select("id, nome_arquivo, caminho_storage, tipo_mime, tamanho_bytes, enviado_por, criado_em")
         .eq("chamado_id", chamadoId)
@@ -102,7 +102,7 @@ export function AnexosChamado({ chamadoId, workspaceId, podeExcluirTodos = false
           falhas.push(arquivo.name);
           continue;
         }
-        const ins = await supabase.from("chamado_anexos").insert({
+        const ins = await db.from("chamado_anexos").insert({
           workspace_id: workspaceId,
           chamado_id: chamadoId,
           enviado_por: u.user.id,
@@ -129,7 +129,7 @@ export function AnexosChamado({ chamadoId, workspaceId, podeExcluirTodos = false
   const excluir = useMutation({
     mutationFn: async (anexo: AnexoRegistro) => {
       await storage.from("chamado-anexos").remove([anexo.caminho_storage]);
-      const { error } = await supabase.from("chamado_anexos").delete().eq("id", anexo.id);
+      const { error } = await db.from("chamado_anexos").delete().eq("id", anexo.id);
       if (error) throw error;
     },
     onSuccess: () => {

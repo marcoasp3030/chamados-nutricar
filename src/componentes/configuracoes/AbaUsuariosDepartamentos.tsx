@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Save, Search, Users } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";
 import { useDepartamentos } from "./AbaDepartamentos";
@@ -12,6 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { db } from "@/dados/atual";
 
 function iniciais(n?: string | null) {
   if (!n) return "?";
@@ -91,20 +91,20 @@ export function AbaUsuariosDepartamentos() {
     mutationFn: async () => {
       if (!membroAtual || !workspaceAtual) throw new Error("Selecione um usuário");
 
-      const { error: erroMembro } = await supabase
+      const { error: erroMembro } = await db
         .from("workspace_membros")
         .update({ departamento_id: selecionados[0] ?? null })
         .eq("id", membroAtual.id);
       if (erroMembro) throw erroMembro;
 
-      const { error: erroDel } = await supabase
+      const { error: erroDel } = await db
         .from("workspace_membro_departamentos")
         .delete()
         .eq("membro_id", membroAtual.id);
       if (erroDel) throw erroDel;
 
       if (selecionados.length > 0) {
-        const { error: erroIns } = await supabase
+        const { error: erroIns } = await db
           .from("workspace_membro_departamentos")
           .insert(
             selecionados.map((d) => ({

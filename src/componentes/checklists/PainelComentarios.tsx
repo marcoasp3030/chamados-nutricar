@@ -11,7 +11,6 @@ import {
   useComentariosChecklist,
   useExcluirComentario,
 } from "@/hooks/useComentariosChecklist";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";

@@ -16,7 +16,6 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -74,6 +73,7 @@ import {
 import { rotuloStatusChamado, rotuloTipoChamado } from "@/utilitarios/traducoes";
 import { obterUsuarioAtual, obterUsuarioAtualId } from "@/auth/atual";
 import { storage } from "@/storage/atual";
+import { db } from "@/dados/atual";
 
 interface Props {
   numero: number;
@@ -119,7 +119,7 @@ export function DetalheChamado({ numero }: Props) {
       tratativa: string | null;
     }>) => {
       if (!chamado) throw new Error("Chamado não carregado");
-      const { error } = await supabase.from("chamados").update(campos).eq("id", chamado.id);
+      const { error } = await db.from("chamados").update(campos).eq("id", chamado.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -184,7 +184,7 @@ export function DetalheChamado({ numero }: Props) {
   const editar = useMutation({
     mutationFn: async (dados: DadosFormularioChamado) => {
       if (!chamado) throw new Error("Chamado não carregado");
-      const { error } = await supabase
+      const { error } = await db
         .from("chamados")
         .update({
           titulo: dados.titulo,
@@ -213,7 +213,7 @@ export function DetalheChamado({ numero }: Props) {
   const excluir = useMutation({
     mutationFn: async () => {
       if (!chamado) return;
-      const { error } = await supabase.from("chamados").delete().eq("id", chamado.id);
+      const { error } = await db.from("chamados").delete().eq("id", chamado.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -611,7 +611,7 @@ function NovoChamadoEmbutido({
     mutationFn: async (dados: DadosFormularioChamado) => {
       const u = { user: await obterUsuarioAtual() };
       if (!u.user || !workspaceAtual) throw new Error("Sessão expirada");
-      const { data: novo, error } = await supabase
+      const { data: novo, error } = await db
         .from("chamados")
         .insert({
           workspace_id: workspaceAtual.id,
@@ -644,7 +644,7 @@ function NovoChamadoEmbutido({
             falhas.push(arquivo.name);
             continue;
           }
-          const ins = await supabase.from("chamado_anexos").insert({
+          const ins = await db.from("chamado_anexos").insert({
             workspace_id: workspaceAtual.id,
             chamado_id: novo.id,
             enviado_por: u.user.id,

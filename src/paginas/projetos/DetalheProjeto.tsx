@@ -12,7 +12,6 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -50,6 +49,7 @@ import {
 import { rotuloStatusTarefa } from "@/utilitarios/traducoes";
 import { cn } from "@/lib/utils";
 import { obterUsuarioAtual } from "@/auth/atual";
+import { db } from "@/dados/atual";
 
 interface Props {
   projetoId: string;
@@ -82,7 +82,7 @@ export function DetalheProjeto({ projetoId }: Props) {
 
   const editar = useMutation({
     mutationFn: async (d: DadosProjeto) => {
-      const { error } = await supabase
+      const { error } = await db
         .from("projetos")
         .update({
           nome: d.nome,
@@ -107,7 +107,7 @@ export function DetalheProjeto({ projetoId }: Props) {
 
   const excluirProjeto = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("projetos").delete().eq("id", projetoId);
+      const { error } = await db.from("projetos").delete().eq("id", projetoId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -123,7 +123,7 @@ export function DetalheProjeto({ projetoId }: Props) {
       const u = { user: await obterUsuarioAtual() };
       if (!u.user || !projeto) throw new Error("Sessão expirada");
       const ordem = (tarefas ?? []).filter((t) => t.status === d.status).length;
-      const { error } = await supabase.from("tarefas").insert({
+      const { error } = await db.from("tarefas").insert({
         projeto_id: projetoId,
         workspace_id: projeto.workspace_id,
         titulo: d.titulo,
@@ -148,7 +148,7 @@ export function DetalheProjeto({ projetoId }: Props) {
 
   const editarTarefa = useMutation({
     mutationFn: async (vars: { id: string; dados: DadosTarefa }) => {
-      const { error } = await supabase
+      const { error } = await db
         .from("tarefas")
         .update({
           titulo: vars.dados.titulo,
@@ -172,7 +172,7 @@ export function DetalheProjeto({ projetoId }: Props) {
 
   const moverStatus = useMutation({
     mutationFn: async (vars: { id: string; status: StatusTarefa }) => {
-      const { error } = await supabase
+      const { error } = await db
         .from("tarefas")
         .update({ status: vars.status })
         .eq("id", vars.id);
@@ -187,7 +187,7 @@ export function DetalheProjeto({ projetoId }: Props) {
 
   const excluirTarefa = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("tarefas").delete().eq("id", id);
+      const { error } = await db.from("tarefas").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

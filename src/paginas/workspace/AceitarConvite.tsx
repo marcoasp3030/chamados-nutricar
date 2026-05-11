@@ -3,11 +3,11 @@ import { useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import logo from "@/assets/nutricar-logo.png";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { rotuloPapel } from "@/utilitarios/traducoes";
 import type { PapelMembro } from "@/tipos/workspace";
 import { obterSessao } from "@/auth/atual";
+import { db } from "@/dados/atual";
 
 interface ConviteCarregado {
   id: string;
@@ -36,7 +36,7 @@ export function AceitarConvite({ token }: { token: string }) {
       }
       setEmailUsuario(sessao.session.user.email ?? null);
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("workspace_convites")
         .select("id, workspace_id, email, papel, expira_em, aceito, workspace:workspaces(nome, slug, cor_primaria)")
         .eq("token", token)
@@ -62,7 +62,7 @@ export function AceitarConvite({ token }: { token: string }) {
       return;
     }
 
-    const { error: erroMembro } = await supabase.from("workspace_membros").insert({
+    const { error: erroMembro } = await db.from("workspace_membros").insert({
       workspace_id: convite.workspace_id,
       usuario_id: sessao.session.user.id,
       papel: convite.papel,
@@ -76,7 +76,7 @@ export function AceitarConvite({ token }: { token: string }) {
       return;
     }
 
-    await supabase
+    await db
       .from("workspace_convites")
       .update({ aceito: true })
       .eq("id", convite.id);

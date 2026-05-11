@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/dados/atual";
 
 export interface MembroWorkspace {
   id: string;
@@ -27,7 +27,7 @@ export function useMembrosWorkspace(
     queryKey: ["membros-workspace", workspaceId, { incluirInativos }],
     enabled: !!workspaceId,
     queryFn: async (): Promise<MembroWorkspace[]> => {
-      let query = supabase
+      let query = db
         .from("workspace_membros")
         .select("id, usuario_id, papel, cargo, departamento_id, ativo")
         .eq("workspace_id", workspaceId!);
@@ -42,8 +42,8 @@ export function useMembrosWorkspace(
       const membroIds = (membros ?? []).map((m) => m.id);
 
       const [perfisRes, vinculosRes] = await Promise.all([
-        supabase.from("perfis").select("id, nome, email, telefone, avatar_url").in("id", ids),
-        supabase
+        db.from("perfis").select("id, nome, email, telefone, avatar_url").in("id", ids),
+        db
           .from("workspace_membro_departamentos")
           .select("membro_id, departamento_id")
           .in("membro_id", membroIds),

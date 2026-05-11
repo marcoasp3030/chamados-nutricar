@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Canais, useInscricaoRealtime } from "@/realtime/atual";
+import { db } from "@/dados/atual";
 
 export interface Notificacao {
   id: string;
@@ -24,7 +24,7 @@ export function useNotificacoes(workspaceId: string | undefined) {
     queryKey: ["notificacoes", workspaceId],
     enabled: !!workspaceId,
     queryFn: async (): Promise<Notificacao[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("notificacoes")
         .select("*")
         .eq("workspace_id", workspaceId!)
@@ -48,7 +48,7 @@ export function useMarcarNotificacaoLida() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (ids: string[] | "todas") => {
-      let q = supabase.from("notificacoes").update({ lida_em: new Date().toISOString() });
+      let q = db.from("notificacoes").update({ lida_em: new Date().toISOString() });
       if (ids === "todas") q = q.is("lida_em", null);
       else q = q.in("id", ids);
       const { error } = await q;

@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +26,7 @@ import {
   type ItemTemplate,
   type TipoItemChecklist,
 } from "@/hooks/useChecklists";
+import { db } from "@/dados/atual";
 
 const TIPOS: { v: TipoItemChecklist; r: string }[] = [
   { v: "checkbox", r: "Caixa de seleção" },
@@ -54,7 +54,7 @@ export function EditorTemplate() {
     queryKey: ["editor-template-itens", padrao?.id],
     enabled: !!padrao?.id,
     queryFn: async (): Promise<ItemTemplate[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("checklist_template_itens")
         .select("*")
         .eq("template_id", padrao!.id)
@@ -80,7 +80,7 @@ export function EditorTemplate() {
         novoTipo === "select" && novaOpcoes
           ? novaOpcoes.split(",").map((s) => s.trim()).filter(Boolean)
           : null;
-      const { error } = await supabase.from("checklist_template_itens").insert({
+      const { error } = await db.from("checklist_template_itens").insert({
         template_id: padrao.id,
         workspace_id: workspaceAtual.id,
         secao: novaSecao.trim(),
@@ -106,7 +106,7 @@ export function EditorTemplate() {
 
   const alterarAtivo = useMutation({
     mutationFn: async (vars: { id: string; ativo: boolean }) => {
-      const { error } = await supabase
+      const { error } = await db
         .from("checklist_template_itens")
         .update({ ativo: vars.ativo })
         .eq("id", vars.id);
@@ -120,7 +120,7 @@ export function EditorTemplate() {
 
   const excluir = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("checklist_template_itens").delete().eq("id", id);
+      const { error } = await db.from("checklist_template_itens").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

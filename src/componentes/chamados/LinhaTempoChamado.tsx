@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { MessageSquare, GitBranch, Activity, Plus, Lock, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { db } from "@/dados/atual";
 
 interface Props {
   chamadoId: string;
@@ -44,7 +44,7 @@ export function LinhaTempoChamado({ chamadoId, numeroPrincipal }: Props) {
   const principal = useQuery({
     queryKey: ["lt-principal", chamadoId],
     queryFn: async (): Promise<ChamadoMeta | null> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("chamados")
         .select("id, numero, titulo, criado_em, criado_por")
         .eq("id", chamadoId)
@@ -58,7 +58,7 @@ export function LinhaTempoChamado({ chamadoId, numeroPrincipal }: Props) {
   const subs = useQuery({
     queryKey: ["lt-subs", chamadoId],
     queryFn: async (): Promise<ChamadoMeta[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("chamados")
         .select("id, numero, titulo, criado_em, criado_por")
         .eq("chamado_pai_id", chamadoId);
@@ -82,7 +82,7 @@ export function LinhaTempoChamado({ chamadoId, numeroPrincipal }: Props) {
     queryKey: ["lt-historico", chaveIds],
     enabled: idsChamados.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("chamado_historico")
         .select("*")
         .in("chamado_id", idsChamados);
@@ -96,7 +96,7 @@ export function LinhaTempoChamado({ chamadoId, numeroPrincipal }: Props) {
     queryKey: ["lt-comentarios", chaveIds],
     enabled: idsChamados.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("chamado_comentarios")
         .select("*")
         .in("chamado_id", idsChamados);
@@ -120,7 +120,7 @@ export function LinhaTempoChamado({ chamadoId, numeroPrincipal }: Props) {
     queryKey: ["lt-perfis", chaveUsuarios],
     enabled: usuarioIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("perfis")
         .select("id, nome")
         .in("id", usuarioIds);

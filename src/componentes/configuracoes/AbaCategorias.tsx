@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { Loader2, Pencil, Plus, Tag, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { db } from "@/dados/atual";
 
 export interface CategoriaChamado {
   id: string;
@@ -57,7 +57,7 @@ export function useCategoriasChamado(workspaceId: string | undefined) {
     queryKey: ["categorias-chamado", workspaceId],
     enabled: !!workspaceId,
     queryFn: async (): Promise<CategoriaChamado[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("categorias_chamado")
         .select("id, nome, descricao, cor, workspace_id, criado_em, sla_resposta_horas, sla_resolucao_horas")
         .eq("workspace_id", workspaceId!)
@@ -140,13 +140,13 @@ export function AbaCategorias() {
       };
 
       if (editando) {
-        const { error } = await supabase
+        const { error } = await db
           .from("categorias_chamado")
           .update(payload)
           .eq("id", editando.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("categorias_chamado").insert({
+        const { error } = await db.from("categorias_chamado").insert({
           ...payload,
           workspace_id: workspaceAtual.id,
           criado_por: u.user.id,
@@ -168,7 +168,7 @@ export function AbaCategorias() {
 
   const remover = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("categorias_chamado").delete().eq("id", id);
+      const { error } = await db.from("categorias_chamado").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

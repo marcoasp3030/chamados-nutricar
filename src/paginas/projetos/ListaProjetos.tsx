@@ -5,7 +5,6 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar, FolderKanban, Loader2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -31,6 +30,7 @@ import {
 import { STATUS_PROJETO, type StatusProjeto } from "@/tipos/projeto";
 import { rotuloStatusProjeto } from "@/utilitarios/traducoes";
 import { obterUsuarioAtual } from "@/auth/atual";
+import { db } from "@/dados/atual";
 
 export function ListaProjetos() {
   const { workspaceAtual } = useWorkspaceStore();
@@ -44,7 +44,7 @@ export function ListaProjetos() {
     mutationFn: async (dados: DadosProjeto) => {
       const u = { user: await obterUsuarioAtual() };
       if (!u.user || !workspaceAtual) throw new Error("Sessão expirada");
-      const { error } = await supabase.from("projetos").insert({
+      const { error } = await db.from("projetos").insert({
         workspace_id: workspaceAtual.id,
         nome: dados.nome,
         descricao: dados.descricao || null,

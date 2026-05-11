@@ -16,7 +16,6 @@ import {
 import { format, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,6 +33,7 @@ import {
 import { useContagemComentarios } from "@/hooks/useComentariosChecklist";
 import { PainelComentarios } from "@/componentes/checklists/PainelComentarios";
 import { cn } from "@/lib/utils";
+import { db } from "@/dados/atual";
 
 interface DefColuna {
   id: ColunaInauguracao;
@@ -97,7 +97,7 @@ export function PainelInauguracoes() {
 
   const concluir = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await db
         .from("checklists")
         .update({ status: "Concluído" })
         .eq("id", id);
