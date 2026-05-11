@@ -161,6 +161,8 @@ export async function executarIaChamado(
       modelo,
       resultado: conteudo,
     });
+    const { publicarIaExecucao } = await import("@/realtime/publish.server");
+    publicarIaExecucao(input.chamadoId, "INSERT", { acao: input.acao });
   }
 
   if (input.acao === "classificar") {
