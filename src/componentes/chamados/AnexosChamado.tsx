@@ -158,7 +158,7 @@ export function AnexosChamado({ chamadoId, workspaceId, podeExcluirTodos = false
     try {
       const { data, error } = await storage.from("chamado-anexos")
         .download(anexo.caminho_storage);
-      if (error) throw error;
+      if (error || !data) throw error ?? new Error("Sem dados");
       const url = URL.createObjectURL(data);
       const a = document.createElement("a");
       a.href = url;
