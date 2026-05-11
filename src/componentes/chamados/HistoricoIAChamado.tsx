@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { Canais, useInscricaoRealtime } from "@/realtime/atual";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronDown, ChevronRight, Loader2, Sparkles, AlertCircle, Copy } from "lucide-react";
