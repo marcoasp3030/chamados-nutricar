@@ -110,8 +110,8 @@ export async function criarUsuarioDireto(
       .update(workspaceMembros)
       .set({
         ativo: true,
-        papel: input.papel,
-        cargo: input.cargo,
+        papel: input.papel as typeof workspaceMembros.$inferInsert.papel,
+        cargo: input.cargo as typeof workspaceMembros.$inferInsert.cargo,
         departamentoId: deptos[0] ?? null,
         aceitoEm: new Date(),
       })
@@ -123,8 +123,8 @@ export async function criarUsuarioDireto(
       .values({
         workspaceId: input.workspaceId,
         usuarioId,
-        papel: input.papel,
-        cargo: input.cargo,
+        papel: input.papel as typeof workspaceMembros.$inferInsert.papel,
+        cargo: input.cargo as typeof workspaceMembros.$inferInsert.cargo,
         departamentoId: deptos[0] ?? null,
         ativo: true,
         aceitoEm: new Date(),
@@ -132,6 +132,20 @@ export async function criarUsuarioDireto(
       })
       .returning();
     membroId = novo.id;
+  }
+
+  // 4) Sincroniza N:N de departamentos
+  await db
+    .delete(workspaceMembroDepartamentos)
+    .where(eq(workspaceMembroDepartamentos.membroId, membroId));
+  if (deptos.length) {
+    await db.insert(workspaceMembroDepartamentos).values(
+      deptos.map((d) => ({
+        workspaceId: input.workspaceId,
+        membroId,
+        departamentoId: d,
+      })) as (typeof workspaceMembroDepartamentos.$inferInsert)[],
+    );
   }
 
   // 4) Sincroniza N:N de departamentos
