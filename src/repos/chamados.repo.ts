@@ -334,6 +334,8 @@ export async function _registrarExecucaoIa(
   input: typeof chamadoIaExecucoes.$inferInsert,
 ) {
   await db.insert(chamadoIaExecucoes).values(input);
+  const { publicarIaExecucao } = await import("@/realtime/publish.server");
+  publicarIaExecucao(input.chamadoId, "INSERT", { acao: input.acao });
 }
 
 // ===========================================================

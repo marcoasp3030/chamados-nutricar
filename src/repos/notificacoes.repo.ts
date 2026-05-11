@@ -55,5 +55,7 @@ export async function criarNotificacao(
     .insert(notificacoes)
     .values({ ...input, workspaceId: ctx.workspaceId, atorId: ctx.userId })
     .returning();
+  const { publicarNotificacao } = await import("@/realtime/publish.server");
+  publicarNotificacao(ctx.workspaceId, "INSERT", { id: r.id });
   return r;
 }
