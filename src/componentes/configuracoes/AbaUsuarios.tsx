@@ -29,6 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { obterUsuarioAtualId } from "@/auth/atual";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -176,7 +177,7 @@ export function AbaUsuarios() {
 
   const [usuarioAtualId, setUsuarioAtualId] = useState<string | null>(null);
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUsuarioAtualId(data.user?.id ?? null));
+    obterUsuarioAtualId().then(setUsuarioAtualId);
   }, []);
 
   function abrirEdicaoMembro(m: MembroAtivo) {

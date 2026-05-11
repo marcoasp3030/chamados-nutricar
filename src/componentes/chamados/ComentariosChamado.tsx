@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useComentariosChamado } from "@/hooks/useChamado";
 import { cn } from "@/lib/utils";
+import { obterUsuarioAtual } from "@/auth/atual";
 
 interface Props {
   chamadoId: string;
@@ -26,7 +27,7 @@ export function ComentariosChamado({ chamadoId, workspaceId, podeUsarInterno }: 
 
   const adicionar = useMutation({
     mutationFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!u.user) throw new Error("Sessão expirada");
       const { error } = await supabase.from("chamado_comentarios").insert({
         chamado_id: chamadoId,

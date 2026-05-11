@@ -19,11 +19,11 @@ import {
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { TrocadorWorkspace } from "./TrocadorWorkspace";
-import { supabase } from "@/integrations/supabase/client";
+import { sair as authSair, useUsuarioAtual } from "@/auth/atual";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { rotuloPapel } from "@/utilitarios/traducoes";
 import { toast } from "sonner";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   useMarcarNotificacaoLida,
   useNotificacoes,
@@ -33,13 +33,10 @@ import { cn } from "@/lib/utils";
 export function Cabecalho() {
   const navigate = useNavigate();
   const { workspaceAtual, limpar } = useWorkspaceStore();
-  const [email, setEmail] = useState<string>("");
+  const { usuario } = useUsuarioAtual();
+  const email = usuario?.email ?? "";
   const { data: notificacoes } = useNotificacoes(workspaceAtual?.id);
   const marcar = useMarcarNotificacaoLida();
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ""));
-  }, []);
 
   const naoLidas = useMemo(
     () => (notificacoes ?? []).filter((n) => !n.lida_em).length,
@@ -47,7 +44,7 @@ export function Cabecalho() {
   );
 
   const sair = async () => {
-    await supabase.auth.signOut();
+    await authSair();
     limpar();
     toast.success("Sessão encerrada.");
     navigate({ to: "/login" });

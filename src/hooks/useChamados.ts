@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ChamadoComPessoas, StatusChamado, PrioridadeChamado } from "@/tipos/chamado";
+import { obterUsuarioAtual } from "@/auth/atual";
 
 export interface FiltrosChamados {
   status?: StatusChamado | "Todos";
@@ -51,7 +52,7 @@ export function useChamados(workspaceId: string | undefined, filtros: FiltrosCha
       if (filtros.somenteRaiz) q = q.is("chamado_pai_id", null);
       if (filtros.responsavel_id && filtros.responsavel_id !== "Todos") {
         if (filtros.responsavel_id === "MEUS") {
-          const { data: u } = await supabase.auth.getUser();
+          const u = { user: await obterUsuarioAtual() };
           if (u.user) q = q.eq("responsavel_id", u.user.id);
         } else {
           q = q.eq("responsavel_id", filtros.responsavel_id);

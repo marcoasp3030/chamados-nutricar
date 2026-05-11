@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
+import { obterUsuarioAtual } from "@/auth/atual";
 import {
   FormularioChamado,
   type DadosFormularioChamado,
@@ -25,7 +26,7 @@ export function NovoChamado({ chamadoPaiId }: Props) {
 
   const criar = useMutation({
     mutationFn: async (dados: DadosFormularioChamado) => {
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!u.user || !workspaceAtual) throw new Error("Sessão expirada");
 
       const { data, error } = await supabase
@@ -43,8 +44,8 @@ export function NovoChamado({ chamadoPaiId }: Props) {
           departamento_id: dados.departamento_id,
           prazo: dados.prazo,
           chamado_pai_id: paiId,
-          solicitante_id: u.user.id,
-          criado_por: u.user.id,
+          solicitante_id: u.user!.id,
+          criado_por: u.user!.id,
           numero: 0,
           requisicao_compras: dados.requisicao_compras,
         })
@@ -62,7 +63,7 @@ export function NovoChamado({ chamadoPaiId }: Props) {
             itensValidos.map((it, idx) => ({
               workspace_id: workspaceAtual.id,
               chamado_id: data.id,
-              criado_por: u.user.id,
+              criado_por: u.user!.id,
               ordem: idx,
               quantidade: it.quantidade,
               unidade: it.unidade || null,
@@ -94,7 +95,7 @@ export function NovoChamado({ chamadoPaiId }: Props) {
           const ins = await supabase.from("chamado_anexos").insert({
             workspace_id: workspaceAtual.id,
             chamado_id: data.id,
-            enviado_por: u.user.id,
+            enviado_por: u.user!.id,
             nome_arquivo: arquivo.name,
             caminho_storage: caminho,
             tipo_mime: arquivo.type || null,

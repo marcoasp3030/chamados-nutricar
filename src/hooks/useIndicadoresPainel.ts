@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { PrioridadeChamado, StatusChamado } from "@/tipos/chamado";
+import { obterUsuarioAtual } from "@/auth/atual";
 
 export interface IndicadoresPainel {
   abertos: number;
@@ -78,7 +79,7 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
       inicioMes.setDate(1);
       inicioMes.setHours(0, 0, 0, 0);
 
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       const meuId = u.user?.id;
 
       const [chamadosRes, comentariosRes] = await Promise.all([

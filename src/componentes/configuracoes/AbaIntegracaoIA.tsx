@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
+import { obterUsuarioAtual } from "@/auth/atual";
 
 const MODELOS = [
   { valor: "gpt-5-mini", rotulo: "GPT-5 mini (rápido e barato)" },
@@ -71,7 +72,7 @@ export function AbaIntegracaoIA() {
   const salvar = useMutation({
     mutationFn: async () => {
       if (!workspaceAtual) throw new Error("Workspace inválido.");
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
 
       if (!config && !chave.trim()) {
         throw new Error("Informe a chave OpenAI para ativar a IA.");

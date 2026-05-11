@@ -28,6 +28,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
+import { obterUsuarioAtual } from "@/auth/atual";
 import {
   useChecklist,
   useHistoricoChecklist,
@@ -85,7 +86,7 @@ export function DetalheChecklist({ checklistId }: Props) {
 
   const salvar = useMutation({
     mutationFn: async () => {
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!u.user || !checklist) throw new Error("Sessão expirada");
       const alterados: { item_id: string; rotulo: string; antes: Valor; depois: Valor }[] = [];
       const upserts: {
@@ -105,7 +106,7 @@ export function DetalheChecklist({ checklistId }: Props) {
           item_id: it.id,
           workspace_id: checklist.workspace_id,
           valor: { v: novo },
-          atualizado_por: u.user.id,
+          atualizado_por: u.user!.id,
         });
       }
       if (upserts.length === 0) return { count: 0 };
@@ -118,7 +119,7 @@ export function DetalheChecklist({ checklistId }: Props) {
         alterados.map((a) => ({
           checklist_id: checklist.id,
           workspace_id: checklist.workspace_id,
-          usuario_id: u.user.id,
+          usuario_id: u.user!.id,
           item_id: a.item_id,
           rotulo: a.rotulo,
           acao: "preencheu",
@@ -149,7 +150,7 @@ export function DetalheChecklist({ checklistId }: Props) {
         .update({ status })
         .eq("id", checklist.id);
       if (error) throw error;
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       await supabase.from("checklist_historico").insert({
         checklist_id: checklist.id,
         workspace_id: checklist.workspace_id,

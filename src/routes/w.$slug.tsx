@@ -7,6 +7,7 @@ import { AppSidebar } from "@/componentes/layout/AppSidebar";
 import { Cabecalho } from "@/componentes/layout/Cabecalho";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import type { PapelMembro, WorkspaceComPapel } from "@/tipos/workspace";
+import { obterSessao } from "@/auth/atual";
 
 export const Route = createFileRoute("/w/$slug")({
   component: LayoutWorkspace,
@@ -28,7 +29,7 @@ function LayoutWorkspace() {
 
     (async () => {
       setCarregando(true);
-      const { data: sessao } = await supabase.auth.getSession();
+      const sessao = await obterSessao().then((s) => ({ session: s.usuario ? { user: s.usuario } : null }));
       if (!sessao.session) {
         navigate({ to: "/login" });
         return;

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { obterUsuarioAtual } from "@/auth/atual";
 
 export interface ComentarioChecklist {
   id: string;
@@ -72,14 +73,14 @@ export function useAdicionarComentario() {
       destinatariosExtras?: string[];
       slugWorkspace?: string;
     }) => {
-      const { data: u } = await supabase.auth.getUser();
+      const u = { user: await obterUsuarioAtual() };
       if (!u.user) throw new Error("Não autenticado");
       const conteudo = vars.conteudo.trim();
       const mencionados = Array.from(new Set(vars.mencionados ?? []));
       const { error } = await supabase.from("checklist_comentarios").insert({
         checklist_id: vars.checklistId,
         workspace_id: vars.workspaceId,
-        autor_id: u.user.id,
+        autor_id: u.user!.id,
         conteudo,
         mencionados,
       });
@@ -89,7 +90,7 @@ export function useAdicionarComentario() {
       const { data: perfil } = await supabase
         .from("perfis")
         .select("nome")
-        .eq("id", u.user.id)
+        .eq("id", u.user!.id)
         .maybeSingle();
       const autorNome = perfil?.nome ?? "Alguém";
       const titulo = vars.nomeChecklist
@@ -103,12 +104,12 @@ export function useAdicionarComentario() {
         ...mencionados,
         ...(vars.destinatariosExtras ?? []),
       ]);
-      destinatarios.delete(u.user.id);
+      destinatarios.delete(u.user!.id);
       if (destinatarios.size > 0) {
         const linhas = Array.from(destinatarios).map((dest) => ({
           workspace_id: vars.workspaceId,
           destinatario_id: dest,
-          ator_id: u.user.id,
+          ator_id: u.user!.id,
           tipo: mencionados.includes(dest) ? "mencao_comentario" : "novo_comentario",
           titulo: mencionados.includes(dest)
             ? `${autorNome} mencionou você`
