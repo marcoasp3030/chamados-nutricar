@@ -21,6 +21,7 @@ import { Route as WSlugInauguracoesRouteImport } from './routes/w.$slug.inaugura
 import { Route as WSlugConfiguracoesRouteImport } from './routes/w.$slug.configuracoes'
 import { Route as WSlugChecklistsRouteImport } from './routes/w.$slug.checklists'
 import { Route as WSlugChamadosRouteImport } from './routes/w.$slug.chamados'
+import { Route as ApiRealtimeCanalRouteImport } from './routes/api/realtime/$canal'
 import { Route as ApiPublicWhatsappNotifyRouteImport } from './routes/api/public/whatsapp-notify'
 import { Route as WSlugProjetosIndexRouteImport } from './routes/w.$slug.projetos.index'
 import { Route as WSlugChecklistsIndexRouteImport } from './routes/w.$slug.checklists.index'
@@ -94,6 +95,11 @@ const WSlugChamadosRoute = WSlugChamadosRouteImport.update({
   path: '/chamados',
   getParentRoute: () => WSlugRoute,
 } as any)
+const ApiRealtimeCanalRoute = ApiRealtimeCanalRouteImport.update({
+  id: '/api/realtime/$canal',
+  path: '/api/realtime/$canal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWhatsappNotifyRoute = ApiPublicWhatsappNotifyRouteImport.update({
   id: '/api/public/whatsapp-notify',
   path: '/api/public/whatsapp-notify',
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug': typeof WSlugRouteWithChildren
   '/api/public/whatsapp-notify': typeof ApiPublicWhatsappNotifyRoute
+  '/api/realtime/$canal': typeof ApiRealtimeCanalRoute
   '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
   '/w/$slug/checklists': typeof WSlugChecklistsRouteWithChildren
   '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/api/public/whatsapp-notify': typeof ApiPublicWhatsappNotifyRoute
+  '/api/realtime/$canal': typeof ApiRealtimeCanalRoute
   '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
   '/w/$slug/inauguracoes': typeof WSlugInauguracoesRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug': typeof WSlugRouteWithChildren
   '/api/public/whatsapp-notify': typeof ApiPublicWhatsappNotifyRoute
+  '/api/realtime/$canal': typeof ApiRealtimeCanalRoute
   '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
   '/w/$slug/checklists': typeof WSlugChecklistsRouteWithChildren
   '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/convite/$token'
     | '/w/$slug'
     | '/api/public/whatsapp-notify'
+    | '/api/realtime/$canal'
     | '/w/$slug/chamados'
     | '/w/$slug/checklists'
     | '/w/$slug/configuracoes'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/selecionar-empresa'
     | '/convite/$token'
     | '/api/public/whatsapp-notify'
+    | '/api/realtime/$canal'
     | '/w/$slug/configuracoes'
     | '/w/$slug/inauguracoes'
     | '/w/$slug/painel'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/convite/$token'
     | '/w/$slug'
     | '/api/public/whatsapp-notify'
+    | '/api/realtime/$canal'
     | '/w/$slug/chamados'
     | '/w/$slug/checklists'
     | '/w/$slug/configuracoes'
@@ -316,6 +328,7 @@ export interface RootRouteChildren {
   ConviteTokenRoute: typeof ConviteTokenRoute
   WSlugRoute: typeof WSlugRouteWithChildren
   ApiPublicWhatsappNotifyRoute: typeof ApiPublicWhatsappNotifyRoute
+  ApiRealtimeCanalRoute: typeof ApiRealtimeCanalRoute
   ApiPublicStorageBucketSplatRoute: typeof ApiPublicStorageBucketSplatRoute
 }
 
@@ -404,6 +417,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/w/$slug/chamados'
       preLoaderRoute: typeof WSlugChamadosRouteImport
       parentRoute: typeof WSlugRoute
+    }
+    '/api/realtime/$canal': {
+      id: '/api/realtime/$canal'
+      path: '/api/realtime/$canal'
+      fullPath: '/api/realtime/$canal'
+      preLoaderRoute: typeof ApiRealtimeCanalRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/whatsapp-notify': {
       id: '/api/public/whatsapp-notify'
@@ -571,6 +591,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConviteTokenRoute: ConviteTokenRoute,
   WSlugRoute: WSlugRouteWithChildren,
   ApiPublicWhatsappNotifyRoute: ApiPublicWhatsappNotifyRoute,
+  ApiRealtimeCanalRoute: ApiRealtimeCanalRoute,
   ApiPublicStorageBucketSplatRoute: ApiPublicStorageBucketSplatRoute,
 }
 export const routeTree = rootRouteImport

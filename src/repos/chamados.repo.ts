@@ -172,6 +172,8 @@ export async function atualizarChamado(
     .set({ ...patch, atualizadoEm: new Date() })
     .where(eq(chamados.id, chamadoId))
     .returning();
+  const { publicarChamado } = await import("@/realtime/publish.server");
+  publicarChamado(chamadoId, "UPDATE", { id: chamadoId });
   return atualizado;
 }
 
@@ -222,6 +224,11 @@ export async function adicionarComentario(
       interno: input.interno ?? false,
     })
     .returning();
+  const { busRealtime } = await import("@/realtime/bus.server");
+  busRealtime.publicar(`chamado-coment:${input.chamadoId}`, "INSERT", {
+    id: novo.id,
+    interno: novo.interno,
+  });
   return novo;
 }
 
@@ -334,6 +341,8 @@ export async function _registrarExecucaoIa(
   input: typeof chamadoIaExecucoes.$inferInsert,
 ) {
   await db.insert(chamadoIaExecucoes).values(input);
+  const { publicarIaExecucao } = await import("@/realtime/publish.server");
+  publicarIaExecucao(input.chamadoId, "INSERT", { acao: input.acao });
 }
 
 // ===========================================================
