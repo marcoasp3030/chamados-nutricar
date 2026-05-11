@@ -35,8 +35,8 @@ function LoginPage() {
   const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/" });
+    obterSessao().then(({ usuario }) => {
+      if (usuario) navigate({ to: "/" });
     });
   }, [navigate]);
 
@@ -54,17 +54,10 @@ function LoginPage() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: parsed.data.email,
-      password: parsed.data.password,
-    });
+    const r = await entrarComSenha(parsed.data.email, parsed.data.password);
     setLoading(false);
-    if (error) {
-      const msg =
-        error.message === "Invalid login credentials"
-          ? "E-mail ou senha incorretos."
-          : error.message;
-      setErrors({ form: msg });
+    if (!r.ok) {
+      setErrors({ form: r.mensagem });
       return;
     }
     toast.success("Bem-vindo!");
