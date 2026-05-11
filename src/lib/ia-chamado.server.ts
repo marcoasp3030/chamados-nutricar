@@ -99,7 +99,7 @@ export async function executarIaChamado(
   input: InputIaChamado,
 ): Promise<
   | { tipo: "texto"; resultado: string }
-  | { tipo: "json"; resultado: unknown; bruto: string }
+  | { tipo: "json"; resultado: Record<string, string>; bruto: string }
 > {
   await exigirMembroWorkspace(usuarioId, input.workspaceId);
 
@@ -164,7 +164,7 @@ export async function executarIaChamado(
   }
 
   if (input.acao === "classificar") {
-    let parsed: unknown = {};
+    let parsed: Record<string, string> = {};
     try {
       const m = conteudo.match(/\{[\s\S]*\}/);
       parsed = m ? JSON.parse(m[0]) : {};
