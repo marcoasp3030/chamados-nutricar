@@ -82,7 +82,7 @@ export function DetalheProjeto({ projetoId }: Props) {
 
   const editar = useMutation({
     mutationFn: async (d: DadosProjeto) => {
-      const { error } = await dados
+      const { error } = await db
         .from("projetos")
         .update({
           nome: d.nome,
@@ -148,7 +148,7 @@ export function DetalheProjeto({ projetoId }: Props) {
 
   const editarTarefa = useMutation({
     mutationFn: async (vars: { id: string; dados: DadosTarefa }) => {
-      const { error } = await dados
+      const { error } = await db
         .from("tarefas")
         .update({
           titulo: vars.dados.titulo,
@@ -172,7 +172,7 @@ export function DetalheProjeto({ projetoId }: Props) {
 
   const moverStatus = useMutation({
     mutationFn: async (vars: { id: string; status: StatusTarefa }) => {
-      const { error } = await dados
+      const { error } = await db
         .from("tarefas")
         .update({ status: vars.status })
         .eq("id", vars.id);

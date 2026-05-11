@@ -211,7 +211,7 @@ export function AbaUsuarios() {
         throw new Error("Verifique os campos");
       }
 
-      const { error: erroPerfil } = await dados
+      const { error: erroPerfil } = await db
         .from("perfis")
         .update({
           nome: parse.data.nome,
@@ -221,7 +221,7 @@ export function AbaUsuarios() {
       if (erroPerfil) throw erroPerfil;
 
       const novosDeptos = parse.data.departamento_ids;
-      const { error: erroMembro } = await dados
+      const { error: erroMembro } = await db
         .from("workspace_membros")
         .update({
           cargo: parse.data.cargo as Cargo,
@@ -232,14 +232,14 @@ export function AbaUsuarios() {
       if (erroMembro) throw erroMembro;
 
       // Sincroniza vínculos N:N
-      const { error: erroDel } = await dados
+      const { error: erroDel } = await db
         .from("workspace_membro_departamentos")
         .delete()
         .eq("membro_id", editandoMembro.id);
       if (erroDel) throw erroDel;
 
       if (novosDeptos.length > 0 && workspaceAtual) {
-        const { error: erroIns } = await dados
+        const { error: erroIns } = await db
           .from("workspace_membro_departamentos")
           .insert(
             novosDeptos.map((d) => ({
@@ -265,7 +265,7 @@ export function AbaUsuarios() {
 
   const desativarMembro = useMutation({
     mutationFn: async (membroId: string) => {
-      const { error } = await dados
+      const { error } = await db
         .from("workspace_membros")
         .update({ ativo: false })
         .eq("id", membroId);
@@ -282,7 +282,7 @@ export function AbaUsuarios() {
 
   const alternarAtivoMembro = useMutation({
     mutationFn: async ({ membroId, ativo }: { membroId: string; ativo: boolean }) => {
-      const { error } = await dados
+      const { error } = await db
         .from("workspace_membros")
         .update({ ativo })
         .eq("id", membroId);
@@ -301,7 +301,7 @@ export function AbaUsuarios() {
     queryKey: ["convites", workspaceAtual?.id],
     enabled: !!workspaceAtual?.id,
     queryFn: async (): Promise<Convite[]> => {
-      const { data, error } = await dados
+      const { data, error } = await db
         .from("workspace_convites")
         .select(
           "id, email, nome, telefone, papel, cargo, departamento_id, token, aceito, expira_em, criado_em",

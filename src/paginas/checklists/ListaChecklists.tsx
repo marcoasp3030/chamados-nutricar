@@ -51,7 +51,7 @@ export function ListaChecklists() {
     mutationFn: async () => {
       const u = { user: await obterUsuarioAtual() };
       if (!u.user || !workspaceAtual) throw new Error("Sessão expirada");
-      const { data: t, error } = await dados
+      const { data: t, error } = await db
         .from("checklist_templates")
         .insert({
           workspace_id: workspaceAtual.id,
@@ -95,7 +95,7 @@ export function ListaChecklists() {
       if (!tplId) throw new Error("Crie um template antes.");
       const u = { user: await obterUsuarioAtual() };
       if (!u.user || !workspaceAtual) throw new Error("Sessão expirada");
-      const { data, error } = await dados
+      const { data, error } = await db
         .from("checklists")
         .insert({
           workspace_id: workspaceAtual.id,

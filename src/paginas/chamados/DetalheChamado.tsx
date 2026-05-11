@@ -184,7 +184,7 @@ export function DetalheChamado({ numero }: Props) {
   const editar = useMutation({
     mutationFn: async (dados: DadosFormularioChamado) => {
       if (!chamado) throw new Error("Chamado não carregado");
-      const { error } = await dados
+      const { error } = await db
         .from("chamados")
         .update({
           titulo: dados.titulo,
@@ -611,7 +611,7 @@ function NovoChamadoEmbutido({
     mutationFn: async (dados: DadosFormularioChamado) => {
       const u = { user: await obterUsuarioAtual() };
       if (!u.user || !workspaceAtual) throw new Error("Sessão expirada");
-      const { data: novo, error } = await dados
+      const { data: novo, error } = await db
         .from("chamados")
         .insert({
           workspace_id: workspaceAtual.id,

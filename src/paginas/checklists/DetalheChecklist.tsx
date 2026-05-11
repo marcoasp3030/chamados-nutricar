@@ -110,7 +110,7 @@ export function DetalheChecklist({ checklistId }: Props) {
         });
       }
       if (upserts.length === 0) return { count: 0 };
-      const { error } = await dados
+      const { error } = await db
         .from("checklist_respostas")
         .upsert(upserts, { onConflict: "checklist_id,item_id" });
       if (error) throw error;
@@ -127,7 +127,7 @@ export function DetalheChecklist({ checklistId }: Props) {
           valor_novo: { v: a.depois },
         })),
       );
-      await dados
+      await db
         .from("checklists")
         .update({ atualizado_em: new Date().toISOString() })
         .eq("id", checklist.id);
@@ -145,7 +145,7 @@ export function DetalheChecklist({ checklistId }: Props) {
   const alterarStatus = useMutation({
     mutationFn: async (status: string) => {
       if (!checklist) return;
-      const { error } = await dados
+      const { error } = await db
         .from("checklists")
         .update({ status })
         .eq("id", checklist.id);

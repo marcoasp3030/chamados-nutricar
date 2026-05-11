@@ -47,7 +47,7 @@ export function useDepartamentos(workspaceId: string | undefined) {
     queryKey: ["departamentos", workspaceId],
     enabled: !!workspaceId,
     queryFn: async (): Promise<Departamento[]> => {
-      const { data, error } = await dados
+      const { data, error } = await db
         .from("departamentos")
         .select("id, nome, descricao, workspace_id, criado_em")
         .eq("workspace_id", workspaceId!)
@@ -100,7 +100,7 @@ export function AbaDepartamentos() {
       };
 
       if (editando) {
-        const { error } = await dados
+        const { error } = await db
           .from("departamentos")
           .update(payload)
           .eq("id", editando.id);

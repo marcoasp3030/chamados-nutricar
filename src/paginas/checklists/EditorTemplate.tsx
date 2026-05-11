@@ -54,7 +54,7 @@ export function EditorTemplate() {
     queryKey: ["editor-template-itens", padrao?.id],
     enabled: !!padrao?.id,
     queryFn: async (): Promise<ItemTemplate[]> => {
-      const { data, error } = await dados
+      const { data, error } = await db
         .from("checklist_template_itens")
         .select("*")
         .eq("template_id", padrao!.id)
@@ -106,7 +106,7 @@ export function EditorTemplate() {
 
   const alterarAtivo = useMutation({
     mutationFn: async (vars: { id: string; ativo: boolean }) => {
-      const { error } = await dados
+      const { error } = await db
         .from("checklist_template_itens")
         .update({ ativo: vars.ativo })
         .eq("id", vars.id);

@@ -83,7 +83,7 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
       const meuId = u.user?.id;
 
       const [chamadosRes, comentariosRes] = await Promise.all([
-        dados
+        db
           .from("chamados")
           .select(
             "id, numero, codigo, titulo, status, prioridade, prazo, criado_em, primeiro_resposta_em, resolvido_em, fechado_em, responsavel_id, loja, categoria, departamento_id",
@@ -91,7 +91,7 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
           .eq("workspace_id", workspaceId!)
           .order("criado_em", { ascending: false })
           .limit(1000),
-        dados
+        db
           .from("chamado_comentarios")
           .select("chamado_id")
           .eq("workspace_id", workspaceId!)

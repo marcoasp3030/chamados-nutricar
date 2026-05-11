@@ -80,7 +80,7 @@ export function NotificacoesWhatsappChamado({ chamadoId }: Props) {
   const consulta = useQuery({
     queryKey: ["whatsapp-notif-chamado", chamadoId],
     queryFn: async (): Promise<{ registros: RegistroNotificacao[]; perfis: Map<string, Perfil> }> => {
-      const { data, error } = await dados
+      const { data, error } = await db
         .from("chamado_whatsapp_notificacoes")
         .select("id,evento,destinatario_perfil_id,telefone,mensagem,sucesso,status_http,erro,dedup_key,criado_em")
         .eq("chamado_id", chamadoId)

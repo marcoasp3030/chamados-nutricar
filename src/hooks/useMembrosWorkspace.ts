@@ -27,7 +27,7 @@ export function useMembrosWorkspace(
     queryKey: ["membros-workspace", workspaceId, { incluirInativos }],
     enabled: !!workspaceId,
     queryFn: async (): Promise<MembroWorkspace[]> => {
-      let query = dados
+      let query = db
         .from("workspace_membros")
         .select("id, usuario_id, papel, cargo, departamento_id, ativo")
         .eq("workspace_id", workspaceId!);
@@ -43,7 +43,7 @@ export function useMembrosWorkspace(
 
       const [perfisRes, vinculosRes] = await Promise.all([
         db.from("perfis").select("id, nome, email, telefone, avatar_url").in("id", ids),
-        dados
+        db
           .from("workspace_membro_departamentos")
           .select("membro_id, departamento_id")
           .in("membro_id", membroIds),
