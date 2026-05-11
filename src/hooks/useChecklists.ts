@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { dados } from "@/dados/atual";
+import { db } from "@/dados/atual";
 
 export type TipoItemChecklist =
   | "checkbox"
@@ -151,7 +151,7 @@ export function useHistoricoChecklist(checklistId: string | undefined) {
       const usuarios = Array.from(new Set((data ?? []).map((h) => h.usuario_id).filter(Boolean))) as string[];
       const mapaNomes = new Map<string, string>();
       if (usuarios.length > 0) {
-        const { data: perfis } = await dados.from("perfis").select("id, nome").in("id", usuarios);
+        const { data: perfis } = await db.from("perfis").select("id, nome").in("id", usuarios);
         for (const p of perfis ?? []) mapaNomes.set(p.id, p.nome);
       }
       return (data ?? []).map((h) => ({ ...h, usuario_nome: h.usuario_id ? mapaNomes.get(h.usuario_id) ?? "Usuário" : "Sistema" }));

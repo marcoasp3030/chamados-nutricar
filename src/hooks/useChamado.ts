@@ -4,12 +4,12 @@ import type {
   ComentarioChamado,
   HistoricoChamado,
 } from "@/tipos/chamado";
-import { dados } from "@/dados/atual";
+import { db } from "@/dados/atual";
 
 async function carregarPerfis(ids: string[]) {
   const unicos = [...new Set(ids.filter(Boolean))];
   if (unicos.length === 0) return new Map<string, { id: string; nome: string; email: string }>();
-  const { data } = await dados.from("perfis").select("id, nome, email").in("id", unicos);
+  const { data } = await db.from("perfis").select("id, nome, email").in("id", unicos);
   return new Map((data ?? []).map((p) => [p.id, p]));
 }
 

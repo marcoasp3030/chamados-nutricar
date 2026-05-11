@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { PrioridadeChamado, StatusChamado } from "@/tipos/chamado";
 import { obterUsuarioAtual } from "@/auth/atual";
-import { dados } from "@/dados/atual";
+import { db } from "@/dados/atual";
 
 export interface IndicadoresPainel {
   abertos: number;
@@ -215,10 +215,10 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
 
       const [depRes, perfRes] = await Promise.all([
         depIds.length
-          ? dados.from("departamentos").select("id, nome").in("id", depIds)
+          ? db.from("departamentos").select("id, nome").in("id", depIds)
           : Promise.resolve({ data: [] as { id: string; nome: string }[] }),
         respIds.length
-          ? dados.from("perfis").select("id, nome").in("id", respIds)
+          ? db.from("perfis").select("id, nome").in("id", respIds)
           : Promise.resolve({ data: [] as { id: string; nome: string }[] }),
       ]);
 

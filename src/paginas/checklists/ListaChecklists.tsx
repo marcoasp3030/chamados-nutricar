@@ -30,7 +30,7 @@ import {
 } from "@/hooks/useChecklists";
 import { ITENS_TEMPLATE_PADRAO } from "@/utilitarios/templateChecklistPadrao";
 import { obterUsuarioAtual } from "@/auth/atual";
-import { dados } from "@/dados/atual";
+import { db } from "@/dados/atual";
 
 export function ListaChecklists() {
   const { workspaceAtual } = useWorkspaceStore();
@@ -73,7 +73,7 @@ export function ListaChecklists() {
         opcoes: it.opcoes ?? null,
         ordem: idx + 1,
       }));
-      const { error: e2 } = await dados.from("checklist_template_itens").insert(itens);
+      const { error: e2 } = await db.from("checklist_template_itens").insert(itens);
       if (e2) throw e2;
     },
     onSuccess: () => {
@@ -107,7 +107,7 @@ export function ListaChecklists() {
         .select("id, workspace_id")
         .single();
       if (error) throw error;
-      await dados.from("checklist_historico").insert({
+      await db.from("checklist_historico").insert({
         checklist_id: data.id,
         workspace_id: data.workspace_id,
         usuario_id: u.user.id,

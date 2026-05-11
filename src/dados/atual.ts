@@ -2,5 +2,5 @@
 // Hoje delega para o adapter Supabase. No cutover (VPS), copie
 // `atual.adapter.proprio.ts` por cima de `atual.adapter.ts`.
 
-export { dados } from "./atual.adapter";
+export { db } from "./atual.adapter";
 export type { ClienteDados } from "./tipos";

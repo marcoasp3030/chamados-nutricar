@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useComentariosChamado } from "@/hooks/useChamado";
 import { cn } from "@/lib/utils";
 import { obterUsuarioAtual } from "@/auth/atual";
-import { dados } from "@/dados/atual";
+import { db } from "@/dados/atual";
 
 interface Props {
   chamadoId: string;
@@ -29,7 +29,7 @@ export function ComentariosChamado({ chamadoId, workspaceId, podeUsarInterno }: 
     mutationFn: async () => {
       const u = { user: await obterUsuarioAtual() };
       if (!u.user) throw new Error("Sessão expirada");
-      const { error } = await dados.from("chamado_comentarios").insert({
+      const { error } = await db.from("chamado_comentarios").insert({
         chamado_id: chamadoId,
         workspace_id: workspaceId,
         autor_id: u.user.id,

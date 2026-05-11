@@ -4,7 +4,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { ClienteDados } from "./tipos";
 
-export const dados: ClienteDados = {
+export const db: ClienteDados = {
   from: supabase.from.bind(supabase),
   rpc: supabase.rpc.bind(supabase),
 };

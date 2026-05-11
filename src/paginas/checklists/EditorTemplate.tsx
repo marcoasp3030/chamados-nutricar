@@ -26,7 +26,7 @@ import {
   type ItemTemplate,
   type TipoItemChecklist,
 } from "@/hooks/useChecklists";
-import { dados } from "@/dados/atual";
+import { db } from "@/dados/atual";
 
 const TIPOS: { v: TipoItemChecklist; r: string }[] = [
   { v: "checkbox", r: "Caixa de seleção" },
@@ -80,7 +80,7 @@ export function EditorTemplate() {
         novoTipo === "select" && novaOpcoes
           ? novaOpcoes.split(",").map((s) => s.trim()).filter(Boolean)
           : null;
-      const { error } = await dados.from("checklist_template_itens").insert({
+      const { error } = await db.from("checklist_template_itens").insert({
         template_id: padrao.id,
         workspace_id: workspaceAtual.id,
         secao: novaSecao.trim(),
@@ -120,7 +120,7 @@ export function EditorTemplate() {
 
   const excluir = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await dados.from("checklist_template_itens").delete().eq("id", id);
+      const { error } = await db.from("checklist_template_itens").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

@@ -27,7 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { dados } from "@/dados/atual";
+import { db } from "@/dados/atual";
 
 export interface Departamento {
   id: string;
@@ -106,7 +106,7 @@ export function AbaDepartamentos() {
           .eq("id", editando.id);
         if (error) throw error;
       } else {
-        const { error } = await dados.from("departamentos").insert({
+        const { error } = await db.from("departamentos").insert({
           ...payload,
           workspace_id: workspaceAtual.id,
           criado_por: u.user.id,
@@ -128,7 +128,7 @@ export function AbaDepartamentos() {
 
   const remover = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await dados.from("departamentos").delete().eq("id", id);
+      const { error } = await db.from("departamentos").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

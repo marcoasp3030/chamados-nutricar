@@ -46,7 +46,7 @@ const cliente = new PostgrestClient<Database>(URL_POSTGREST, {
   },
 });
 
-export const dados: ClienteDados = {
+export const db: ClienteDados = {
   from: cliente.from.bind(cliente) as ClienteDados["from"],
   rpc: cliente.rpc.bind(cliente) as ClienteDados["rpc"],
 };

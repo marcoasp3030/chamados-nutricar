@@ -10,7 +10,7 @@ import {
   type DadosFormularioChamado,
 } from "@/componentes/chamados/FormularioChamado";
 import { storage } from "@/storage/atual";
-import { dados } from "@/dados/atual";
+import { db } from "@/dados/atual";
 
 interface Props {
   chamadoPaiId?: string | null;
@@ -60,7 +60,7 @@ export function NovoChamado({ chamadoPaiId }: Props) {
           (it) => it.descricao.trim().length > 0,
         );
         if (itensValidos.length > 0) {
-          const insItens = await dados.from("chamado_requisicao_itens").insert(
+          const insItens = await db.from("chamado_requisicao_itens").insert(
             itensValidos.map((it, idx) => ({
               workspace_id: workspaceAtual.id,
               chamado_id: data.id,
@@ -92,7 +92,7 @@ export function NovoChamado({ chamadoPaiId }: Props) {
             falhas.push(arquivo.name);
             continue;
           }
-          const ins = await dados.from("chamado_anexos").insert({
+          const ins = await db.from("chamado_anexos").insert({
             workspace_id: workspaceAtual.id,
             chamado_id: data.id,
             enviado_por: u.user!.id,

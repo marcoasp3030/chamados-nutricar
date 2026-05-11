@@ -40,7 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { dados } from "@/dados/atual";
+import { db } from "@/dados/atual";
 
 const CARGOS = ["Funcionario", "Supervisor", "Gestor", "Gerente"] as const;
 type Cargo = (typeof CARGOS)[number];
@@ -375,7 +375,7 @@ export function AbaUsuarios() {
 
   const excluirConvite = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await dados.from("workspace_convites").delete().eq("id", id);
+      const { error } = await db.from("workspace_convites").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

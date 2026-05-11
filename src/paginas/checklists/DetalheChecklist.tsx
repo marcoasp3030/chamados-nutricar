@@ -35,7 +35,7 @@ import {
   useRespostasChecklist,
   type ItemTemplate,
 } from "@/hooks/useChecklists";
-import { dados } from "@/dados/atual";
+import { db } from "@/dados/atual";
 
 interface Props {
   checklistId: string;
@@ -115,7 +115,7 @@ export function DetalheChecklist({ checklistId }: Props) {
         .upsert(upserts, { onConflict: "checklist_id,item_id" });
       if (error) throw error;
 
-      await dados.from("checklist_historico").insert(
+      await db.from("checklist_historico").insert(
         alterados.map((a) => ({
           checklist_id: checklist.id,
           workspace_id: checklist.workspace_id,
@@ -151,7 +151,7 @@ export function DetalheChecklist({ checklistId }: Props) {
         .eq("id", checklist.id);
       if (error) throw error;
       const u = { user: await obterUsuarioAtual() };
-      await dados.from("checklist_historico").insert({
+      await db.from("checklist_historico").insert({
         checklist_id: checklist.id,
         workspace_id: checklist.workspace_id,
         usuario_id: u.user?.id ?? null,

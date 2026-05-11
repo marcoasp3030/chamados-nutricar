@@ -27,7 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { dados } from "@/dados/atual";
+import { db } from "@/dados/atual";
 
 export interface CategoriaChamado {
   id: string;
@@ -146,7 +146,7 @@ export function AbaCategorias() {
           .eq("id", editando.id);
         if (error) throw error;
       } else {
-        const { error } = await dados.from("categorias_chamado").insert({
+        const { error } = await db.from("categorias_chamado").insert({
           ...payload,
           workspace_id: workspaceAtual.id,
           criado_por: u.user.id,
@@ -168,7 +168,7 @@ export function AbaCategorias() {
 
   const remover = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await dados.from("categorias_chamado").delete().eq("id", id);
+      const { error } = await db.from("categorias_chamado").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

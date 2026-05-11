@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { rotuloPapel } from "@/utilitarios/traducoes";
 import type { PapelMembro } from "@/tipos/workspace";
 import { obterSessao } from "@/auth/atual";
-import { dados } from "@/dados/atual";
+import { db } from "@/dados/atual";
 
 interface ConviteCarregado {
   id: string;
@@ -62,7 +62,7 @@ export function AceitarConvite({ token }: { token: string }) {
       return;
     }
 
-    const { error: erroMembro } = await dados.from("workspace_membros").insert({
+    const { error: erroMembro } = await db.from("workspace_membros").insert({
       workspace_id: convite.workspace_id,
       usuario_id: sessao.session.user.id,
       papel: convite.papel,

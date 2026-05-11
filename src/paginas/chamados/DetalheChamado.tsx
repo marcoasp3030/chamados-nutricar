@@ -73,7 +73,7 @@ import {
 import { rotuloStatusChamado, rotuloTipoChamado } from "@/utilitarios/traducoes";
 import { obterUsuarioAtual, obterUsuarioAtualId } from "@/auth/atual";
 import { storage } from "@/storage/atual";
-import { dados } from "@/dados/atual";
+import { db } from "@/dados/atual";
 
 interface Props {
   numero: number;
@@ -119,7 +119,7 @@ export function DetalheChamado({ numero }: Props) {
       tratativa: string | null;
     }>) => {
       if (!chamado) throw new Error("Chamado não carregado");
-      const { error } = await dados.from("chamados").update(campos).eq("id", chamado.id);
+      const { error } = await db.from("chamados").update(campos).eq("id", chamado.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -213,7 +213,7 @@ export function DetalheChamado({ numero }: Props) {
   const excluir = useMutation({
     mutationFn: async () => {
       if (!chamado) return;
-      const { error } = await dados.from("chamados").delete().eq("id", chamado.id);
+      const { error } = await db.from("chamados").delete().eq("id", chamado.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -644,7 +644,7 @@ function NovoChamadoEmbutido({
             falhas.push(arquivo.name);
             continue;
           }
-          const ins = await dados.from("chamado_anexos").insert({
+          const ins = await db.from("chamado_anexos").insert({
             workspace_id: workspaceAtual.id,
             chamado_id: novo.id,
             enviado_por: u.user.id,
