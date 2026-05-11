@@ -43,7 +43,7 @@ function formatarTamanho(bytes: number) {
 async function gerarUrlAssinada(caminho: string, expiraSegundos = 3600) {
   const { data, error } = await storage.from("chamado-anexos")
     .createSignedUrl(caminho, expiraSegundos);
-  if (error) throw error;
+  if (error || !data) throw error ?? new Error("Sem dados");
   return data.signedUrl;
 }
 
