@@ -19,7 +19,7 @@ import {
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { TrocadorWorkspace } from "./TrocadorWorkspace";
-import { supabase } from "@/integrations/supabase/client";
+import { sair as authSair, useUsuarioAtual } from "@/auth/atual";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { rotuloPapel } from "@/utilitarios/traducoes";
 import { toast } from "sonner";
