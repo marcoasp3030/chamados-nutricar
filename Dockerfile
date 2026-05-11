@@ -10,10 +10,10 @@ RUN bun install --frozen-lockfile || bun install
 # Código
 COPY . .
 
-# Build de produção (TanStack Start + Vite)
-# Para VPS Node usamos o preset "node-server" do Nitro/Vite.
+# Build de produção (TanStack Start + Vite, preset Node).
+# Usa vite.config.vps.ts (sem Cloudflare Workers).
 ENV NITRO_PRESET=node-server
-RUN bun run build
+RUN bun run build:vps
 
 
 # ===== Estágio 2: runtime =====
