@@ -106,7 +106,7 @@ export function DetalheChecklist({ checklistId }: Props) {
           item_id: it.id,
           workspace_id: checklist.workspace_id,
           valor: { v: novo },
-          atualizado_por: u.user.id,
+          atualizado_por: u.user!.id,
         });
       }
       if (upserts.length === 0) return { count: 0 };
@@ -119,7 +119,7 @@ export function DetalheChecklist({ checklistId }: Props) {
         alterados.map((a) => ({
           checklist_id: checklist.id,
           workspace_id: checklist.workspace_id,
-          usuario_id: u.user.id,
+          usuario_id: u.user!.id,
           item_id: a.item_id,
           rotulo: a.rotulo,
           acao: "preencheu",
