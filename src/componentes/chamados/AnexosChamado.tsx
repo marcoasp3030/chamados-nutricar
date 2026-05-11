@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { SeletorAnexos } from "./SeletorAnexos";
 import { obterUsuarioAtual, obterUsuarioAtualId } from "@/auth/atual";
+import { storage } from "@/storage/atual";
 
 interface Props {
   chamadoId: string;
@@ -129,7 +130,7 @@ export function AnexosChamado({ chamadoId, workspaceId, podeExcluirTodos = false
 
   const excluir = useMutation({
     mutationFn: async (anexo: AnexoRegistro) => {
-      await supabase.storage.from("chamado-anexos").remove([anexo.caminho_storage]);
+      await storage.from("chamado-anexos").remove([anexo.caminho_storage]);
       const { error } = await supabase.from("chamado_anexos").delete().eq("id", anexo.id);
       if (error) throw error;
     },
