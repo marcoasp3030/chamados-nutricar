@@ -194,12 +194,15 @@ export async function criarConvite(
   >,
 ) {
   await exigirPapel(ctx.userId, ctx.workspaceId, ["Proprietario", "Administrador"]);
+  const { randomBytes } = await import("crypto");
+  const token = randomBytes(24).toString("hex");
   const [r] = await db
     .insert(workspaceConvites)
     .values({
       ...input,
       workspaceId: ctx.workspaceId,
       convidadoPor: ctx.userId,
+      token,
       expiraEm: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
     })
     .returning();
