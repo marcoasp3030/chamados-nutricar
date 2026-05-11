@@ -35,20 +35,11 @@ export function useNotificacoes(workspaceId: string | undefined) {
     },
   });
 
-  useEffect(() => {
-    if (!workspaceId) return;
-    const ch = supabase
-      .channel(`notif-${workspaceId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "notificacoes", filter: `workspace_id=eq.${workspaceId}` },
-        () => qc.invalidateQueries({ queryKey: ["notificacoes", workspaceId] }),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [workspaceId, qc]);
+  useInscricaoRealtime(
+    workspaceId ? Canais.notificacoes(workspaceId) : null,
+    () => qc.invalidateQueries({ queryKey: ["notificacoes", workspaceId] }),
+    [workspaceId, qc],
+  );
 
   return query;
 }
