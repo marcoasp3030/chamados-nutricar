@@ -61,7 +61,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verifica se solicitante é Proprietário/Administrador do workspace
     const { data: papelData, error: papelErr } = await admin
       .from("workspace_membros")
       .select("papel")
@@ -80,7 +79,6 @@ Deno.serve(async (req) => {
     const email = body.email.toLowerCase().trim();
     const senha = gerarSenha();
 
-    // 1) Cria ou recupera usuário no auth
     let userId: string | null = null;
     const { data: criado, error: criarErr } = await admin.auth.admin.createUser({
       email,
@@ -90,7 +88,6 @@ Deno.serve(async (req) => {
     });
 
     if (criarErr) {
-      // Pode já existir; tentar localizar via listagem
       const msg = (criarErr.message ?? "").toLowerCase();
       if (msg.includes("already") || msg.includes("registered") || msg.includes("exists")) {
         const { data: lista, error: listaErr } = await admin.auth.admin.listUsers({
@@ -110,18 +107,11 @@ Deno.serve(async (req) => {
 
     if (!userId) throw new Error("Falha ao obter usuário.");
 
-    // 2) Garante perfil atualizado
     await admin.from("perfis").upsert(
-      {
-        id: userId,
-        nome: body.nome,
-        email,
-        telefone: body.telefone || null,
-      },
+      { id: userId, nome: body.nome, email, telefone: body.telefone || null },
       { onConflict: "id" },
     );
 
-    // 3) Cria/ativa membership
     const { data: existente } = await admin
       .from("workspace_membros")
       .select("id, ativo")
@@ -164,7 +154,6 @@ Deno.serve(async (req) => {
       membroId = novo.id;
     }
 
-    // 4) Sincroniza vínculos N:N de departamentos
     await admin
       .from("workspace_membro_departamentos")
       .delete()

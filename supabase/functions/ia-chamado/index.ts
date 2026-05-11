@@ -14,7 +14,6 @@ interface CorpoRequisicao {
   workspace_id: string;
   acao: Acao;
   chamado_id?: string;
-  // para classificar/corrigir sem chamado existente:
   titulo?: string;
   descricao?: string;
   texto?: string;
@@ -38,29 +37,21 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return json({ error: "Não autenticado." }, 401);
-    }
+    if (!authHeader) return json({ error: "Não autenticado." }, 401);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
 
-    // Cliente como usuário para checar pertencimento ao workspace
     const supaUsuario = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: userData, error: userErr } = await supaUsuario.auth.getUser();
-    if (userErr || !userData.user) {
-      return json({ error: "Sessão inválida." }, 401);
-    }
+    if (userErr || !userData.user) return json({ error: "Sessão inválida." }, 401);
 
     const corpo = (await req.json()) as CorpoRequisicao;
-    if (!corpo.workspace_id || !corpo.acao) {
-      return json({ error: "Parâmetros faltando." }, 400);
-    }
+    if (!corpo.workspace_id || !corpo.acao) return json({ error: "Parâmetros faltando." }, 400);
 
-    // Verificar pertencimento ao workspace
     const { data: membro } = await supaUsuario
       .from("workspace_membros")
       .select("papel, ativo")
@@ -69,11 +60,8 @@ Deno.serve(async (req) => {
       .eq("ativo", true)
       .maybeSingle();
 
-    if (!membro) {
-      return json({ error: "Sem acesso a este workspace." }, 403);
-    }
+    if (!membro) return json({ error: "Sem acesso a este workspace." }, 403);
 
-    // Buscar configuração de IA do workspace via service role (bypass RLS)
     const supaAdmin = createClient(supabaseUrl, serviceKey);
     const { data: config } = await supaAdmin
       .from("workspace_ia_config")
@@ -88,7 +76,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Montar contexto conforme ação
     let contextoUsuario = "";
 
     if (corpo.acao === "classificar") {
@@ -137,7 +124,6 @@ Comentários (mais antigos primeiro):
 ${linhasComentarios}`;
     }
 
-    // Chamar OpenAI
     const modelo = config.modelo || "gpt-5-mini";
     const respostaOpenAI = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -174,7 +160,6 @@ ${linhasComentarios}`;
     const dados = await respostaOpenAI.json();
     const conteudo: string = dados.choices?.[0]?.message?.content ?? "";
 
-    // Registrar histórico (apenas quando há chamado_id)
     if (corpo.chamado_id) {
       await supaAdmin.from("chamado_ia_execucoes").insert({
         chamado_id: corpo.chamado_id,

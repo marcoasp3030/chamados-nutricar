@@ -11,7 +11,7 @@ const corsHeaders = {
 interface Payload {
   workspace_id: string;
   usuario_id: string;
-  senha?: string | null; // se vazio, gera automática
+  senha?: string | null;
 }
 
 function gerarSenha(): string {
@@ -24,7 +24,6 @@ function gerarSenha(): string {
   crypto.getRandomValues(arr);
   let s = "";
   for (const n of arr) s += todos[n % todos.length];
-  // Garante variedade exigida por políticas
   const r = new Uint8Array(4);
   crypto.getRandomValues(r);
   return (
@@ -77,7 +76,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Solicitante deve ser Proprietário/Administrador
     const { data: papelData, error: papelErr } = await admin
       .from("workspace_membros")
       .select("papel")
@@ -93,7 +91,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Alvo deve pertencer ao workspace
     const { data: alvo, error: alvoErr } = await admin
       .from("workspace_membros")
       .select("papel")
@@ -107,7 +104,6 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    // Apenas Proprietário pode alterar senha de outro Proprietário
     if (alvo.papel === "Proprietario" && papelData.papel !== "Proprietario") {
       return new Response(JSON.stringify({ error: "Sem permissão para alterar a senha do proprietário." }), {
         status: 403,
@@ -122,7 +118,6 @@ Deno.serve(async (req) => {
       const r = await admin.auth.admin.updateUserById(body.usuario_id, { password: senha });
       updErr = r.error as { message?: string; code?: string } | null;
       if (!updErr) break;
-      // Se senha gerada caiu em base de vazadas, tenta outra automaticamente
       if (!body.senha && (updErr as { code?: string }).code === "weak_password") {
         senha = gerarSenha();
         tentativas++;

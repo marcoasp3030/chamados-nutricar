@@ -13,9 +13,7 @@ Deno.serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return json({ ok: false, erro: "Não autenticado." }, 200);
-    }
+    if (!authHeader) return json({ ok: false, erro: "Não autenticado." }, 200);
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -23,9 +21,7 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
 
-    const { workspaceId } = (await req.json().catch(() => ({}))) as {
-      workspaceId?: string;
-    };
+    const { workspaceId } = (await req.json().catch(() => ({}))) as { workspaceId?: string };
     if (!workspaceId) return json({ ok: false, erro: "workspaceId obrigatório." }, 200);
 
     const { data: cfg, error } = await supabase
@@ -45,7 +41,6 @@ Deno.serve(async (req) => {
     while (page <= maxPages) {
       const url = `https://vmpay.vertitecnologia.com.br/api/v1/clients?access_token=${encodeURIComponent(cfg.api_key)}&page=${page}&per_page=${perPage}`;
 
-      // Retry com backoff para erros transitórios (502/503/504/timeouts)
       let res: Response | null = null;
       let ultimoErro = "";
       const tentativas = 3;
@@ -76,10 +71,7 @@ Deno.serve(async (req) => {
             : status === 401 || status === 403
               ? "Chave VMPay inválida ou sem permissão."
               : `Não foi possível consultar a VMPay (${ultimoErro || `HTTP ${status}`}).`;
-        return json(
-          { ok: false, erro: erroAmigavel, fallback: true, clientes: todos },
-          200,
-        );
+        return json({ ok: false, erro: erroAmigavel, fallback: true, clientes: todos }, 200);
       }
       const arr = (await res.json()) as Array<{ id: number; name: string }>;
       if (!Array.isArray(arr) || arr.length === 0) break;
