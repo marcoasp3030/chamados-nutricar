@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import type { WorkspaceComPapel, PapelMembro } from "@/tipos/workspace";
 import { obterSessao } from "@/auth/atual";
 

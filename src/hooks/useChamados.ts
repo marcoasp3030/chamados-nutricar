@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import type { ChamadoComPessoas, StatusChamado, PrioridadeChamado } from "@/tipos/chamado";
 import { obterUsuarioAtual } from "@/auth/atual";
 

@@ -4,7 +4,6 @@ import logo from "@/assets/nutricar-logo.png";
 import { Button } from "@/components/ui/button";
 import { useMeusWorkspaces } from "@/hooks/useMeusWorkspaces";
 import { rotuloPapel } from "@/utilitarios/traducoes";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { sair } from "@/auth/atual";
 

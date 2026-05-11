@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { MessageSquare, GitBranch, Activity, Plus, Lock, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Props {

@@ -53,7 +53,6 @@ import {
 } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { useChamados, type FiltrosChamados } from "@/hooks/useChamados";
 import { BadgeStatus } from "@/componentes/chamados/BadgeStatus";
