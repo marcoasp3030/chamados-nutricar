@@ -3,7 +3,6 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import {
+import { dados } from "@/dados/atual";
   useChecklistTemplates,
   type ItemTemplate,
   type TipoItemChecklist,
@@ -80,7 +80,7 @@ export function EditorTemplate() {
         novoTipo === "select" && novaOpcoes
           ? novaOpcoes.split(",").map((s) => s.trim()).filter(Boolean)
           : null;
-      const { error } = await supabase.from("checklist_template_itens").insert({
+      const { error } = await dados.from("checklist_template_itens").insert({
         template_id: padrao.id,
         workspace_id: workspaceAtual.id,
         secao: novaSecao.trim(),
@@ -120,7 +120,7 @@ export function EditorTemplate() {
 
   const excluir = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("checklist_template_itens").delete().eq("id", id);
+      const { error } = await dados.from("checklist_template_itens").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

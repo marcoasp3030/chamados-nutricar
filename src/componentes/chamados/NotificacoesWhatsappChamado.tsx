@@ -4,7 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { AlertCircle, CheckCircle2, Loader2, MessageCircle, RefreshCw, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { dados } from "@/dados/atual";
 
 interface Props {
   chamadoId: string;
@@ -90,7 +90,7 @@ export function NotificacoesWhatsappChamado({ chamadoId }: Props) {
       const ids = Array.from(new Set(registros.map((r) => r.destinatario_perfil_id)));
       const perfis = new Map<string, Perfil>();
       if (ids.length > 0) {
-        const { data: ps } = await supabase.from("perfis").select("id,nome,email").in("id", ids);
+        const { data: ps } = await dados.from("perfis").select("id,nome,email").in("id", ids);
         for (const p of ps ?? []) perfis.set(p.id, p as Perfil);
       }
       return { registros, perfis };

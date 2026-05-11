@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import type { PrioridadeChamado, StatusChamado } from "@/tipos/chamado";
 import { obterUsuarioAtual } from "@/auth/atual";
+import { dados } from "@/dados/atual";
 
 export interface IndicadoresPainel {
   abertos: number;
@@ -215,10 +215,10 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
 
       const [depRes, perfRes] = await Promise.all([
         depIds.length
-          ? supabase.from("departamentos").select("id, nome").in("id", depIds)
+          ? dados.from("departamentos").select("id, nome").in("id", depIds)
           : Promise.resolve({ data: [] as { id: string; nome: string }[] }),
         respIds.length
-          ? supabase.from("perfis").select("id, nome").in("id", respIds)
+          ? dados.from("perfis").select("id, nome").in("id", respIds)
           : Promise.resolve({ data: [] as { id: string; nome: string }[] }),
       ]);
 

@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { obterUsuarioAtualId } from "@/auth/atual";
 import {
+import { dados } from "@/dados/atual";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -374,7 +375,7 @@ export function AbaUsuarios() {
 
   const excluirConvite = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("workspace_convites").delete().eq("id", id);
+      const { error } = await dados.from("workspace_convites").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

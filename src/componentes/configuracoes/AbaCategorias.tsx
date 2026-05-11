@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { Loader2, Pencil, Plus, Tag, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { obterUsuarioAtual } from "@/auth/atual";
 import {
+import { dados } from "@/dados/atual";
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -146,7 +146,7 @@ export function AbaCategorias() {
           .eq("id", editando.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("categorias_chamado").insert({
+        const { error } = await dados.from("categorias_chamado").insert({
           ...payload,
           workspace_id: workspaceAtual.id,
           criado_por: u.user.id,
@@ -168,7 +168,7 @@ export function AbaCategorias() {
 
   const remover = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("categorias_chamado").delete().eq("id", id);
+      const { error } = await dados.from("categorias_chamado").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

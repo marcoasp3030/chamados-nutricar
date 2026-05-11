@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { obterUsuarioAtual } from "@/auth/atual";
+import { dados } from "@/dados/atual";
 
 export interface ComentarioChecklist {
   id: string;
@@ -77,7 +77,7 @@ export function useAdicionarComentario() {
       if (!u.user) throw new Error("Não autenticado");
       const conteudo = vars.conteudo.trim();
       const mencionados = Array.from(new Set(vars.mencionados ?? []));
-      const { error } = await supabase.from("checklist_comentarios").insert({
+      const { error } = await dados.from("checklist_comentarios").insert({
         checklist_id: vars.checklistId,
         workspace_id: vars.workspaceId,
         autor_id: u.user!.id,
@@ -119,7 +119,7 @@ export function useAdicionarComentario() {
           recurso_tipo: "checklist",
           recurso_id: vars.checklistId,
         }));
-        await supabase.from("notificacoes").insert(linhas);
+        await dados.from("notificacoes").insert(linhas);
       }
     },
     onSuccess: (_d, v) => {

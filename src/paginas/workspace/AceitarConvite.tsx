@@ -3,11 +3,11 @@ import { useNavigate } from "@tanstack/react-router";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import logo from "@/assets/nutricar-logo.png";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { rotuloPapel } from "@/utilitarios/traducoes";
 import type { PapelMembro } from "@/tipos/workspace";
 import { obterSessao } from "@/auth/atual";
+import { dados } from "@/dados/atual";
 
 interface ConviteCarregado {
   id: string;
@@ -62,7 +62,7 @@ export function AceitarConvite({ token }: { token: string }) {
       return;
     }
 
-    const { error: erroMembro } = await supabase.from("workspace_membros").insert({
+    const { error: erroMembro } = await dados.from("workspace_membros").insert({
       workspace_id: convite.workspace_id,
       usuario_id: sessao.session.user.id,
       papel: convite.papel,

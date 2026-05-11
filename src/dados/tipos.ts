@@ -1,8 +1,9 @@
 // Tipos da camada de dados (queries).
-// A API espelha o `supabase.from()` / `supabase.rpc()` para que o
+// A API espelha o `dados.from()` / `dados.rpc()` para que o
 // frontend não precise saber quem está respondendo (Supabase ou VPS).
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { dados } from "@/dados/atual";
 
 /** Subconjunto público do cliente que o frontend pode usar. */
 export interface ClienteDados {

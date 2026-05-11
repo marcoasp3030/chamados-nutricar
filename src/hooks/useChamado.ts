@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import type {
+import { dados } from "@/dados/atual";
   ChamadoComPessoas,
   ComentarioChamado,
   HistoricoChamado,
@@ -9,7 +9,7 @@ import type {
 async function carregarPerfis(ids: string[]) {
   const unicos = [...new Set(ids.filter(Boolean))];
   if (unicos.length === 0) return new Map<string, { id: string; nome: string; email: string }>();
-  const { data } = await supabase.from("perfis").select("id, nome, email").in("id", unicos);
+  const { data } = await dados.from("perfis").select("id, nome, email").in("id", unicos);
   return new Map((data ?? []).map((p) => [p.id, p]));
 }
 

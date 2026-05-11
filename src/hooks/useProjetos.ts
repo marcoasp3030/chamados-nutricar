@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import type { ProjetoComResumo, TarefaComPessoa } from "@/tipos/projeto";
+import { dados } from "@/dados/atual";
 
 async function buscarPerfis(ids: string[]) {
   const unicos = [...new Set(ids.filter(Boolean))];
   if (unicos.length === 0) return new Map<string, { id: string; nome: string }>();
-  const { data } = await supabase.from("perfis").select("id, nome").in("id", unicos);
+  const { data } = await dados.from("perfis").select("id, nome").in("id", unicos);
   return new Map((data ?? []).map((p) => [p.id, p]));
 }
 

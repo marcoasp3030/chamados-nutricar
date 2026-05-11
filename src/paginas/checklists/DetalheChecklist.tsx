@@ -7,7 +7,6 @@ import { ArrowLeft, FileDown, History, Loader2, MessageSquare, Save } from "luci
 import { PainelComentarios } from "@/componentes/checklists/PainelComentarios";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +29,7 @@ import {
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { obterUsuarioAtual } from "@/auth/atual";
 import {
+import { dados } from "@/dados/atual";
   useChecklist,
   useHistoricoChecklist,
   useItensTemplate,
@@ -115,7 +115,7 @@ export function DetalheChecklist({ checklistId }: Props) {
         .upsert(upserts, { onConflict: "checklist_id,item_id" });
       if (error) throw error;
 
-      await supabase.from("checklist_historico").insert(
+      await dados.from("checklist_historico").insert(
         alterados.map((a) => ({
           checklist_id: checklist.id,
           workspace_id: checklist.workspace_id,
@@ -151,7 +151,7 @@ export function DetalheChecklist({ checklistId }: Props) {
         .eq("id", checklist.id);
       if (error) throw error;
       const u = { user: await obterUsuarioAtual() };
-      await supabase.from("checklist_historico").insert({
+      await dados.from("checklist_historico").insert({
         checklist_id: checklist.id,
         workspace_id: checklist.workspace_id,
         usuario_id: u.user?.id ?? null,

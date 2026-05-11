@@ -4,7 +4,6 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Loader2, Lock } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -12,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useComentariosChamado } from "@/hooks/useChamado";
 import { cn } from "@/lib/utils";
 import { obterUsuarioAtual } from "@/auth/atual";
+import { dados } from "@/dados/atual";
 
 interface Props {
   chamadoId: string;
@@ -29,7 +29,7 @@ export function ComentariosChamado({ chamadoId, workspaceId, podeUsarInterno }: 
     mutationFn: async () => {
       const u = { user: await obterUsuarioAtual() };
       if (!u.user) throw new Error("Sessão expirada");
-      const { error } = await supabase.from("chamado_comentarios").insert({
+      const { error } = await dados.from("chamado_comentarios").insert({
         chamado_id: chamadoId,
         workspace_id: workspaceId,
         autor_id: u.user.id,
