@@ -1,0 +1,31 @@
+{$DOMAIN} {
+    encode zstd gzip
+
+    # Limite generoso para uploads de anexos (ajuste conforme storage/config.ts)
+    request_body {
+        max_size 50MB
+    }
+
+    # SSE precisa de buffering desativado e timeouts longos
+    @sse path /api/realtime/*
+    reverse_proxy @sse app:3000 {
+        flush_interval -1
+        transport http {
+            read_timeout 24h
+            write_timeout 24h
+        }
+    }
+
+    reverse_proxy app:3000 {
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}

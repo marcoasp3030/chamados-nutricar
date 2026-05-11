@@ -1,0 +1,33 @@
+# Git / build
+.git
+.gitignore
+node_modules
+.output
+.vite
+dist
+build
+coverage
+
+# Editor / SO
+.vscode
+.idea
+.DS_Store
+
+# Locais
+.env
+.env.*
+!.env.example
+
+# Storage local (NUNCA copiar para a imagem)
+data
+storage
+uploads
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+bun-debug.log*
+
+# Supabase (não vai pra VPS)
+supabase
