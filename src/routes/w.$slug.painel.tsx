@@ -31,6 +31,7 @@ import {
   PreviaIndicador,
   type FiltrosPrevia,
 } from "@/componentes/painel/PreviaIndicador";
+import { ArvoreChamadosInterativa } from "@/componentes/painel/ArvoreChamadosInterativa";
 import {
   PRIORIDADES_CHAMADO,
   STATUS_KANBAN,
@@ -524,6 +525,14 @@ function Painel() {
               )}
             </section>
           </div>
+
+          <h2 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Árvore de chamados
+          </h2>
+          <ArvoreChamadosInterativa
+            workspaceId={workspaceAtual.id}
+            slug={workspaceAtual.slug}
+          />
 
           <h2 className="mb-3 mt-8 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Indicadores estratégicos
