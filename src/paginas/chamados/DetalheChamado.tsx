@@ -310,10 +310,10 @@ export function DetalheChamado({ numero }: Props) {
           {podeExcluir && (
             <Button
               variant="outline"
-              className="text-destructive hover:text-destructive"
+              className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={() => setConfirmarExcluir(true)}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-4 w-4" /> Excluir
             </Button>
           )}
         </div>
