@@ -477,13 +477,35 @@ export function FormularioChamado({
                   const cat = (categorias ?? []).find((c) => c.nome === novaCategoria);
                   setDados((d) => {
                     let prazo = d.prazo;
-                    // Sugere o prazo a partir do SLA de resolução, se ainda não houver prazo definido
                     if (cat?.sla_resolucao_horas && !d.prazo) {
                       const dt = new Date();
                       dt.setHours(dt.getHours() + cat.sla_resolucao_horas);
                       prazo = dt.toISOString();
                     }
-                    return { ...d, categoria: novaCategoria, prazo };
+                    // Se a categoria tiver departamento vinculado, preenche/sobrescreve.
+                    let departamento_id = d.departamento_id;
+                    let requisicao_compras = d.requisicao_compras;
+                    let itens_requisicao = d.itens_requisicao;
+                    let responsavel_id = d.responsavel_id;
+                    if (cat?.departamento_id) {
+                      departamento_id = cat.departamento_id;
+                      responsavel_id = null;
+                      const dep = (departamentos ?? []).find((x) => x.id === cat.departamento_id);
+                      const ehCompras = !!dep && dep.nome.trim().toLowerCase() === "compras";
+                      if (!ehCompras) {
+                        requisicao_compras = false;
+                        itens_requisicao = [];
+                      }
+                    }
+                    return {
+                      ...d,
+                      categoria: novaCategoria,
+                      prazo,
+                      departamento_id,
+                      responsavel_id,
+                      requisicao_compras,
+                      itens_requisicao,
+                    };
                   });
                 }}
               >
