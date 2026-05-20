@@ -454,7 +454,47 @@ export function DetalheChamado({ numero }: Props) {
                       chamado.responsavel?.nome ?? "Sem responsável"
                     )}
                   </dd>
+              </div>
+              <div className="flex items-start gap-2">
+                <Building2 className="mt-1 h-4 w-4 text-muted-foreground" />
+                <div className="flex-1">
+                  <dt className="text-xs text-muted-foreground">Departamento</dt>
+                  <dd>
+                    {podeAtender ? (
+                      <Select
+                        value={chamado.departamento_id ?? "__nenhum__"}
+                        onValueChange={(v) => {
+                          const novoDepto = v === "__nenhum__" ? null : v;
+                          if (novoDepto === chamado.departamento_id) return;
+                          atualizar.mutate(
+                            { departamento_id: novoDepto, responsavel_id: null },
+                            {
+                              onSuccess: () =>
+                                toast.success("Chamado transferido de departamento.", {
+                                  description: "O responsável foi removido para que o novo time possa assumir.",
+                                }),
+                            },
+                          );
+                        }}
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue placeholder="Sem departamento" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__nenhum__">Sem departamento</SelectItem>
+                          {(departamentos ?? []).map((d) => (
+                            <SelectItem key={d.id} value={d.id}>
+                              {d.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      (departamentos ?? []).find((d) => d.id === chamado.departamento_id)?.nome ?? "—"
+                    )}
+                  </dd>
                 </div>
+              </div>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
