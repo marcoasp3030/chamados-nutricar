@@ -477,13 +477,35 @@ export function FormularioChamado({
                   const cat = (categorias ?? []).find((c) => c.nome === novaCategoria);
                   setDados((d) => {
                     let prazo = d.prazo;
-                    // Sugere o prazo a partir do SLA de resolução, se ainda não houver prazo definido
                     if (cat?.sla_resolucao_horas && !d.prazo) {
                       const dt = new Date();
                       dt.setHours(dt.getHours() + cat.sla_resolucao_horas);
                       prazo = dt.toISOString();
                     }
-                    return { ...d, categoria: novaCategoria, prazo };
+                    // Se a categoria tiver departamento vinculado, preenche/sobrescreve.
+                    let departamento_id = d.departamento_id;
+                    let requisicao_compras = d.requisicao_compras;
+                    let itens_requisicao = d.itens_requisicao;
+                    let responsavel_id = d.responsavel_id;
+                    if (cat?.departamento_id) {
+                      departamento_id = cat.departamento_id;
+                      responsavel_id = null;
+                      const dep = (departamentos ?? []).find((x) => x.id === cat.departamento_id);
+                      const ehCompras = !!dep && dep.nome.trim().toLowerCase() === "compras";
+                      if (!ehCompras) {
+                        requisicao_compras = false;
+                        itens_requisicao = [];
+                      }
+                    }
+                    return {
+                      ...d,
+                      categoria: novaCategoria,
+                      prazo,
+                      departamento_id,
+                      responsavel_id,
+                      requisicao_compras,
+                      itens_requisicao,
+                    };
                   });
                 }}
               >
@@ -587,7 +609,48 @@ export function FormularioChamado({
               <p className="text-xs text-muted-foreground">
                 Todos os membros do departamento destino terão acesso ao chamado e poderão atribuí-lo.
               </p>
+
+              {dados.departamento_id && (() => {
+                const responsaveis = (membros ?? []).filter((m) =>
+                  m.departamento_ids.includes(dados.departamento_id!),
+                );
+                const depNome = (departamentos ?? []).find(
+                  (d) => d.id === dados.departamento_id,
+                )?.nome;
+                return (
+                  <div className="rounded-lg border border-border bg-muted/30 p-3">
+                    <p className="mb-2 text-xs font-medium text-foreground">
+                      Receberão este chamado em <strong>{depNome}</strong>
+                      <span className="ml-1 text-muted-foreground">({responsaveis.length})</span>
+                    </p>
+                    {responsaveis.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        Nenhum membro vinculado a este departamento ainda.
+                      </p>
+                    ) : (
+                      <ul className="flex flex-wrap gap-1.5">
+                        {responsaveis.map((m) => (
+                          <li
+                            key={m.id}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2 py-0.5 text-xs"
+                            title={m.perfil.email}
+                          >
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">
+                              {(m.perfil.nome || m.perfil.email || "?").charAt(0).toUpperCase()}
+                            </span>
+                            <span className="font-medium">{m.perfil.nome || m.perfil.email}</span>
+                            {m.cargo && (
+                              <span className="text-muted-foreground">· {m.cargo}</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
+
 
             <div className="space-y-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

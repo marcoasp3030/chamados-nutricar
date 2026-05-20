@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Loader2, Pencil, Plus, Tag, Trash2 } from "lucide-react";
+import { Building2, Loader2, Pencil, Plus, Tag, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { db } from "@/dados/atual";
+import { useDepartamentos } from "@/componentes/configuracoes/AbaDepartamentos";
 
 export interface CategoriaChamado {
   id: string;
@@ -38,6 +46,7 @@ export interface CategoriaChamado {
   criado_em: string;
   sla_resposta_horas: number | null;
   sla_resolucao_horas: number | null;
+  departamento_id: string | null;
 }
 
 const slaSchema = z
@@ -50,6 +59,7 @@ const categoriaSchema = z.object({
   cor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
   sla_resposta_horas: slaSchema,
   sla_resolucao_horas: slaSchema,
+  departamento_id: z.string().uuid().nullable().optional(),
 });
 
 export function useCategoriasChamado(workspaceId: string | undefined) {
@@ -59,7 +69,7 @@ export function useCategoriasChamado(workspaceId: string | undefined) {
     queryFn: async (): Promise<CategoriaChamado[]> => {
       const { data, error } = await db
         .from("categorias_chamado")
-        .select("id, nome, descricao, cor, workspace_id, criado_em, sla_resposta_horas, sla_resolucao_horas")
+        .select("id, nome, descricao, cor, workspace_id, criado_em, sla_resposta_horas, sla_resolucao_horas, departamento_id")
         .eq("workspace_id", workspaceId!)
         .order("nome");
       if (error) throw error;
@@ -72,6 +82,7 @@ export function AbaCategorias() {
   const { workspaceAtual } = useWorkspaceStore();
   const queryClient = useQueryClient();
   const { data, isLoading } = useCategoriasChamado(workspaceAtual?.id);
+  const { data: departamentos } = useDepartamentos(workspaceAtual?.id);
   const [aberto, setAberto] = useState(false);
   const [editando, setEditando] = useState<CategoriaChamado | null>(null);
   const [confirmarRemover, setConfirmarRemover] = useState<CategoriaChamado | null>(null);
@@ -81,6 +92,7 @@ export function AbaCategorias() {
     cor: "#88BE46",
     sla_resposta_horas: "",
     sla_resolucao_horas: "",
+    departamento_id: "" as string,
   });
   const [erros, setErros] = useState<{
     nome?: string;
@@ -88,11 +100,12 @@ export function AbaCategorias() {
     cor?: string;
     sla_resposta_horas?: string;
     sla_resolucao_horas?: string;
+    departamento_id?: string;
   }>({});
 
   function abrirNovo() {
     setEditando(null);
-    setForm({ nome: "", descricao: "", cor: "#88BE46", sla_resposta_horas: "", sla_resolucao_horas: "" });
+    setForm({ nome: "", descricao: "", cor: "#88BE46", sla_resposta_horas: "", sla_resolucao_horas: "", departamento_id: "" });
     setErros({});
     setAberto(true);
   }
@@ -105,6 +118,7 @@ export function AbaCategorias() {
       cor: c.cor,
       sla_resposta_horas: c.sla_resposta_horas != null ? String(c.sla_resposta_horas) : "",
       sla_resolucao_horas: c.sla_resolucao_horas != null ? String(c.sla_resolucao_horas) : "",
+      departamento_id: c.departamento_id ?? "",
     });
     setErros({});
     setAberto(true);
@@ -112,7 +126,10 @@ export function AbaCategorias() {
 
   const salvar = useMutation({
     mutationFn: async () => {
-      const parse = categoriaSchema.safeParse(form);
+      const parse = categoriaSchema.safeParse({
+        ...form,
+        departamento_id: form.departamento_id ? form.departamento_id : null,
+      });
       if (!parse.success) {
         const flat = parse.error.flatten().fieldErrors;
         setErros({
@@ -121,6 +138,7 @@ export function AbaCategorias() {
           cor: flat.cor?.[0],
           sla_resposta_horas: flat.sla_resposta_horas?.[0],
           sla_resolucao_horas: flat.sla_resolucao_horas?.[0],
+          departamento_id: flat.departamento_id?.[0],
         });
         throw new Error("Verifique os campos");
       }
@@ -137,6 +155,7 @@ export function AbaCategorias() {
         cor: parse.data.cor,
         sla_resposta_horas: toIntOrNull(parse.data.sla_resposta_horas),
         sla_resolucao_horas: toIntOrNull(parse.data.sla_resolucao_horas),
+        departamento_id: parse.data.departamento_id ?? null,
       };
 
       if (editando) {
@@ -220,16 +239,20 @@ export function AbaCategorias() {
                     {c.descricao && (
                       <p className="truncate text-xs text-muted-foreground">{c.descricao}</p>
                     )}
-                    {(c.sla_resposta_horas != null || c.sla_resolucao_horas != null) && (
-                      <p className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                        {c.sla_resposta_horas != null && (
-                          <span>SLA resposta: <strong className="text-foreground">{c.sla_resposta_horas}h</strong></span>
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1">
+                        <Building2 className="h-3 w-3" />
+                        {(departamentos ?? []).find((d) => d.id === c.departamento_id)?.nome ?? (
+                          <span className="italic">Sem departamento</span>
                         )}
-                        {c.sla_resolucao_horas != null && (
-                          <span>SLA resolução: <strong className="text-foreground">{c.sla_resolucao_horas}h</strong></span>
-                        )}
-                      </p>
-                    )}
+                      </span>
+                      {c.sla_resposta_horas != null && (
+                        <span>SLA resposta: <strong className="text-foreground">{c.sla_resposta_horas}h</strong></span>
+                      )}
+                      {c.sla_resolucao_horas != null && (
+                        <span>SLA resolução: <strong className="text-foreground">{c.sla_resolucao_horas}h</strong></span>
+                      )}
+                    </p>
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-1">
@@ -305,6 +328,37 @@ export function AbaCategorias() {
               </div>
               {erros.cor && <p className="text-xs text-destructive">{erros.cor}</p>}
             </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="cat-depto" className="flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5" /> Departamento responsável
+              </Label>
+              <Select
+                value={form.departamento_id || "__nenhum__"}
+                onValueChange={(v) =>
+                  setForm((f) => ({ ...f, departamento_id: v === "__nenhum__" ? "" : v }))
+                }
+              >
+                <SelectTrigger id="cat-depto">
+                  <SelectValue placeholder="Selecionar departamento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__nenhum__">Sem departamento</SelectItem>
+                  {(departamentos ?? []).map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Ao escolher esta categoria em um novo chamado, o departamento será preenchido automaticamente.
+              </p>
+              {erros.departamento_id && (
+                <p className="text-xs text-destructive">{erros.departamento_id}</p>
+              )}
+            </div>
+
 
             <div className="rounded-lg border border-dashed border-border bg-muted/40 p-3">
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
