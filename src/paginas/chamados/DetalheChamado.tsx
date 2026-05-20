@@ -87,6 +87,7 @@ export function DetalheChamado({ numero }: Props) {
   const queryClient = useQueryClient();
   const { data: chamado, isLoading } = useChamadoPorNumero(workspaceAtual?.id, numero);
   const { data: membros } = useMembrosWorkspace(workspaceAtual?.id);
+  const { data: departamentos } = useDepartamentos(workspaceAtual?.id);
   const [editando, setEditando] = useState(false);
   const [novoSub, setNovoSub] = useState(false);
   const [confirmarExcluir, setConfirmarExcluir] = useState(false);
