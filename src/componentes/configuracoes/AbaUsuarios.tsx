@@ -869,6 +869,34 @@ export function AbaUsuarios() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-1.5">
+              <Label>Nível de acesso *</Label>
+              <Select
+                value={formMembro.papel}
+                onValueChange={(v) => setFormMembro((f) => ({ ...f, papel: v as Papel }))}
+                disabled={editandoMembro?.papel === "Proprietario"}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAPEIS.filter((p) => p !== "Proprietario").map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {rotuloPapel[p]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {editandoMembro?.papel === "Proprietario" ? (
+                <p className="text-xs text-muted-foreground">
+                  O papel do Proprietário não pode ser alterado.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Define o que o usuário pode ver e fazer no sistema.
+                </p>
+              )}
+            </div>
           </div>
 
           <DialogFooter>
