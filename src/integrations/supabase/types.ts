@@ -38,6 +38,7 @@ export type Database = {
           cor: string
           criado_em: string
           criado_por: string
+          departamento_id: string | null
           descricao: string | null
           id: string
           nome: string
@@ -50,6 +51,7 @@ export type Database = {
           cor?: string
           criado_em?: string
           criado_por: string
+          departamento_id?: string | null
           descricao?: string | null
           id?: string
           nome: string
@@ -62,6 +64,7 @@ export type Database = {
           cor?: string
           criado_em?: string
           criado_por?: string
+          departamento_id?: string | null
           descricao?: string | null
           id?: string
           nome?: string
@@ -69,7 +72,15 @@ export type Database = {
           sla_resposta_horas?: number | null
           workspace_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categorias_chamado_departamento_id_fkey"
+            columns: ["departamento_id"]
+            isOneToOne: false
+            referencedRelation: "departamentos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chamado_anexos: {
         Row: {
