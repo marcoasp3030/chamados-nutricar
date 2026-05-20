@@ -116,6 +116,7 @@ export function DetalheChamado({ numero }: Props) {
     mutationFn: async (campos: Partial<{
       status: StatusChamado;
       responsavel_id: string | null;
+      departamento_id: string | null;
       motivo_agendamento: string | null;
       agendado_para: string | null;
       motivo_pausa: string | null;
