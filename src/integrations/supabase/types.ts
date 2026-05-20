@@ -798,6 +798,48 @@ export type Database = {
         }
         Relationships: []
       }
+      kanban_funis: {
+        Row: {
+          atualizado_em: string
+          cor: string
+          criado_em: string
+          filtros: Json
+          id: string
+          nome: string
+          ordem: number
+          status_origem: Database["public"]["Enums"]["status_chamado"] | null
+          tipo: string
+          usuario_id: string
+          workspace_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          cor?: string
+          criado_em?: string
+          filtros?: Json
+          id?: string
+          nome: string
+          ordem?: number
+          status_origem?: Database["public"]["Enums"]["status_chamado"] | null
+          tipo?: string
+          usuario_id: string
+          workspace_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          cor?: string
+          criado_em?: string
+          filtros?: Json
+          id?: string
+          nome?: string
+          ordem?: number
+          status_origem?: Database["public"]["Enums"]["status_chamado"] | null
+          tipo?: string
+          usuario_id?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       notificacoes: {
         Row: {
           ator_id: string | null
