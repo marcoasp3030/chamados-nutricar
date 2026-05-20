@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Loader2, Pencil, Plus, Tag, Trash2 } from "lucide-react";
+import { Building2, Loader2, Pencil, Plus, Tag, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { Button } from "@/components/ui/button";
