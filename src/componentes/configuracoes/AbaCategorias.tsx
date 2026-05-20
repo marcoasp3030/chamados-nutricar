@@ -329,6 +329,37 @@ export function AbaCategorias() {
               {erros.cor && <p className="text-xs text-destructive">{erros.cor}</p>}
             </div>
 
+            <div className="space-y-1.5">
+              <Label htmlFor="cat-depto" className="flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5" /> Departamento responsável
+              </Label>
+              <Select
+                value={form.departamento_id || "__nenhum__"}
+                onValueChange={(v) =>
+                  setForm((f) => ({ ...f, departamento_id: v === "__nenhum__" ? "" : v }))
+                }
+              >
+                <SelectTrigger id="cat-depto">
+                  <SelectValue placeholder="Selecionar departamento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__nenhum__">Sem departamento</SelectItem>
+                  {(departamentos ?? []).map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Ao escolher esta categoria em um novo chamado, o departamento será preenchido automaticamente.
+              </p>
+              {erros.departamento_id && (
+                <p className="text-xs text-destructive">{erros.departamento_id}</p>
+              )}
+            </div>
+
+
             <div className="rounded-lg border border-dashed border-border bg-muted/40 p-3">
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 SLA (horas)
