@@ -139,6 +139,7 @@ export function AbaUsuarios() {
     nome: "",
     telefone: "",
     cargo: "Funcionario" as Cargo,
+    papel: "Solicitante" as Papel,
     departamento_ids: [] as string[],
   });
   const [errosMembro, setErrosMembro] = useState<Record<string, string>>({});
