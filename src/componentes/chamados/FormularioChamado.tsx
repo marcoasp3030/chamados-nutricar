@@ -342,39 +342,49 @@ export function FormularioChamado({
             </div>
           </Cartao>
 
-          <Cartao
-            titulo="Requisição de Compras"
-            icone={ShoppingCart}
-            acoes={
-              <Switch
-                checked={dados.requisicao_compras}
-                onCheckedChange={(ativo) => {
-                  setDados((d) => ({
-                    ...d,
-                    requisicao_compras: ativo,
-                    itens_requisicao:
-                      ativo && d.itens_requisicao.length === 0
-                        ? [itemRequisicaoVazio()]
-                        : d.itens_requisicao,
-                  }));
-                }}
-                aria-label="Ativar requisição de compras"
-              />
-            }
-          >
-            {dados.requisicao_compras ? (
-              <ItensRequisicao
-                itens={dados.itens_requisicao}
-                aoMudar={(itens) => atualizar("itens_requisicao", itens)}
-                desabilitado={enviando}
-              />
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Ative para informar uma lista de itens a serem comprados pelo time de
-                compras.
-              </p>
-            )}
-          </Cartao>
+          {(() => {
+            const deptoSel = (departamentos ?? []).find(
+              (d) => d.id === dados.departamento_id,
+            );
+            const ehCompras =
+              !!deptoSel && deptoSel.nome.trim().toLowerCase() === "compras";
+            if (!ehCompras) return null;
+            return (
+              <Cartao
+                titulo="Requisição de Compras"
+                icone={ShoppingCart}
+                acoes={
+                  <Switch
+                    checked={dados.requisicao_compras}
+                    onCheckedChange={(ativo) => {
+                      setDados((d) => ({
+                        ...d,
+                        requisicao_compras: ativo,
+                        itens_requisicao:
+                          ativo && d.itens_requisicao.length === 0
+                            ? [itemRequisicaoVazio()]
+                            : d.itens_requisicao,
+                      }));
+                    }}
+                    aria-label="Ativar requisição de compras"
+                  />
+                }
+              >
+                {dados.requisicao_compras ? (
+                  <ItensRequisicao
+                    itens={dados.itens_requisicao}
+                    aoMudar={(itens) => atualizar("itens_requisicao", itens)}
+                    desabilitado={enviando}
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Ative para informar uma lista de itens a serem comprados pelo time de
+                    compras.
+                  </p>
+                )}
+              </Cartao>
+            );
+          })()}
 
           <Cartao titulo="Anexos" icone={Paperclip}>
             <SeletorAnexos
@@ -535,12 +545,18 @@ export function FormularioChamado({
               <Select
                 value={dados.departamento_id ?? ""}
                 onValueChange={(v) => {
+                  const dep = (departamentos ?? []).find((x) => x.id === v);
+                  const ehCompras =
+                    !!dep && dep.nome.trim().toLowerCase() === "compras";
                   setDados((d) => ({
                     ...d,
                     departamento_id: v,
                     // Ao escolher um departamento, limpamos o responsável individual:
                     // todos os membros do departamento ficam vinculados.
                     responsavel_id: null,
+                    // Se mudou para um depto que não é Compras, desativa a requisição.
+                    requisicao_compras: ehCompras ? d.requisicao_compras : false,
+                    itens_requisicao: ehCompras ? d.itens_requisicao : [],
                   }));
                 }}
               >
