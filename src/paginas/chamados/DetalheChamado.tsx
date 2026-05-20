@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   ArrowLeft,
+  Building2,
   Calendar,
   Loader2,
   Pencil,
@@ -12,6 +13,7 @@ import {
   UserPlus,
   User as UserIcon,
 } from "lucide-react";
+import { useDepartamentos } from "@/componentes/configuracoes/AbaDepartamentos";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -85,6 +87,7 @@ export function DetalheChamado({ numero }: Props) {
   const queryClient = useQueryClient();
   const { data: chamado, isLoading } = useChamadoPorNumero(workspaceAtual?.id, numero);
   const { data: membros } = useMembrosWorkspace(workspaceAtual?.id);
+  const { data: departamentos } = useDepartamentos(workspaceAtual?.id);
   const [editando, setEditando] = useState(false);
   const [novoSub, setNovoSub] = useState(false);
   const [confirmarExcluir, setConfirmarExcluir] = useState(false);
@@ -113,6 +116,7 @@ export function DetalheChamado({ numero }: Props) {
     mutationFn: async (campos: Partial<{
       status: StatusChamado;
       responsavel_id: string | null;
+      departamento_id: string | null;
       motivo_agendamento: string | null;
       agendado_para: string | null;
       motivo_pausa: string | null;
@@ -195,6 +199,7 @@ export function DetalheChamado({ numero }: Props) {
           categoria: dados.categoria || null,
           loja: dados.loja,
           responsavel_id: dados.responsavel_id,
+          departamento_id: dados.departamento_id,
           prazo: dados.prazo,
         })
         .eq("id", chamado.id);
@@ -305,10 +310,10 @@ export function DetalheChamado({ numero }: Props) {
           {podeExcluir && (
             <Button
               variant="outline"
-              className="text-destructive hover:text-destructive"
+              className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={() => setConfirmarExcluir(true)}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-4 w-4" /> Excluir
             </Button>
           )}
         </div>
@@ -449,7 +454,47 @@ export function DetalheChamado({ numero }: Props) {
                       chamado.responsavel?.nome ?? "Sem responsável"
                     )}
                   </dd>
+              </div>
+              <div className="flex items-start gap-2">
+                <Building2 className="mt-1 h-4 w-4 text-muted-foreground" />
+                <div className="flex-1">
+                  <dt className="text-xs text-muted-foreground">Departamento</dt>
+                  <dd>
+                    {podeAtender ? (
+                      <Select
+                        value={chamado.departamento_id ?? "__nenhum__"}
+                        onValueChange={(v) => {
+                          const novoDepto = v === "__nenhum__" ? null : v;
+                          if (novoDepto === chamado.departamento_id) return;
+                          atualizar.mutate(
+                            { departamento_id: novoDepto, responsavel_id: null },
+                            {
+                              onSuccess: () =>
+                                toast.success("Chamado transferido de departamento.", {
+                                  description: "O responsável foi removido para que o novo time possa assumir.",
+                                }),
+                            },
+                          );
+                        }}
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue placeholder="Sem departamento" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__nenhum__">Sem departamento</SelectItem>
+                          {(departamentos ?? []).map((d) => (
+                            <SelectItem key={d.id} value={d.id}>
+                              {d.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      (departamentos ?? []).find((d) => d.id === chamado.departamento_id)?.nome ?? "—"
+                    )}
+                  </dd>
                 </div>
+              </div>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -543,19 +588,21 @@ export function DetalheChamado({ numero }: Props) {
       </Dialog>
 
       <Dialog open={editando} onOpenChange={setEditando}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="border-b border-border px-6 py-4">
             <DialogTitle>Editar chamado {chamado.codigo ?? `#${chamado.numero}`}</DialogTitle>
           </DialogHeader>
-          <FormularioChamado
-            workspaceId={chamado.workspace_id}
-            inicial={chamado}
-            permiteEditarStatus={!!podeAtender}
-            enviando={editar.isPending}
-            rotuloEnvio="Salvar alterações"
-            aoCancelar={() => setEditando(false)}
-            aoEnviar={(dados) => editar.mutate(dados)}
-          />
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+            <FormularioChamado
+              workspaceId={chamado.workspace_id}
+              inicial={chamado}
+              permiteEditarStatus={!!podeAtender}
+              enviando={editar.isPending}
+              rotuloEnvio="Salvar alterações"
+              aoCancelar={() => setEditando(false)}
+              aoEnviar={(dados) => editar.mutate(dados)}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
