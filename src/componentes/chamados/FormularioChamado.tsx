@@ -342,39 +342,49 @@ export function FormularioChamado({
             </div>
           </Cartao>
 
-          <Cartao
-            titulo="Requisição de Compras"
-            icone={ShoppingCart}
-            acoes={
-              <Switch
-                checked={dados.requisicao_compras}
-                onCheckedChange={(ativo) => {
-                  setDados((d) => ({
-                    ...d,
-                    requisicao_compras: ativo,
-                    itens_requisicao:
-                      ativo && d.itens_requisicao.length === 0
-                        ? [itemRequisicaoVazio()]
-                        : d.itens_requisicao,
-                  }));
-                }}
-                aria-label="Ativar requisição de compras"
-              />
-            }
-          >
-            {dados.requisicao_compras ? (
-              <ItensRequisicao
-                itens={dados.itens_requisicao}
-                aoMudar={(itens) => atualizar("itens_requisicao", itens)}
-                desabilitado={enviando}
-              />
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Ative para informar uma lista de itens a serem comprados pelo time de
-                compras.
-              </p>
-            )}
-          </Cartao>
+          {(() => {
+            const deptoSel = (departamentos ?? []).find(
+              (d) => d.id === dados.departamento_id,
+            );
+            const ehCompras =
+              !!deptoSel && deptoSel.nome.trim().toLowerCase() === "compras";
+            if (!ehCompras) return null;
+            return (
+              <Cartao
+                titulo="Requisição de Compras"
+                icone={ShoppingCart}
+                acoes={
+                  <Switch
+                    checked={dados.requisicao_compras}
+                    onCheckedChange={(ativo) => {
+                      setDados((d) => ({
+                        ...d,
+                        requisicao_compras: ativo,
+                        itens_requisicao:
+                          ativo && d.itens_requisicao.length === 0
+                            ? [itemRequisicaoVazio()]
+                            : d.itens_requisicao,
+                      }));
+                    }}
+                    aria-label="Ativar requisição de compras"
+                  />
+                }
+              >
+                {dados.requisicao_compras ? (
+                  <ItensRequisicao
+                    itens={dados.itens_requisicao}
+                    aoMudar={(itens) => atualizar("itens_requisicao", itens)}
+                    desabilitado={enviando}
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Ative para informar uma lista de itens a serem comprados pelo time de
+                    compras.
+                  </p>
+                )}
+              </Cartao>
+            );
+          })()}
 
           <Cartao titulo="Anexos" icone={Paperclip}>
             <SeletorAnexos
