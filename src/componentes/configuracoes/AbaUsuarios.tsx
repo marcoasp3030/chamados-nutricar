@@ -201,6 +201,7 @@ export function AbaUsuarios() {
         nome: z.string().trim().min(2, "Informe o nome").max(120),
         telefone: z.string().trim().max(30).optional().or(z.literal("")),
         cargo: z.enum(CARGOS as unknown as [string, ...string[]]),
+        papel: z.enum(PAPEIS as unknown as [string, ...string[]]),
         departamento_ids: z.array(z.string().uuid()),
       });
       const parse = schema.safeParse(formMembro);
@@ -223,10 +224,17 @@ export function AbaUsuarios() {
       if (erroPerfil) throw erroPerfil;
 
       const novosDeptos = parse.data.departamento_ids;
+      // Não permite alterar o papel do Proprietário, nem promover ninguém a Proprietário
+      const papelAtual = editandoMembro.papel as Papel;
+      const novoPapel: Papel =
+        papelAtual === "Proprietario" || parse.data.papel === "Proprietario"
+          ? papelAtual
+          : (parse.data.papel as Papel);
       const { error: erroMembro } = await db
         .from("workspace_membros")
         .update({
           cargo: parse.data.cargo as Cargo,
+          papel: novoPapel,
           // mantém o campo legado apontando para o primeiro departamento (compatibilidade)
           departamento_id: novosDeptos[0] ?? null,
         })
