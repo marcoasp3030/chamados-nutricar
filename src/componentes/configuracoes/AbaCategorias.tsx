@@ -239,16 +239,20 @@ export function AbaCategorias() {
                     {c.descricao && (
                       <p className="truncate text-xs text-muted-foreground">{c.descricao}</p>
                     )}
-                    {(c.sla_resposta_horas != null || c.sla_resolucao_horas != null) && (
-                      <p className="mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                        {c.sla_resposta_horas != null && (
-                          <span>SLA resposta: <strong className="text-foreground">{c.sla_resposta_horas}h</strong></span>
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1">
+                        <Building2 className="h-3 w-3" />
+                        {(departamentos ?? []).find((d) => d.id === c.departamento_id)?.nome ?? (
+                          <span className="italic">Sem departamento</span>
                         )}
-                        {c.sla_resolucao_horas != null && (
-                          <span>SLA resolução: <strong className="text-foreground">{c.sla_resolucao_horas}h</strong></span>
-                        )}
-                      </p>
-                    )}
+                      </span>
+                      {c.sla_resposta_horas != null && (
+                        <span>SLA resposta: <strong className="text-foreground">{c.sla_resposta_horas}h</strong></span>
+                      )}
+                      {c.sla_resolucao_horas != null && (
+                        <span>SLA resolução: <strong className="text-foreground">{c.sla_resolucao_horas}h</strong></span>
+                      )}
+                    </p>
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-1">
