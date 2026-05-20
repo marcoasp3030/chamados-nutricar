@@ -545,12 +545,18 @@ export function FormularioChamado({
               <Select
                 value={dados.departamento_id ?? ""}
                 onValueChange={(v) => {
+                  const dep = (departamentos ?? []).find((x) => x.id === v);
+                  const ehCompras =
+                    !!dep && dep.nome.trim().toLowerCase() === "compras";
                   setDados((d) => ({
                     ...d,
                     departamento_id: v,
                     // Ao escolher um departamento, limpamos o responsável individual:
                     // todos os membros do departamento ficam vinculados.
                     responsavel_id: null,
+                    // Se mudou para um depto que não é Compras, desativa a requisição.
+                    requisicao_compras: ehCompras ? d.requisicao_compras : false,
+                    itens_requisicao: ehCompras ? d.itens_requisicao : [],
                   }));
                 }}
               >
