@@ -188,6 +188,7 @@ export function AbaUsuarios() {
       nome: m.perfil.nome ?? "",
       telefone: m.perfil.telefone ?? "",
       cargo: (m.cargo as Cargo) ?? "Funcionario",
+      papel: (m.papel as Papel) ?? "Solicitante",
       departamento_ids: m.departamento_ids ?? [],
     });
     setEditandoMembro(m);
