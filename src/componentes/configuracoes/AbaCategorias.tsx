@@ -27,7 +27,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { db } from "@/dados/atual";
+import { useDepartamentos } from "@/componentes/configuracoes/AbaDepartamentos";
 
 export interface CategoriaChamado {
   id: string;
@@ -38,6 +46,7 @@ export interface CategoriaChamado {
   criado_em: string;
   sla_resposta_horas: number | null;
   sla_resolucao_horas: number | null;
+  departamento_id: string | null;
 }
 
 const slaSchema = z
@@ -50,6 +59,7 @@ const categoriaSchema = z.object({
   cor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida"),
   sla_resposta_horas: slaSchema,
   sla_resolucao_horas: slaSchema,
+  departamento_id: z.string().uuid().nullable().optional(),
 });
 
 export function useCategoriasChamado(workspaceId: string | undefined) {
