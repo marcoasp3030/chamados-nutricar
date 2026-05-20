@@ -199,6 +199,7 @@ export function DetalheChamado({ numero }: Props) {
           categoria: dados.categoria || null,
           loja: dados.loja,
           responsavel_id: dados.responsavel_id,
+          departamento_id: dados.departamento_id,
           prazo: dados.prazo,
         })
         .eq("id", chamado.id);
