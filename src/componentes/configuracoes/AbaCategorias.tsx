@@ -126,7 +126,10 @@ export function AbaCategorias() {
 
   const salvar = useMutation({
     mutationFn: async () => {
-      const parse = categoriaSchema.safeParse(form);
+      const parse = categoriaSchema.safeParse({
+        ...form,
+        departamento_id: form.departamento_id ? form.departamento_id : null,
+      });
       if (!parse.success) {
         const flat = parse.error.flatten().fieldErrors;
         setErros({
@@ -135,6 +138,7 @@ export function AbaCategorias() {
           cor: flat.cor?.[0],
           sla_resposta_horas: flat.sla_resposta_horas?.[0],
           sla_resolucao_horas: flat.sla_resolucao_horas?.[0],
+          departamento_id: flat.departamento_id?.[0],
         });
         throw new Error("Verifique os campos");
       }
@@ -151,6 +155,7 @@ export function AbaCategorias() {
         cor: parse.data.cor,
         sla_resposta_horas: toIntOrNull(parse.data.sla_resposta_horas),
         sla_resolucao_horas: toIntOrNull(parse.data.sla_resolucao_horas),
+        departamento_id: parse.data.departamento_id ?? null,
       };
 
       if (editando) {
