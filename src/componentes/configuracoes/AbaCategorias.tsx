@@ -82,6 +82,7 @@ export function AbaCategorias() {
   const { workspaceAtual } = useWorkspaceStore();
   const queryClient = useQueryClient();
   const { data, isLoading } = useCategoriasChamado(workspaceAtual?.id);
+  const { data: departamentos } = useDepartamentos(workspaceAtual?.id);
   const [aberto, setAberto] = useState(false);
   const [editando, setEditando] = useState<CategoriaChamado | null>(null);
   const [confirmarRemover, setConfirmarRemover] = useState<CategoriaChamado | null>(null);
@@ -91,6 +92,7 @@ export function AbaCategorias() {
     cor: "#88BE46",
     sla_resposta_horas: "",
     sla_resolucao_horas: "",
+    departamento_id: "" as string,
   });
   const [erros, setErros] = useState<{
     nome?: string;
@@ -98,11 +100,12 @@ export function AbaCategorias() {
     cor?: string;
     sla_resposta_horas?: string;
     sla_resolucao_horas?: string;
+    departamento_id?: string;
   }>({});
 
   function abrirNovo() {
     setEditando(null);
-    setForm({ nome: "", descricao: "", cor: "#88BE46", sla_resposta_horas: "", sla_resolucao_horas: "" });
+    setForm({ nome: "", descricao: "", cor: "#88BE46", sla_resposta_horas: "", sla_resolucao_horas: "", departamento_id: "" });
     setErros({});
     setAberto(true);
   }
@@ -115,6 +118,7 @@ export function AbaCategorias() {
       cor: c.cor,
       sla_resposta_horas: c.sla_resposta_horas != null ? String(c.sla_resposta_horas) : "",
       sla_resolucao_horas: c.sla_resolucao_horas != null ? String(c.sla_resolucao_horas) : "",
+      departamento_id: c.departamento_id ?? "",
     });
     setErros({});
     setAberto(true);
