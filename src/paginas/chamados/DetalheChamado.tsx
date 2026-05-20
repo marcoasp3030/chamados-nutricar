@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   ArrowLeft,
+  Building2,
   Calendar,
   Loader2,
   Pencil,
@@ -12,6 +13,7 @@ import {
   UserPlus,
   User as UserIcon,
 } from "lucide-react";
+import { useDepartamentos } from "@/componentes/configuracoes/AbaDepartamentos";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
