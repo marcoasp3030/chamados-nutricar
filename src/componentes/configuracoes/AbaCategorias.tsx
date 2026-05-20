@@ -69,7 +69,7 @@ export function useCategoriasChamado(workspaceId: string | undefined) {
     queryFn: async (): Promise<CategoriaChamado[]> => {
       const { data, error } = await db
         .from("categorias_chamado")
-        .select("id, nome, descricao, cor, workspace_id, criado_em, sla_resposta_horas, sla_resolucao_horas")
+        .select("id, nome, descricao, cor, workspace_id, criado_em, sla_resposta_horas, sla_resolucao_horas, departamento_id")
         .eq("workspace_id", workspaceId!)
         .order("nome");
       if (error) throw error;
