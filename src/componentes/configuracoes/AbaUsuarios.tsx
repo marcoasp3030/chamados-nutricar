@@ -139,6 +139,7 @@ export function AbaUsuarios() {
     nome: "",
     telefone: "",
     cargo: "Funcionario" as Cargo,
+    papel: "Solicitante" as Papel,
     departamento_ids: [] as string[],
   });
   const [errosMembro, setErrosMembro] = useState<Record<string, string>>({});
@@ -187,6 +188,7 @@ export function AbaUsuarios() {
       nome: m.perfil.nome ?? "",
       telefone: m.perfil.telefone ?? "",
       cargo: (m.cargo as Cargo) ?? "Funcionario",
+      papel: (m.papel as Papel) ?? "Solicitante",
       departamento_ids: m.departamento_ids ?? [],
     });
     setEditandoMembro(m);
@@ -199,6 +201,7 @@ export function AbaUsuarios() {
         nome: z.string().trim().min(2, "Informe o nome").max(120),
         telefone: z.string().trim().max(30).optional().or(z.literal("")),
         cargo: z.enum(CARGOS as unknown as [string, ...string[]]),
+        papel: z.enum(PAPEIS as unknown as [string, ...string[]]),
         departamento_ids: z.array(z.string().uuid()),
       });
       const parse = schema.safeParse(formMembro);
@@ -221,10 +224,17 @@ export function AbaUsuarios() {
       if (erroPerfil) throw erroPerfil;
 
       const novosDeptos = parse.data.departamento_ids;
+      // Não permite alterar o papel do Proprietário, nem promover ninguém a Proprietário
+      const papelAtual = editandoMembro.papel as Papel;
+      const novoPapel: Papel =
+        papelAtual === "Proprietario" || parse.data.papel === "Proprietario"
+          ? papelAtual
+          : (parse.data.papel as Papel);
       const { error: erroMembro } = await db
         .from("workspace_membros")
         .update({
           cargo: parse.data.cargo as Cargo,
+          papel: novoPapel,
           // mantém o campo legado apontando para o primeiro departamento (compatibilidade)
           departamento_id: novosDeptos[0] ?? null,
         })
@@ -858,6 +868,34 @@ export function AbaUsuarios() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Nível de acesso *</Label>
+              <Select
+                value={formMembro.papel}
+                onValueChange={(v) => setFormMembro((f) => ({ ...f, papel: v as Papel }))}
+                disabled={editandoMembro?.papel === "Proprietario"}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAPEIS.filter((p) => p !== "Proprietario").map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {rotuloPapel[p]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {editandoMembro?.papel === "Proprietario" ? (
+                <p className="text-xs text-muted-foreground">
+                  O papel do Proprietário não pode ser alterado.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Define o que o usuário pode ver e fazer no sistema.
+                </p>
+              )}
             </div>
           </div>
 
