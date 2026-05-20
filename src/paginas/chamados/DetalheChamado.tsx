@@ -588,19 +588,21 @@ export function DetalheChamado({ numero }: Props) {
       </Dialog>
 
       <Dialog open={editando} onOpenChange={setEditando}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="border-b border-border px-6 py-4">
             <DialogTitle>Editar chamado {chamado.codigo ?? `#${chamado.numero}`}</DialogTitle>
           </DialogHeader>
-          <FormularioChamado
-            workspaceId={chamado.workspace_id}
-            inicial={chamado}
-            permiteEditarStatus={!!podeAtender}
-            enviando={editar.isPending}
-            rotuloEnvio="Salvar alterações"
-            aoCancelar={() => setEditando(false)}
-            aoEnviar={(dados) => editar.mutate(dados)}
-          />
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+            <FormularioChamado
+              workspaceId={chamado.workspace_id}
+              inicial={chamado}
+              permiteEditarStatus={!!podeAtender}
+              enviando={editar.isPending}
+              rotuloEnvio="Salvar alterações"
+              aoCancelar={() => setEditando(false)}
+              aoEnviar={(dados) => editar.mutate(dados)}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
