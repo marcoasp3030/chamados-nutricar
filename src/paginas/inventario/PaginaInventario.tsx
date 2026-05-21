@@ -12,6 +12,12 @@ import {
   AlertTriangle,
   History,
   Users,
+  Search,
+  Package,
+  TrendingUp,
+  Activity,
+  MapPin,
+  Store,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
