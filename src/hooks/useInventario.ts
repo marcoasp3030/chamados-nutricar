@@ -97,6 +97,38 @@ export function useMovimentacoesItem(itemId: string | undefined) {
   });
 }
 
+export function useMovimentacoesDepartamento(
+  workspaceId: string | undefined,
+  departamentoId: string | undefined,
+) {
+  return useQuery({
+    queryKey: ["inventario-mov-dep", workspaceId, departamentoId],
+    enabled: !!workspaceId && !!departamentoId,
+    queryFn: async (): Promise<(MovimentacaoInventario & { item_nome?: string })[]> => {
+      const { data: itens, error: e1 } = await db
+        .from("inventario_itens")
+        .select("id, nome")
+        .eq("workspace_id", workspaceId!)
+        .eq("departamento_id", departamentoId!);
+      if (e1) throw e1;
+      const ids = (itens ?? []).map((i) => i.id);
+      if (ids.length === 0) return [];
+      const { data, error } = await db
+        .from("inventario_movimentacoes")
+        .select("*")
+        .in("item_id", ids)
+        .order("criado_em", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      const mapaNomes = new Map((itens ?? []).map((i) => [i.id, i.nome]));
+      return (data ?? []).map((m) => ({
+        ...(m as MovimentacaoInventario),
+        item_nome: mapaNomes.get((m as MovimentacaoInventario).item_id),
+      }));
+    },
+  });
+}
+
 export function useCompartilhamentos(workspaceId: string | undefined, departamentoDonoId: string | undefined) {
   return useQuery({
     queryKey: ["inventario-compart", workspaceId, departamentoDonoId],
