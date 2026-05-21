@@ -1200,3 +1200,155 @@ function GraficosInventario({
   );
 }
 
+function VisaoPorLoja({
+  itens,
+  podeEditar,
+  onHist,
+  onMov,
+  onEdit,
+  onDel,
+}: {
+  itens: ItemInventario[];
+  podeEditar: boolean;
+  onHist: (i: ItemInventario) => void;
+  onMov: (i: ItemInventario) => void;
+  onEdit: (i: Partial<ItemInventario>) => void;
+  onDel: (i: ItemInventario) => void;
+}) {
+  const [busca, setBusca] = useState("");
+  const [expandidas, setExpandidas] = useState<Record<string, boolean>>({});
+
+  const grupos = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    const mapa = new Map<string, ItemInventario[]>();
+    for (const i of itens) {
+      const chave = i.loja?.trim() || "__sem_loja__";
+      if (!mapa.has(chave)) mapa.set(chave, []);
+      mapa.get(chave)!.push(i);
+    }
+    const lista = Array.from(mapa.entries()).map(([loja, its]) => ({
+      loja,
+      itens: its
+        .filter((i) => {
+          if (!q) return true;
+          return (
+            i.nome.toLowerCase().includes(q) ||
+            (i.descricao ?? "").toLowerCase().includes(q) ||
+            (i.localizacao ?? "").toLowerCase().includes(q)
+          );
+        })
+        .sort((a, b) => a.nome.localeCompare(b.nome)),
+    }));
+    lista.sort((a, b) => {
+      if (a.loja === "__sem_loja__") return 1;
+      if (b.loja === "__sem_loja__") return -1;
+      return a.loja.localeCompare(b.loja);
+    });
+    return lista.filter((g) => g.itens.length > 0 || !q);
+  }, [itens, busca]);
+
+  if (itens.length === 0) {
+    return (
+      <div className="py-10 text-center text-sm text-muted-foreground">
+        Nenhum item cadastrado ainda.
+      </div>
+    );
+  }
+
+  const toggleTodas = (abrir: boolean) => {
+    const novo: Record<string, boolean> = {};
+    for (const g of grupos) novo[g.loja] = abrir;
+    setExpandidas(novo);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[220px]">
+          <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar item dentro das lojas..."
+            className="pl-8"
+          />
+        </div>
+        <Button variant="outline" size="sm" onClick={() => toggleTodas(true)}>
+          Expandir todas
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => toggleTodas(false)}>
+          Recolher todas
+        </Button>
+      </div>
+
+      <div className="space-y-3">
+        {grupos.map((g) => {
+          const semLoja = g.loja === "__sem_loja__";
+          const nomeLoja = semLoja ? "Sem loja vinculada" : g.loja;
+          const totalUnidades = g.itens.reduce((acc, i) => acc + Number(i.quantidade), 0);
+          const baixo = g.itens.filter(
+            (i) => i.quantidade_minima > 0 && i.quantidade <= i.quantidade_minima,
+          ).length;
+          const zerados = g.itens.filter((i) => Number(i.quantidade) === 0).length;
+          const aberta = expandidas[g.loja] ?? true;
+
+          return (
+            <Card key={g.loja} className="overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setExpandidas((s) => ({ ...s, [g.loja]: !aberta }))}
+                className="flex w-full items-center justify-between gap-3 border-b bg-muted/30 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <Store className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold">{nomeLoja}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {g.itens.length} item(ns) · {totalUnidades.toLocaleString("pt-BR")} unidades
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {baixo > 0 && (
+                    <Badge variant="destructive" className="text-[10px]">
+                      {baixo} abaixo do mínimo
+                    </Badge>
+                  )}
+                  {zerados > 0 && (
+                    <Badge variant="outline" className="text-[10px]">
+                      {zerados} zerado(s)
+                    </Badge>
+                  )}
+                  <Badge variant="secondary" className="text-[10px]">
+                    {aberta ? "−" : "+"}
+                  </Badge>
+                </div>
+              </button>
+              {aberta && (
+                <div className="p-0">
+                  {g.itens.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-xs text-muted-foreground">
+                      Nenhum item corresponde à busca nesta loja.
+                    </div>
+                  ) : (
+                    <TabelaItens
+                      itens={g.itens}
+                      podeEditar={podeEditar}
+                      onHist={onHist}
+                      onMov={onMov}
+                      onEdit={onEdit}
+                      onDel={onDel}
+                    />
+                  )}
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
