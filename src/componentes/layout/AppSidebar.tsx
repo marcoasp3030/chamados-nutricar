@@ -6,6 +6,7 @@ import {
   CheckSquare,
   PartyPopper,
   Boxes,
+  Store,
   Users,
   BarChart3,
   Settings,
