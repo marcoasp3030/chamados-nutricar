@@ -18,7 +18,23 @@ import {
   Activity,
   MapPin,
   Store,
+  BarChart3,
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RTooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  LineChart,
+  Line,
+} from "recharts";
 import { toast } from "sonner";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { useUsuarioAtualId } from "@/auth/atual";
@@ -296,6 +312,9 @@ function PainelInventarioDepartamento({
               </TabsTrigger>
               <TabsTrigger value="movimentacoes">Movimentações</TabsTrigger>
               <TabsTrigger value="lojas">Por loja</TabsTrigger>
+              <TabsTrigger value="graficos">
+                <BarChart3 className="mr-1 h-3.5 w-3.5" /> Gráficos
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="itens" className="space-y-3">
@@ -465,6 +484,10 @@ function PainelInventarioDepartamento({
                   })}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="graficos">
+              <GraficosInventario itens={itens} movs={movsDep} />
             </TabsContent>
           </Tabs>
         )}
@@ -1061,3 +1084,170 @@ function TabelaItens({
     </Table>
   );
 }
+
+function GraficosInventario({
+  itens,
+  movs,
+}: {
+  itens: ItemInventario[];
+  movs: { tipo: string; quantidade: number; criado_em: string; item_nome?: string }[];
+}) {
+  // Top 10 itens por quantidade
+  const topItens = useMemo(
+    () =>
+      [...itens]
+        .sort((a, b) => Number(b.quantidade) - Number(a.quantidade))
+        .slice(0, 10)
+        .map((i) => ({ nome: i.nome, quantidade: Number(i.quantidade), minimo: Number(i.quantidade_minima) })),
+    [itens],
+  );
+
+  // Distribuição por loja
+  const porLoja = useMemo(() => {
+    const map = new Map<string, number>();
+    itens.forEach((i) => {
+      const k = i.loja ?? "Sem loja";
+      map.set(k, (map.get(k) ?? 0) + Number(i.quantidade));
+    });
+    return Array.from(map.entries()).map(([nome, valor]) => ({ nome, valor }));
+  }, [itens]);
+
+  // Status de estoque (pizza)
+  const statusEstoque = useMemo(() => {
+    let ok = 0,
+      baixo = 0,
+      zero = 0;
+    itens.forEach((i) => {
+      const q = Number(i.quantidade);
+      const m = Number(i.quantidade_minima);
+      if (q === 0) zero++;
+      else if (m > 0 && q <= m) baixo++;
+      else ok++;
+    });
+    return [
+      { nome: "OK", valor: ok },
+      { nome: "Abaixo do mínimo", valor: baixo },
+      { nome: "Sem estoque", valor: zero },
+    ].filter((d) => d.valor > 0);
+  }, [itens]);
+
+  // Movimentações por dia (últimos 30 dias)
+  const movsPorDia = useMemo(() => {
+    const dias = new Map<string, { entrada: number; saida: number; ajuste: number }>();
+    const hoje = new Date();
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(hoje);
+      d.setDate(d.getDate() - i);
+      const k = d.toISOString().slice(0, 10);
+      dias.set(k, { entrada: 0, saida: 0, ajuste: 0 });
+    }
+    movs.forEach((m) => {
+      const k = new Date(m.criado_em).toISOString().slice(0, 10);
+      const e = dias.get(k);
+      if (!e) return;
+      const q = Number(m.quantidade);
+      if (m.tipo === "entrada") e.entrada += q;
+      else if (m.tipo === "saida") e.saida += q;
+      else e.ajuste += q;
+    });
+    return Array.from(dias.entries()).map(([data, v]) => ({
+      data: data.slice(5),
+      ...v,
+    }));
+  }, [movs]);
+
+  const CORES = ["hsl(var(--primary))", "hsl(var(--destructive))", "hsl(var(--muted-foreground))", "#88BE46", "#f59e0b", "#3b82f6", "#a855f7", "#ec4899"];
+
+  if (itens.length === 0) {
+    return (
+      <div className="py-10 text-center text-sm text-muted-foreground">
+        Cadastre itens para visualizar gráficos.
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Top 10 itens por quantidade</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={topItens} layout="vertical" margin={{ left: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis type="number" tick={{ fontSize: 11 }} />
+              <YAxis type="category" dataKey="nome" tick={{ fontSize: 11 }} width={100} />
+              <RTooltip />
+              <Bar dataKey="quantidade" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="minimo" fill="hsl(var(--muted-foreground))" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Status do estoque</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={280}>
+            <PieChart>
+              <Pie
+                data={statusEstoque}
+                dataKey="valor"
+                nameKey="nome"
+                outerRadius={90}
+                label={(e) => `${e.nome}: ${e.valor}`}
+              >
+                {statusEstoque.map((_, i) => (
+                  <Cell key={i} fill={CORES[i]} />
+                ))}
+              </Pie>
+              <Legend />
+              <RTooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Distribuição por loja</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={porLoja}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis dataKey="nome" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} />
+              <RTooltip />
+              <Bar dataKey="valor" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Movimentações — últimos 30 dias</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={movsPorDia}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis dataKey="data" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 11 }} />
+              <RTooltip />
+              <Legend />
+              <Line type="monotone" dataKey="entrada" stroke="#22c55e" strokeWidth={2} />
+              <Line type="monotone" dataKey="saida" stroke="hsl(var(--destructive))" strokeWidth={2} />
+              <Line type="monotone" dataKey="ajuste" stroke="#3b82f6" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
