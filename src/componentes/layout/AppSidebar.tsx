@@ -34,6 +34,7 @@ const itensPrincipais = [
   { rotulo: "Projetos", para: "/w/$slug/projetos" as const, icone: FolderKanban },
   { rotulo: "Checklists", para: "/w/$slug/checklists" as const, icone: CheckSquare },
   { rotulo: "Inventário", para: "/w/$slug/inventario" as const, icone: Boxes },
+  { rotulo: "Lojas", para: "/w/$slug/lojas" as const, icone: Store },
   { rotulo: "Inaugurações", para: "/w/$slug/inauguracoes" as const, icone: PartyPopper },
 ];
 
