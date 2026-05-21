@@ -312,6 +312,9 @@ function PainelInventarioDepartamento({
               </TabsTrigger>
               <TabsTrigger value="movimentacoes">Movimentações</TabsTrigger>
               <TabsTrigger value="lojas">Por loja</TabsTrigger>
+              <TabsTrigger value="graficos">
+                <BarChart3 className="mr-1 h-3.5 w-3.5" /> Gráficos
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="itens" className="space-y-3">
