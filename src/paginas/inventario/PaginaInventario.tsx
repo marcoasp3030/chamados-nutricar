@@ -425,65 +425,14 @@ function PainelInventarioDepartamento({
             </TabsContent>
 
             <TabsContent value="lojas">
-              {lojasUnicas.length === 0 ? (
-                <div className="py-10 text-center text-sm text-muted-foreground">
-                  Nenhuma loja vinculada aos itens.
-                </div>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {lojasUnicas.map((loja) => {
-                    const lojaItens = itens.filter((i) => i.loja === loja);
-                    const lojaBaixo = lojaItens.filter(
-                      (i) => i.quantidade_minima > 0 && i.quantidade <= i.quantidade_minima,
-                    ).length;
-                    return (
-                      <Card key={loja} className="border-l-4 border-l-primary/60">
-                        <CardContent className="space-y-2 p-4">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-2 text-sm font-medium">
-                              <Store className="h-4 w-4 text-muted-foreground" />
-                              <span className="truncate">{loja}</span>
-                            </div>
-                            {lojaBaixo > 0 && (
-                              <Badge variant="destructive" className="text-[10px]">
-                                {lojaBaixo} alerta(s)
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {lojaItens.length} item(ns) ·{" "}
-                            {lojaItens
-                              .reduce((acc, i) => acc + Number(i.quantidade), 0)
-                              .toLocaleString("pt-BR")}{" "}
-                            unidades
-                          </div>
-                          <div className="space-y-1 pt-1">
-                            {lojaItens.slice(0, 4).map((i) => (
-                              <div
-                                key={i.id}
-                                className="flex items-center justify-between text-xs"
-                              >
-                                <span className="flex items-center gap-1 truncate text-muted-foreground">
-                                  <MapPin className="h-3 w-3" />
-                                  {i.nome}
-                                </span>
-                                <span className="font-medium">
-                                  {Number(i.quantidade)} {i.unidade ?? ""}
-                                </span>
-                              </div>
-                            ))}
-                            {lojaItens.length > 4 && (
-                              <div className="text-xs text-muted-foreground">
-                                + {lojaItens.length - 4} item(ns)
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
+              <VisaoPorLoja
+                itens={itens}
+                podeEditar={podeEditar}
+                onHist={setHistItem}
+                onMov={setMovItem}
+                onEdit={setDlgItem}
+                onDel={setExcluir}
+              />
             </TabsContent>
 
             <TabsContent value="graficos">
