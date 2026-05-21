@@ -18,7 +18,23 @@ import {
   Activity,
   MapPin,
   Store,
+  BarChart3,
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RTooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  LineChart,
+  Line,
+} from "recharts";
 import { toast } from "sonner";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { useUsuarioAtualId } from "@/auth/atual";
