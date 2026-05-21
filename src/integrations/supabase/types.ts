@@ -798,6 +798,122 @@ export type Database = {
         }
         Relationships: []
       }
+      inventario_compartilhamentos: {
+        Row: {
+          criado_em: string
+          criado_por: string
+          departamento_compartilhado_id: string
+          departamento_dono_id: string
+          id: string
+          workspace_id: string
+        }
+        Insert: {
+          criado_em?: string
+          criado_por: string
+          departamento_compartilhado_id: string
+          departamento_dono_id: string
+          id?: string
+          workspace_id: string
+        }
+        Update: {
+          criado_em?: string
+          criado_por?: string
+          departamento_compartilhado_id?: string
+          departamento_dono_id?: string
+          id?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      inventario_itens: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          criado_por: string
+          departamento_id: string
+          descricao: string | null
+          id: string
+          localizacao: string | null
+          loja: string | null
+          nome: string
+          quantidade: number
+          quantidade_minima: number
+          unidade: string | null
+          workspace_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por: string
+          departamento_id: string
+          descricao?: string | null
+          id?: string
+          localizacao?: string | null
+          loja?: string | null
+          nome: string
+          quantidade?: number
+          quantidade_minima?: number
+          unidade?: string | null
+          workspace_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          criado_por?: string
+          departamento_id?: string
+          descricao?: string | null
+          id?: string
+          localizacao?: string | null
+          loja?: string | null
+          nome?: string
+          quantidade?: number
+          quantidade_minima?: number
+          unidade?: string | null
+          workspace_id?: string
+        }
+        Relationships: []
+      }
+      inventario_movimentacoes: {
+        Row: {
+          criado_em: string
+          id: string
+          item_id: string
+          motivo: string | null
+          quantidade: number
+          tipo: string
+          usuario_id: string
+          workspace_id: string
+        }
+        Insert: {
+          criado_em?: string
+          id?: string
+          item_id: string
+          motivo?: string | null
+          quantidade: number
+          tipo: string
+          usuario_id: string
+          workspace_id: string
+        }
+        Update: {
+          criado_em?: string
+          id?: string
+          item_id?: string
+          motivo?: string | null
+          quantidade?: number
+          tipo?: string
+          usuario_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventario_movimentacoes_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventario_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kanban_funis: {
         Row: {
           atualizado_em: string
@@ -1416,6 +1532,18 @@ export type Database = {
           _workspace_id: string
         }
         Returns: undefined
+      }
+      eh_membro_departamento: {
+        Args: { _departamento_id: string; _workspace_id: string }
+        Returns: boolean
+      }
+      pode_editar_inventario_departamento: {
+        Args: { _departamento_id: string; _workspace_id: string }
+        Returns: boolean
+      }
+      pode_ver_inventario_departamento: {
+        Args: { _departamento_id: string; _workspace_id: string }
+        Returns: boolean
       }
       pode_ver_todos_chamados: {
         Args: { _workspace_id: string }
