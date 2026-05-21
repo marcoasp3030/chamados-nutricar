@@ -34,7 +34,6 @@ const itensPrincipais = [
   { rotulo: "Checklists", para: "/w/$slug/checklists" as const, icone: CheckSquare },
   { rotulo: "Inventário", para: "/w/$slug/inventario" as const, icone: Boxes },
   { rotulo: "Inaugurações", para: "/w/$slug/inauguracoes" as const, icone: PartyPopper },
-  { rotulo: "Inaugurações", para: "/w/$slug/inauguracoes" as const, icone: PartyPopper },
 ];
 
 const itensGestao = [
