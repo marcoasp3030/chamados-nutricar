@@ -4,6 +4,22 @@ import { supabase } from "@/integrations/supabase/client";
 export interface LojaVMPay {
   id: number;
   name: string;
+  // Campos opcionais — preservados se vierem da API VMPay
+  document?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  zip_code?: string | null;
+  status?: string | null;
+  active?: boolean | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+  [k: string]: unknown;
 }
 
 interface RespostaLojas {

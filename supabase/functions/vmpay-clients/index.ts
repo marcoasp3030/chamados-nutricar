@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
       return json({ ok: false, erro: "Nenhuma chave VMPay cadastrada.", clientes: [] }, 200);
 
     const perPage = 200;
-    const todos: Array<{ id: number; name: string }> = [];
+    const todos: Array<Record<string, any>> = [];
     let page = 1;
     const maxPages = 50;
     while (page <= maxPages) {
@@ -73,9 +73,9 @@ Deno.serve(async (req) => {
               : `Não foi possível consultar a VMPay (${ultimoErro || `HTTP ${status}`}).`;
         return json({ ok: false, erro: erroAmigavel, fallback: true, clientes: todos }, 200);
       }
-      const arr = (await res.json()) as Array<{ id: number; name: string }>;
+      const arr = (await res.json()) as Array<Record<string, any>>;
       if (!Array.isArray(arr) || arr.length === 0) break;
-      for (const c of arr) todos.push({ id: c.id, name: c.name });
+      for (const c of arr) todos.push(c);
       if (arr.length < perPage) break;
       page += 1;
     }
