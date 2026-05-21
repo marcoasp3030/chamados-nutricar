@@ -29,6 +29,7 @@ import {
   useMovimentacoesItem,
   useCompartilhamentos,
   useMutacoesInventario,
+  useMovimentacoesDepartamento,
   type ItemInventario,
 } from "@/hooks/useInventario";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ import { Label } from "@/components/ui/label";
 import { SeletorLoja } from "@/componentes/chamados/SeletorLoja";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
