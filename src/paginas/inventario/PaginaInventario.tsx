@@ -943,3 +943,121 @@ function DialogCompartilhar({
     </Dialog>
   );
 }
+
+function KpiCard({
+  icone,
+  titulo,
+  valor,
+  subtitulo,
+  destaque,
+}: {
+  icone: React.ReactNode;
+  titulo: string;
+  valor: string;
+  subtitulo?: string;
+  destaque?: "warn";
+}) {
+  return (
+    <Card
+      className={
+        destaque === "warn"
+          ? "border-destructive/40 bg-destructive/5"
+          : ""
+      }
+    >
+      <CardContent className="space-y-1 p-4">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {icone}
+          {titulo}
+        </div>
+        <div
+          className={`text-2xl font-semibold ${
+            destaque === "warn" ? "text-destructive" : ""
+          }`}
+        >
+          {valor}
+        </div>
+        {subtitulo && <div className="text-xs text-muted-foreground">{subtitulo}</div>}
+      </CardContent>
+    </Card>
+  );
+}
+
+function TabelaItens({
+  itens,
+  podeEditar,
+  onHist,
+  onMov,
+  onEdit,
+  onDel,
+}: {
+  itens: ItemInventario[];
+  podeEditar: boolean;
+  onHist: (i: ItemInventario) => void;
+  onMov: (i: ItemInventario) => void;
+  onEdit: (i: ItemInventario) => void;
+  onDel: (i: ItemInventario) => void;
+}) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Item</TableHead>
+          <TableHead>Localização</TableHead>
+          <TableHead>Loja</TableHead>
+          <TableHead className="text-right">Qtd</TableHead>
+          <TableHead className="text-right">Mín.</TableHead>
+          <TableHead className="w-[1%]" />
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {itens.map((i) => {
+          const baixo = i.quantidade_minima > 0 && i.quantidade <= i.quantidade_minima;
+          return (
+            <TableRow key={i.id}>
+              <TableCell>
+                <div className="font-medium">{i.nome}</div>
+                {i.descricao && (
+                  <div className="text-xs text-muted-foreground line-clamp-1">{i.descricao}</div>
+                )}
+              </TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {i.localizacao ?? "—"}
+              </TableCell>
+              <TableCell className="text-sm text-muted-foreground">{i.loja ?? "—"}</TableCell>
+              <TableCell className="text-right">
+                <span className={baixo ? "font-semibold text-destructive" : ""}>
+                  {Number(i.quantidade)} {i.unidade ?? ""}
+                </span>
+                {baixo && (
+                  <AlertTriangle className="ml-1 inline h-3.5 w-3.5 text-destructive" />
+                )}
+              </TableCell>
+              <TableCell className="text-right text-sm text-muted-foreground">
+                {Number(i.quantidade_minima)}
+              </TableCell>
+              <TableCell className="space-x-1 text-right">
+                <Button variant="ghost" size="icon" onClick={() => onHist(i)} title="Histórico">
+                  <History className="h-4 w-4" />
+                </Button>
+                {podeEditar && (
+                  <>
+                    <Button variant="ghost" size="icon" onClick={() => onMov(i)} title="Movimentar">
+                      <Settings2 className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => onEdit(i)} title="Editar">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => onDel(i)} title="Excluir">
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </>
+                )}
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  );
+}
