@@ -471,7 +471,7 @@ function DialogItem({
             <div className="grid gap-1.5">
               <Label>Loja</Label>
               <SeletorLoja
-                workspaceId={workspaceAtual!.id}
+                workspaceId={workspaceAtual?.id ?? ""}
                 valor={form.loja || null}
                 aoMudar={(v) => setForm({ ...form, loja: v ?? "" })}
               />
