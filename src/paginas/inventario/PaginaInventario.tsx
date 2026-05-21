@@ -485,6 +485,10 @@ function PainelInventarioDepartamento({
                 </div>
               )}
             </TabsContent>
+
+            <TabsContent value="graficos">
+              <GraficosInventario itens={itens} movs={movsDep} />
+            </TabsContent>
           </Tabs>
         )}
       </CardContent>
