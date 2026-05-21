@@ -468,9 +468,10 @@ function DialogItem({
             </div>
             <div className="grid gap-1.5">
               <Label>Loja</Label>
-              <Input
-                value={form.loja}
-                onChange={(e) => setForm({ ...form, loja: e.target.value })}
+              <SeletorLoja
+                workspaceId={workspaceAtual!.id}
+                valor={form.loja || null}
+                aoMudar={(v) => setForm({ ...form, loja: v ?? "" })}
               />
             </div>
           </div>
