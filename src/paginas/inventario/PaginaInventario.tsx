@@ -379,6 +379,7 @@ function DialogItem({
     departamento_id: string;
   }) => Promise<void>;
 }) {
+  const { workspaceAtual } = useWorkspaceStore();
   const [form, setForm] = useState({
     nome: "",
     descricao: "",
