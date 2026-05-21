@@ -186,6 +186,7 @@ function PainelInventarioDepartamento({
 }: PainelProps) {
   const { data: itens = [], isLoading } = useItensInventario(workspaceId, departamentoId);
   const { data: compartilhamentos = [] } = useCompartilhamentos(workspaceId, departamentoId);
+  const { data: movsDep = [] } = useMovimentacoesDepartamento(workspaceId, departamentoId);
   const mut = useMutacoesInventario(workspaceId, usuarioId);
 
   const [dlgItem, setDlgItem] = useState<Partial<ItemInventario> | null>(null);
@@ -193,10 +194,40 @@ function PainelInventarioDepartamento({
   const [movItem, setMovItem] = useState<ItemInventario | null>(null);
   const [histItem, setHistItem] = useState<ItemInventario | null>(null);
   const [dlgCompart, setDlgCompart] = useState(false);
+  const [busca, setBusca] = useState("");
+  const [filtroLoja, setFiltroLoja] = useState<string>("__all");
 
   const nomeDepto = departamentosTodos.find((d) => d.id === departamentoId)?.nome ?? "";
 
-  const baixoEstoque = itens.filter((i) => i.quantidade_minima > 0 && i.quantidade <= i.quantidade_minima);
+  const lojasUnicas = useMemo(
+    () => Array.from(new Set(itens.map((i) => i.loja).filter((v): v is string => !!v))).sort(),
+    [itens],
+  );
+
+  const itensFiltrados = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    return itens.filter((i) => {
+      if (filtroLoja !== "__all" && (i.loja ?? "") !== filtroLoja) return false;
+      if (!q) return true;
+      return (
+        i.nome.toLowerCase().includes(q) ||
+        (i.descricao ?? "").toLowerCase().includes(q) ||
+        (i.localizacao ?? "").toLowerCase().includes(q) ||
+        (i.loja ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [itens, busca, filtroLoja]);
+
+  const baixoEstoque = useMemo(
+    () => itens.filter((i) => i.quantidade_minima > 0 && i.quantidade <= i.quantidade_minima),
+    [itens],
+  );
+  const semEstoque = itens.filter((i) => Number(i.quantidade) === 0).length;
+  const totalUnidades = itens.reduce((acc, i) => acc + Number(i.quantidade), 0);
+  const movs7d = useMemo(() => {
+    const limite = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    return movsDep.filter((m) => new Date(m.criado_em).getTime() >= limite);
+  }, [movsDep]);
 
   return (
     <Card>
@@ -204,7 +235,7 @@ function PainelInventarioDepartamento({
         <div>
           <CardTitle className="text-base">{nomeDepto}</CardTitle>
           <p className="text-xs text-muted-foreground">
-            {itens.length} item(ns){baixoEstoque.length > 0 && ` · ${baixoEstoque.length} abaixo do mínimo`}
+            Visão exclusiva deste departamento{!podeEditar && " · somente leitura"}
           </p>
         </div>
         {podeEditar && (
@@ -218,79 +249,224 @@ function PainelInventarioDepartamento({
           </div>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {/* KPIs */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard
+            icone={<Package className="h-4 w-4" />}
+            titulo="Itens cadastrados"
+            valor={itens.length.toString()}
+            subtitulo={`${totalUnidades.toLocaleString("pt-BR")} unidade(s) totais`}
+          />
+          <KpiCard
+            icone={<AlertTriangle className="h-4 w-4" />}
+            titulo="Abaixo do mínimo"
+            valor={baixoEstoque.length.toString()}
+            destaque={baixoEstoque.length > 0 ? "warn" : undefined}
+            subtitulo={`${semEstoque} sem estoque`}
+          />
+          <KpiCard
+            icone={<Activity className="h-4 w-4" />}
+            titulo="Movimentações (7d)"
+            valor={movs7d.length.toString()}
+            subtitulo={`${movsDep.length} no histórico`}
+          />
+          <KpiCard
+            icone={<TrendingUp className="h-4 w-4" />}
+            titulo="Lojas atendidas"
+            valor={lojasUnicas.length.toString()}
+            subtitulo={
+              compartilhamentos.length
+                ? `Compartilhado com ${compartilhamentos.length} depto.`
+                : "Não compartilhado"
+            }
+          />
+        </div>
+
         {isLoading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
-        ) : itens.length === 0 ? (
-          <div className="py-10 text-center text-sm text-muted-foreground">
-            Nenhum item cadastrado{podeEditar ? "." : " neste inventário."}
-          </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Item</TableHead>
-                <TableHead>Localização</TableHead>
-                <TableHead>Loja</TableHead>
-                <TableHead className="text-right">Qtd</TableHead>
-                <TableHead className="text-right">Mín.</TableHead>
-                <TableHead className="w-[1%]" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {itens.map((i) => {
-                const baixo = i.quantidade_minima > 0 && i.quantidade <= i.quantidade_minima;
-                return (
-                  <TableRow key={i.id}>
-                    <TableCell>
-                      <div className="font-medium">{i.nome}</div>
-                      {i.descricao && (
-                        <div className="text-xs text-muted-foreground line-clamp-1">{i.descricao}</div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{i.localizacao ?? "—"}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{i.loja ?? "—"}</TableCell>
-                    <TableCell className="text-right">
-                      <span className={baixo ? "font-semibold text-destructive" : ""}>
-                        {Number(i.quantidade)} {i.unidade ?? ""}
-                      </span>
-                      {baixo && (
-                        <AlertTriangle className="ml-1 inline h-3.5 w-3.5 text-destructive" />
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right text-sm text-muted-foreground">
-                      {Number(i.quantidade_minima)}
-                    </TableCell>
-                    <TableCell className="space-x-1 text-right">
-                      <Button variant="ghost" size="icon" onClick={() => setHistItem(i)} title="Histórico">
-                        <History className="h-4 w-4" />
-                      </Button>
-                      {podeEditar && (
-                        <>
-                          <Button variant="ghost" size="icon" onClick={() => setMovItem(i)} title="Movimentar">
-                            <Settings2 className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => setDlgItem(i)} title="Editar">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setExcluir(i)}
-                            title="Excluir"
+          <Tabs defaultValue="itens" className="w-full">
+            <TabsList>
+              <TabsTrigger value="itens">Itens ({itens.length})</TabsTrigger>
+              <TabsTrigger value="alertas">
+                Alertas {baixoEstoque.length > 0 && `(${baixoEstoque.length})`}
+              </TabsTrigger>
+              <TabsTrigger value="movimentacoes">Movimentações</TabsTrigger>
+              <TabsTrigger value="lojas">Por loja</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="itens" className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                    placeholder="Buscar por nome, descrição, localização..."
+                    className="pl-8"
+                  />
+                </div>
+                <Select value={filtroLoja} onValueChange={setFiltroLoja}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Todas as lojas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all">Todas as lojas</SelectItem>
+                    {lojasUnicas.map((l) => (
+                      <SelectItem key={l} value={l}>
+                        {l}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {itensFiltrados.length === 0 ? (
+                <div className="py-10 text-center text-sm text-muted-foreground">
+                  {itens.length === 0
+                    ? `Nenhum item cadastrado${podeEditar ? "." : " neste inventário."}`
+                    : "Nenhum item corresponde aos filtros."}
+                </div>
+              ) : (
+                <TabelaItens
+                  itens={itensFiltrados}
+                  podeEditar={podeEditar}
+                  onHist={setHistItem}
+                  onMov={setMovItem}
+                  onEdit={setDlgItem}
+                  onDel={setExcluir}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="alertas">
+              {baixoEstoque.length === 0 ? (
+                <div className="py-10 text-center text-sm text-muted-foreground">
+                  Nenhum item abaixo do mínimo. 🎉
+                </div>
+              ) : (
+                <TabelaItens
+                  itens={baixoEstoque}
+                  podeEditar={podeEditar}
+                  onHist={setHistItem}
+                  onMov={setMovItem}
+                  onEdit={setDlgItem}
+                  onDel={setExcluir}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="movimentacoes">
+              {movsDep.length === 0 ? (
+                <div className="py-10 text-center text-sm text-muted-foreground">
+                  Nenhuma movimentação registrada.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Item</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead className="text-right">Qtd</TableHead>
+                      <TableHead>Motivo</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {movsDep.map((m) => (
+                      <TableRow key={m.id}>
+                        <TableCell className="text-xs">
+                          {new Date(m.criado_em).toLocaleString("pt-BR")}
+                        </TableCell>
+                        <TableCell className="text-sm font-medium">{m.item_nome ?? "—"}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              m.tipo === "entrada"
+                                ? "default"
+                                : m.tipo === "saida"
+                                  ? "destructive"
+                                  : "secondary"
+                            }
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                            {m.tipo}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">{Number(m.quantidade)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {m.motivo ?? "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </TabsContent>
+
+            <TabsContent value="lojas">
+              {lojasUnicas.length === 0 ? (
+                <div className="py-10 text-center text-sm text-muted-foreground">
+                  Nenhuma loja vinculada aos itens.
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {lojasUnicas.map((loja) => {
+                    const lojaItens = itens.filter((i) => i.loja === loja);
+                    const lojaBaixo = lojaItens.filter(
+                      (i) => i.quantidade_minima > 0 && i.quantidade <= i.quantidade_minima,
+                    ).length;
+                    return (
+                      <Card key={loja} className="border-l-4 border-l-primary/60">
+                        <CardContent className="space-y-2 p-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <Store className="h-4 w-4 text-muted-foreground" />
+                              <span className="truncate">{loja}</span>
+                            </div>
+                            {lojaBaixo > 0 && (
+                              <Badge variant="destructive" className="text-[10px]">
+                                {lojaBaixo} alerta(s)
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {lojaItens.length} item(ns) ·{" "}
+                            {lojaItens
+                              .reduce((acc, i) => acc + Number(i.quantidade), 0)
+                              .toLocaleString("pt-BR")}{" "}
+                            unidades
+                          </div>
+                          <div className="space-y-1 pt-1">
+                            {lojaItens.slice(0, 4).map((i) => (
+                              <div
+                                key={i.id}
+                                className="flex items-center justify-between text-xs"
+                              >
+                                <span className="flex items-center gap-1 truncate text-muted-foreground">
+                                  <MapPin className="h-3 w-3" />
+                                  {i.nome}
+                                </span>
+                                <span className="font-medium">
+                                  {Number(i.quantidade)} {i.unidade ?? ""}
+                                </span>
+                              </div>
+                            ))}
+                            {lojaItens.length > 4 && (
+                              <div className="text-xs text-muted-foreground">
+                                + {lojaItens.length - 4} item(ns)
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </CardContent>
 
