@@ -28,6 +28,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SeletorLoja } from "@/componentes/chamados/SeletorLoja";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -378,6 +379,7 @@ function DialogItem({
     departamento_id: string;
   }) => Promise<void>;
 }) {
+  const { workspaceAtual } = useWorkspaceStore();
   const [form, setForm] = useState({
     nome: "",
     descricao: "",
@@ -468,9 +470,10 @@ function DialogItem({
             </div>
             <div className="grid gap-1.5">
               <Label>Loja</Label>
-              <Input
-                value={form.loja}
-                onChange={(e) => setForm({ ...form, loja: e.target.value })}
+              <SeletorLoja
+                workspaceId={workspaceAtual?.id ?? ""}
+                valor={form.loja || null}
+                aoMudar={(v) => setForm({ ...form, loja: v ?? "" })}
               />
             </div>
           </div>
