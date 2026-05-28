@@ -9,8 +9,11 @@ import {
   MapPin,
   MessageSquare,
   PartyPopper,
+  Pencil,
   Search,
+  Settings2,
   Sparkles,
+  Trash2,
   User,
 } from "lucide-react";
 import { format, isValid } from "date-fns";
@@ -18,12 +21,22 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import {
   useInauguracoes,
@@ -31,75 +44,42 @@ import {
   type ColunaInauguracao,
 } from "@/hooks/useInauguracoes";
 import { useContagemComentarios } from "@/hooks/useComentariosChecklist";
+import {
+  useEhSuperAdmin,
+  useFunisInauguracao,
+  type FunilInauguracao,
+} from "@/hooks/useFunisInauguracao";
 import { PainelComentarios } from "@/componentes/checklists/PainelComentarios";
 import { cn } from "@/lib/utils";
 import { db } from "@/dados/atual";
 
-interface DefColuna {
-  id: ColunaInauguracao;
-  rotulo: string;
-  descricao: string;
-  ponto: string;
-  topo: string;
-  icone: typeof Calendar;
-}
-
-const COLUNAS: DefColuna[] = [
-  {
-    id: "Planejamento",
-    rotulo: "Planejamento",
-    descricao: "Sem data prevista",
-    ponto: "bg-slate-400",
-    topo: "from-slate-400/60",
-    icone: Sparkles,
-  },
-  {
-    id: "Agendado",
-    rotulo: "Agendado",
-    descricao: "Mais de 30 dias",
-    ponto: "bg-blue-500",
-    topo: "from-blue-500/60",
-    icone: Calendar,
-  },
-  {
-    id: "Proximas",
-    rotulo: "Standby",
-    descricao: "Nos próximos 30 dias",
-    ponto: "bg-amber-500",
-    topo: "from-amber-500/60",
-    icone: PartyPopper,
-  },
-  {
-    id: "Atrasadas",
-    rotulo: "Atrasadas",
-    descricao: "Data já passou",
-    ponto: "bg-red-500",
-    topo: "from-red-500/60",
-    icone: AlertTriangle,
-  },
-  {
-    id: "Inauguradas",
-    rotulo: "Concluído",
-    descricao: "Concluídas",
-    ponto: "bg-emerald-500",
-    topo: "from-emerald-500/60",
-    icone: CheckCircle2,
-  },
-];
+const ESTILO_COLUNA: Record<
+  ColunaInauguracao,
+  { ponto: string; topo: string; icone: typeof Calendar }
+> = {
+  Planejamento: { ponto: "bg-slate-400", topo: "from-slate-400/60", icone: Sparkles },
+  Agendado: { ponto: "bg-blue-500", topo: "from-blue-500/60", icone: Calendar },
+  Proximas: { ponto: "bg-amber-500", topo: "from-amber-500/60", icone: PartyPopper },
+  Atrasadas: { ponto: "bg-red-500", topo: "from-red-500/60", icone: AlertTriangle },
+  Inauguradas: { ponto: "bg-emerald-500", topo: "from-emerald-500/60", icone: CheckCircle2 },
+};
 
 export function PainelInauguracoes() {
   const { workspaceAtual } = useWorkspaceStore();
   const queryClient = useQueryClient();
   const { data, isLoading } = useInauguracoes(workspaceAtual?.id);
   const { data: contagemComentarios } = useContagemComentarios(workspaceAtual?.id);
+  const { data: funis = [] } = useFunisInauguracao(workspaceAtual?.id);
+  const { data: ehSuperAdmin = false } = useEhSuperAdmin();
   const [busca, setBusca] = useState("");
   const [comentariosDe, setComentariosDe] = useState<CardInauguracao | null>(null);
+  const [colunaArrastando, setColunaArrastando] = useState<string | null>(null);
 
   const concluir = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await db
         .from("checklists")
-        .update({ status: "Concluído" })
+        .update({ status: "Concluído", coluna_manual: "Inauguradas" })
         .eq("id", id);
       if (error) throw error;
     },
@@ -111,6 +91,54 @@ export function PainelInauguracoes() {
     onError: (e: Error) =>
       toast.error("Não foi possível atualizar.", { description: e.message }),
   });
+
+  const moverColuna = useMutation({
+    mutationFn: async ({ id, coluna }: { id: string; coluna: ColunaInauguracao }) => {
+      const patch: Record<string, unknown> = { coluna_manual: coluna };
+      if (coluna === "Inauguradas") patch.status = "Concluído";
+      const { error } = await db.from("checklists").update(patch).eq("id", id);
+      if (error) throw error;
+    },
+    // Optimistic update
+    onMutate: async ({ id, coluna }) => {
+      await queryClient.cancelQueries({ queryKey: ["inauguracoes", workspaceAtual?.id] });
+      const anterior = queryClient.getQueryData<CardInauguracao[]>([
+        "inauguracoes",
+        workspaceAtual?.id,
+      ]);
+      queryClient.setQueryData<CardInauguracao[]>(
+        ["inauguracoes", workspaceAtual?.id],
+        (old) => (old ?? []).map((c) => (c.id === id ? { ...c, coluna } : c)),
+      );
+      return { anterior };
+    },
+    onError: (e: Error, _v, ctx) => {
+      if (ctx?.anterior) {
+        queryClient.setQueryData(["inauguracoes", workspaceAtual?.id], ctx.anterior);
+      }
+      toast.error("Não foi possível mover.", { description: e.message });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["inauguracoes"] });
+    },
+  });
+
+  const colunas = useMemo(() => {
+    // Garante todas as 5 colunas; usa funis salvos quando existirem
+    const mapa = new Map(funis.filter((f) => f.ativo).map((f) => [f.chave, f]));
+    return (["Planejamento", "Agendado", "Proximas", "Atrasadas", "Inauguradas"] as const)
+      .filter((k) => mapa.has(k) || funis.length === 0)
+      .map((k) => {
+        const f = mapa.get(k);
+        return {
+          chave: k,
+          rotulo: f?.rotulo ?? k,
+          descricao: f?.descricao ?? "",
+          funilId: f?.id,
+          ...ESTILO_COLUNA[k],
+        };
+      });
+  }, [funis]);
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -126,13 +154,14 @@ export function PainelInauguracoes() {
 
   const porColuna = useMemo(() => {
     const m = new Map<ColunaInauguracao, CardInauguracao[]>();
-    COLUNAS.forEach((c) => m.set(c.id, []));
-    for (const c of filtrados) m.get(c.coluna)!.push(c);
-    // ordenar cada coluna por proximidade da data
-    for (const def of COLUNAS) {
-      const lista = m.get(def.id)!;
+    colunas.forEach((c) => m.set(c.chave, []));
+    for (const c of filtrados) {
+      if (m.has(c.coluna)) m.get(c.coluna)!.push(c);
+    }
+    for (const def of colunas) {
+      const lista = m.get(def.chave)!;
       lista.sort((a, b) => {
-        if (def.id === "Inauguradas") {
+        if (def.chave === "Inauguradas") {
           return b.atualizado_em.localeCompare(a.atualizado_em);
         }
         if (a.dataInauguracao && b.dataInauguracao) {
@@ -144,7 +173,7 @@ export function PainelInauguracoes() {
       });
     }
     return m;
-  }, [filtrados]);
+  }, [filtrados, colunas]);
 
   if (!workspaceAtual) return null;
 
@@ -157,14 +186,19 @@ export function PainelInauguracoes() {
             Acompanhe o ciclo completo, da implantação à inauguração de cada loja.
           </p>
         </div>
-        <div className="relative min-w-[260px] max-w-sm flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por loja, razão social ou cidade"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-[260px] max-w-sm flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por loja, razão social ou cidade"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          {ehSuperAdmin && workspaceAtual && (
+            <GerenciarFunisDialog workspaceId={workspaceAtual.id} funis={funis} />
+          )}
         </div>
       </div>
 
@@ -174,14 +208,30 @@ export function PainelInauguracoes() {
         </div>
       ) : (
         <div className="-mx-2 flex gap-3 overflow-x-auto px-2 pb-4 xl:gap-4">
-          {COLUNAS.map((def) => {
-            const itens = porColuna.get(def.id) ?? [];
+          {colunas.map((def) => {
+            const itens = porColuna.get(def.chave) ?? [];
             const Icone = def.icone;
+            const ativo = colunaArrastando === def.chave;
             return (
               <div
-                key={def.id}
+                key={def.chave}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (colunaArrastando !== def.chave) setColunaArrastando(def.chave);
+                }}
+                onDragLeave={() => setColunaArrastando(null)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const id = e.dataTransfer.getData("text/card-id");
+                  const origem = e.dataTransfer.getData("text/coluna");
+                  setColunaArrastando(null);
+                  if (id && origem !== def.chave) {
+                    moverColuna.mutate({ id, coluna: def.chave });
+                  }
+                }}
                 className={cn(
-                  "relative flex min-w-[280px] flex-1 flex-col rounded-2xl border border-border bg-muted/40",
+                  "relative flex min-w-[280px] flex-1 flex-col rounded-2xl border bg-muted/40 transition-colors",
+                  ativo ? "border-primary ring-2 ring-primary/30" : "border-border",
                 )}
               >
                 <div
@@ -206,14 +256,16 @@ export function PainelInauguracoes() {
                   </div>
                   <Icone className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </div>
-                <p className="px-3 pt-1.5 text-[11px] text-muted-foreground">
-                  {def.descricao}
-                </p>
+                {def.descricao && (
+                  <p className="px-3 pt-1.5 text-[11px] text-muted-foreground">
+                    {def.descricao}
+                  </p>
+                )}
 
                 <div className="flex-1 space-y-2 px-2 pb-3 pt-2">
                   {itens.length === 0 ? (
                     <p className="rounded-lg border border-dashed border-border/60 px-3 py-8 text-center text-xs text-muted-foreground">
-                      Nenhum registro
+                      {ativo ? "Solte aqui" : "Nenhum registro"}
                     </p>
                   ) : (
                     itens.map((c) => (
@@ -221,7 +273,7 @@ export function PainelInauguracoes() {
                         key={c.id}
                         item={c}
                         slug={workspaceAtual.slug}
-                        coluna={def.id}
+                        coluna={def.chave}
                         comentarios={contagemComentarios?.get(c.id) ?? 0}
                         onComentarios={() => setComentariosDe(c)}
                         onConcluir={() => concluir.mutate(c.id)}
@@ -304,13 +356,23 @@ function CartaoInauguracao({
   const titulo = item.razaoSocial ?? item.nome;
   const subtitulo = item.razaoSocial ? item.nome : null;
   const estilo = item.tipoCondominio ? ESTILO_TIPO[item.tipoCondominio] : null;
+  const [arrastando, setArrastando] = useState(false);
 
   return (
     <Link
       to="/w/$slug/checklists/$checklistId"
       params={{ slug, checklistId: item.id }}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/card-id", item.id);
+        e.dataTransfer.setData("text/coluna", coluna);
+        setArrastando(true);
+      }}
+      onDragEnd={() => setArrastando(false)}
       className={cn(
-        "group relative block overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md",
+        "group relative block cursor-grab overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md active:cursor-grabbing",
+        arrastando && "opacity-40",
         estilo
           ? cn(estilo.borda, estilo.fundo, "hover:border-current")
           : "border-border hover:border-primary/40",
@@ -442,5 +504,125 @@ function CartaoInauguracao({
         </div>
       </div>
     </Link>
+  );
+}
+
+function GerenciarFunisDialog({
+  workspaceId,
+  funis,
+}: {
+  workspaceId: string;
+  funis: FunilInauguracao[];
+}) {
+  const { salvar, excluir } = useFunisInauguracao(workspaceId);
+  const [open, setOpen] = useState(false);
+  const [editado, setEditado] = useState<Record<string, { rotulo: string; descricao: string }>>({});
+
+  function valorRotulo(f: FunilInauguracao) {
+    return editado[f.id]?.rotulo ?? f.rotulo;
+  }
+  function valorDescricao(f: FunilInauguracao) {
+    return editado[f.id]?.descricao ?? (f.descricao ?? "");
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2">
+          <Settings2 className="h-4 w-4" /> Funis
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Pencil className="h-4 w-4" /> Gerenciar funis do painel
+          </DialogTitle>
+          <p className="text-xs text-muted-foreground">
+            Renomeie, descreva ou exclua funis. Acesso restrito a super administradores.
+          </p>
+        </DialogHeader>
+
+        <div className="space-y-3">
+          {funis
+            .slice()
+            .sort((a, b) => a.ordem - b.ordem)
+            .map((f) => (
+              <div key={f.id} className="space-y-2 rounded-lg border bg-card p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-mono uppercase text-muted-foreground">
+                    {f.chave}
+                  </span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      if (confirm(`Excluir o funil "${f.rotulo}"?`)) {
+                        excluir.mutate(f.id, {
+                          onSuccess: () => toast.success("Funil excluído."),
+                          onError: (e: Error) =>
+                            toast.error("Erro ao excluir.", { description: e.message }),
+                        });
+                      }
+                    }}
+                    aria-label="Excluir"
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div>
+                    <Label className="text-xs">Nome exibido</Label>
+                    <Input
+                      value={valorRotulo(f)}
+                      onChange={(e) =>
+                        setEditado({
+                          ...editado,
+                          [f.id]: { rotulo: e.target.value, descricao: valorDescricao(f) },
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Descrição</Label>
+                    <Input
+                      value={valorDescricao(f)}
+                      onChange={(e) =>
+                        setEditado({
+                          ...editado,
+                          [f.id]: { rotulo: valorRotulo(f), descricao: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>
+            Cancelar
+          </Button>
+          <Button
+            disabled={Object.keys(editado).length === 0 || salvar.isPending}
+            onClick={async () => {
+              try {
+                for (const [id, v] of Object.entries(editado)) {
+                  await salvar.mutateAsync({ id, rotulo: v.rotulo, descricao: v.descricao });
+                }
+                toast.success("Funis atualizados.");
+                setEditado({});
+                setOpen(false);
+              } catch (e) {
+                toast.error("Erro ao salvar.", { description: (e as Error).message });
+              }
+            }}
+          >
+            {salvar.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            Salvar alterações
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
