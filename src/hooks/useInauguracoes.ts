@@ -125,7 +125,10 @@ export function useInauguracoes(workspaceId: string | undefined) {
             : null;
 
         let coluna: ColunaInauguracao;
-        if (c.status === "Concluído" || c.status === "Concluido") {
+        const manual = (c as { coluna_manual?: string | null }).coluna_manual;
+        if (manual && ["Planejamento", "Agendado", "Proximas", "Atrasadas", "Inauguradas"].includes(manual)) {
+          coluna = manual as ColunaInauguracao;
+        } else if (c.status === "Concluído" || c.status === "Concluido") {
           coluna = "Inauguradas";
         } else if (data == null) {
           coluna = "Planejamento";
