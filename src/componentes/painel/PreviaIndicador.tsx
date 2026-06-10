@@ -99,6 +99,7 @@ export function PreviaIndicador({
   if (filtros.status && filtros.status !== "Todos") search.status = filtros.status;
   if (filtros.prioridade && filtros.prioridade !== "Todas") search.prioridade = filtros.prioridade;
   if (filtros.responsavel && filtros.responsavel !== "Todos") search.responsavel = filtros.responsavel;
+  if (filtros.solicitante && filtros.solicitante !== "Todos") search.solicitante = filtros.solicitante;
   if (filtros.periodo && filtros.periodo !== "todos") search.periodo = filtros.periodo;
   if (filtros.vencidos) search.vencidos = true;
 
