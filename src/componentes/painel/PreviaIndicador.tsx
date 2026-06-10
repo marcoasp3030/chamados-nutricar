@@ -29,6 +29,7 @@ export interface FiltrosPrevia {
   status?: StatusChamado | "Todos";
   prioridade?: PrioridadeChamado | "Todas";
   responsavel?: "Todos" | "MEUS";
+  solicitante?: "Todos" | "MEUS";
   periodo?: "todos" | "mes";
   vencidos?: boolean;
   /** Restringe a lista a um conjunto fixo de IDs (usado por rankings do painel). */
