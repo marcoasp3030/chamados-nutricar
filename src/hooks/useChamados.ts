@@ -8,6 +8,7 @@ export interface FiltrosChamados {
   prioridade?: PrioridadeChamado | "Todas";
   busca?: string;
   responsavel_id?: string | "Todos" | "MEUS";
+  solicitante_id?: string | "Todos" | "MEUS";
   somenteRaiz?: boolean;
   dataInicio?: string; // ISO
   dataFim?: string; // ISO
