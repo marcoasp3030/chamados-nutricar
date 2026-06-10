@@ -19,6 +19,7 @@ import {
   TrendingDown,
   TrendingUp,
   Trophy,
+  User,
   UserCheck,
   Users,
 } from "lucide-react";
