@@ -8,6 +8,7 @@ export interface FiltrosChamados {
   prioridade?: PrioridadeChamado | "Todas";
   busca?: string;
   responsavel_id?: string | "Todos" | "MEUS";
+  solicitante_id?: string | "Todos" | "MEUS";
   somenteRaiz?: boolean;
   dataInicio?: string; // ISO
   dataFim?: string; // ISO
@@ -56,6 +57,14 @@ export function useChamados(workspaceId: string | undefined, filtros: FiltrosCha
           if (u.user) q = q.eq("responsavel_id", u.user.id);
         } else {
           q = q.eq("responsavel_id", filtros.responsavel_id);
+        }
+      }
+      if (filtros.solicitante_id && filtros.solicitante_id !== "Todos") {
+        if (filtros.solicitante_id === "MEUS") {
+          const u = { user: await obterUsuarioAtual() };
+          if (u.user) q = q.eq("solicitante_id", u.user.id);
+        } else {
+          q = q.eq("solicitante_id", filtros.solicitante_id);
         }
       }
 
