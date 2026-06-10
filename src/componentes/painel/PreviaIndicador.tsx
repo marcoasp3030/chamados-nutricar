@@ -65,6 +65,7 @@ export function PreviaIndicador({
     status: filtros.status,
     prioridade: filtros.prioridade,
     responsavel_id: filtros.responsavel,
+    solicitante_id: filtros.solicitante,
   });
 
   const chamadosFiltrados = useMemo(() => {
