@@ -191,6 +191,23 @@ export function PreviaIndicador({
             </button>
             <button
               type="button"
+              onClick={() =>
+                setFiltros((f) => ({
+                  ...f,
+                  solicitante: f.solicitante === "MEUS" ? "Todos" : "MEUS",
+                }))
+              }
+              className={cn(
+                "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                filtros.solicitante === "MEUS"
+                  ? "border-cyan-500 bg-cyan-500 text-white"
+                  : "border-border bg-background hover:bg-muted",
+              )}
+            >
+              Abertos por mim
+            </button>
+            <button
+              type="button"
               onClick={() => setFiltros((f) => ({ ...f, vencidos: !f.vencidos }))}
               className={cn(
                 "rounded-full border px-2.5 py-1 text-xs transition-colors",
