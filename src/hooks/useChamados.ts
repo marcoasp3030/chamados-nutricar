@@ -59,6 +59,14 @@ export function useChamados(workspaceId: string | undefined, filtros: FiltrosCha
           q = q.eq("responsavel_id", filtros.responsavel_id);
         }
       }
+      if (filtros.solicitante_id && filtros.solicitante_id !== "Todos") {
+        if (filtros.solicitante_id === "MEUS") {
+          const u = { user: await obterUsuarioAtual() };
+          if (u.user) q = q.eq("solicitante_id", u.user.id);
+        } else {
+          q = q.eq("solicitante_id", filtros.solicitante_id);
+        }
+      }
 
       const campo = filtros.campoData ?? "criado_em";
       if (filtros.dataInicio) q = q.gte(campo, filtros.dataInicio);
