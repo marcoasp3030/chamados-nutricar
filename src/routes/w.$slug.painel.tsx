@@ -457,7 +457,7 @@ function Painel() {
             />
           </section>
 
-          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-4">
             <section className="rounded-2xl border border-border bg-card p-5 lg:col-span-1">
               <h2 className="mb-4 text-sm font-semibold">Distribuição por status</h2>
               <div className="space-y-3">
@@ -508,6 +508,48 @@ function Painel() {
               ) : (
                 <ul className="space-y-2">
                   {data.ultimos.map((c) => (
+                    <li key={c.id}>
+                      <Link
+                        to="/w/$slug/chamados/$numero"
+                        params={{ slug: workspaceAtual.slug, numero: String(c.numero) }}
+                        className="block rounded-lg border border-border p-3 transition-colors hover:bg-muted/50"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {c.codigo ?? `#${c.numero}`}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(c.criado_em), "dd/MM HH:mm", { locale: ptBR })}
+                          </span>
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-sm font-medium">{c.titulo}</p>
+                        <div className="mt-2 flex items-center gap-2">
+                          <BadgeStatus status={c.status} />
+                          <BadgePrioridade prioridade={c.prioridade} />
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="rounded-2xl border border-border bg-card p-5 lg:col-span-1">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-sm font-semibold">Meus chamados</h2>
+                <button
+                  type="button"
+                  onClick={() => abrir("Meus chamados", { solicitante: "MEUS" })}
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  Ver todos
+                </button>
+              </div>
+              {data.meusChamados.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Você ainda não abriu nenhum chamado.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {data.meusChamados.map((c) => (
                     <li key={c.id}>
                       <Link
                         to="/w/$slug/chamados/$numero"
