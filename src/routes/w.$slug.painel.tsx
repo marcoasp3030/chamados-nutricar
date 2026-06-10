@@ -432,6 +432,14 @@ function Painel() {
               onClick={() => abrir("Atribuídos a mim", { responsavel: "MEUS" })}
             />
             <CartaoIndicador
+              rotulo="Abertos por mim"
+              valor={data.meusSolicitados}
+              icone={User}
+              cor="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
+              rodape="Chamados que você solicitou"
+              onClick={() => abrir("Abertos por mim", { solicitante: "MEUS" })}
+            />
+            <CartaoIndicador
               rotulo="Abertos no mês"
               valor={data.totalMes}
               icone={TrendingUp}
