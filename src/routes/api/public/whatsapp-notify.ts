@@ -13,7 +13,8 @@ const PayloadSchema = z.object({
 });
 
 const APP_BASE_URL =
-  "https://project--98165f9e-498c-4810-868e-07ed8362bbd9.lovable.app";
+  process.env.APP_BASE_URL?.replace(/\/+$/, "") ??
+  "https://nutricarhub.nutricarbrasil.com.br";
 
 function fmtDataHora(iso?: string | null) {
   if (!iso) return "";

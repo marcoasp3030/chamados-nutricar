@@ -406,6 +406,7 @@ export type Database = {
           categoria: string | null
           chamado_pai_id: string | null
           codigo: string | null
+          codigo_chamado_pai: string | null
           criado_em: string
           criado_por: string
           departamento_id: string | null
@@ -429,6 +430,7 @@ export type Database = {
           tipo: Database["public"]["Enums"]["tipo_chamado"]
           titulo: string
           tratativa: string | null
+          proposta_criada: boolean
           workspace_id: string
         }
         Insert: {
@@ -1569,6 +1571,7 @@ export type Database = {
         | "Administrador"
         | "Gestor"
         | "Atendente"
+        | "Suporte"
         | "Solicitante"
       plano_workspace: "Gratuito" | "Inicial" | "Profissional" | "Empresarial"
       prioridade_chamado: "Baixa" | "Media" | "Alta" | "Urgente"
@@ -1731,6 +1734,7 @@ export const Constants = {
         "Administrador",
         "Gestor",
         "Atendente",
+        "Suporte",
         "Solicitante",
       ],
       plano_workspace: ["Gratuito", "Inicial", "Profissional", "Empresarial"],

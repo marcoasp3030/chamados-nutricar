@@ -9,9 +9,11 @@ import {
   Calendar,
   Loader2,
   Pencil,
+  RotateCcw,
   Trash2,
   UserPlus,
   User as UserIcon,
+  PlayCircle,
 } from "lucide-react";
 import { useDepartamentos } from "@/componentes/configuracoes/AbaDepartamentos";
 import { toast } from "sonner";
@@ -58,11 +60,15 @@ import { ComentariosChamado } from "@/componentes/chamados/ComentariosChamado";
 import { HistoricoChamado } from "@/componentes/chamados/HistoricoChamado";
 import { LinhaTempoChamado } from "@/componentes/chamados/LinhaTempoChamado";
 import { AnexosChamado } from "@/componentes/chamados/AnexosChamado";
+import { SeletorAnexos } from "@/componentes/chamados/SeletorAnexos";
 import { RequisicaoCompras } from "@/componentes/chamados/RequisicaoCompras";
 import { ArvoreSubchamados } from "@/componentes/chamados/ArvoreSubchamados";
+import { BlocoDescricaoChamadoPrincipal } from "@/componentes/chamados/BlocoDescricaoChamadoPrincipal";
+import { TextoMultilinha } from "@/componentes/suporte/TextoMultilinha";
 import { AcoesIAChamado } from "@/componentes/chamados/AcoesIAChamado";
 import { HistoricoIAChamado } from "@/componentes/chamados/HistoricoIAChamado";
 import { NotificacoesWhatsappChamado } from "@/componentes/chamados/NotificacoesWhatsappChamado";
+import { sinalizarNotificacoesWorkspace } from "@/lib/notificacoes-chamado";
 import {
   FormularioChamado,
   type DadosFormularioChamado,
@@ -73,7 +79,21 @@ import {
   type StatusChamado,
 } from "@/tipos/chamado";
 import { rotuloStatusChamado, rotuloTipoChamado } from "@/utilitarios/traducoes";
+import {
+  diasRestantesReabertura,
+  podeReabrirChamado,
+} from "@/utilitarios/prazo-reabertura-chamado";
 import { obterUsuarioAtual, obterUsuarioAtualId } from "@/auth/atual";
+import { chamadoAtivoParaSuporte } from "@/utilitarios/status-chamado-suporte";
+import { ehPapelSuporte } from "@/lib/papel-acesso";
+import { DetalheChamadoSuporte } from "@/paginas/suporte/DetalheChamadoSuporte";
+import { CheckboxPropostaCriada } from "@/componentes/chamados/CheckboxPropostaCriada";
+import { usaFlagPropostaCriada } from "@/utilitarios/categorias-projetos";
+import {
+  DialogAtribuirTecnico,
+  type DadosAtribuicaoTecnico,
+} from "@/componentes/chamados/DialogAtribuirTecnico";
+import { montarCamposAtribuicaoTecnico } from "@/utilitarios/atribuir-chamado-tecnico";
 import { storage } from "@/storage/atual";
 import { db } from "@/dados/atual";
 
@@ -94,7 +114,17 @@ export function DetalheChamado({ numero }: Props) {
   const [transicao, setTransicao] = useState<StatusChamado | null>(null);
   const [motivoTexto, setMotivoTexto] = useState("");
   const [agendadoPara, setAgendadoPara] = useState("");
+  // Anexos (imagens/arquivos) enviados ao resolver o chamado, para registrar
+  // como o problema foi solucionado.
+  const [anexosResolucao, setAnexosResolucao] = useState<File[]>([]);
+  const [enviandoAnexos, setEnviandoAnexos] = useState(false);
   const [usuarioId, setUsuarioId] = useState<string | null>(null);
+  const [reabrindo, setReabrindo] = useState(false);
+  const [motivoReabertura, setMotivoReabertura] = useState("");
+  const [editandoTratativa, setEditandoTratativa] = useState(false);
+  const [textoTratativaEdit, setTextoTratativaEdit] = useState("");
+  const [dialogAtribuir, setDialogAtribuir] = useState(false);
+  const [tecnicoPreSelecionado, setTecnicoPreSelecionado] = useState<string | null>(null);
 
   useEffect(() => {
     obterUsuarioAtualId().then(setUsuarioId);
@@ -102,15 +132,48 @@ export function DetalheChamado({ numero }: Props) {
 
   const podeAtender =
     workspaceAtual && ["Proprietario", "Administrador", "Gestor", "Atendente"].includes(workspaceAtual.papel);
+  const ehSuporte = ehPapelSuporte(workspaceAtual?.papel);
+  const ehResponsavel = !!usuarioId && chamado?.responsavel_id === usuarioId;
+  const meuMembro = (membros ?? []).find((m) => m.usuario_id === usuarioId);
+  const meusDeptoIds = meuMembro?.departamento_ids ?? [];
+  const podeTrabalhar = !!podeAtender || (ehSuporte && ehResponsavel);
+  const podeAceitar = ehSuporte && ehResponsavel && chamado?.status === "Aberto";
+  const podeDevolver =
+    ehSuporte &&
+    ehResponsavel &&
+    !!chamado &&
+    !["Resolvido", "Fechado", "Cancelado"].includes(chamado.status);
+  const podeAssumirColega =
+    ehSuporte &&
+    !ehResponsavel &&
+    !!chamado?.responsavel_id &&
+    !!chamado?.departamento_id &&
+    meusDeptoIds.includes(chamado.departamento_id) &&
+    chamadoAtivoParaSuporte(chamado.status);
   const podeExcluir =
     workspaceAtual && ["Proprietario", "Administrador"].includes(workspaceAtual.papel);
 
-  const meuMembro = (membros ?? []).find((m) => m.usuario_id === usuarioId);
-  const meusDeptoIds = meuMembro?.departamento_ids ?? [];
   const ehDoDeptoDestino =
     !!chamado?.departamento_id && meusDeptoIds.includes(chamado.departamento_id);
   const podeAssumir =
-    !!usuarioId && ehDoDeptoDestino && chamado?.responsavel_id !== usuarioId;
+    !ehSuporte && !!usuarioId && ehDoDeptoDestino && chamado?.responsavel_id !== usuarioId;
+  const ehSolicitante = !!usuarioId && chamado?.solicitante_id === usuarioId;
+  const podeReabrir =
+    !!chamado && ehSolicitante && podeReabrirChamado(chamado.status, chamado.resolvido_em);
+  const diasParaReabrir = diasRestantesReabertura(chamado?.resolvido_em);
+  const podeEditarTratativa =
+    !!chamado &&
+    chamado.status === "Resolvido" &&
+    !!chamado.tratativa &&
+    !!usuarioId &&
+    (chamado.responsavel_id === usuarioId ||
+      (!!podeAtender && ehDoDeptoDestino) ||
+      !!podeExcluir);
+
+  useEffect(() => {
+    setEditandoTratativa(false);
+    setTextoTratativaEdit(chamado?.tratativa ?? "");
+  }, [chamado?.id, chamado?.tratativa]);
 
   const atualizar = useMutation({
     mutationFn: async (campos: Partial<{
@@ -130,10 +193,30 @@ export function DetalheChamado({ numero }: Props) {
       queryClient.invalidateQueries({ queryKey: ["chamado", workspaceAtual?.id, numero] });
       queryClient.invalidateQueries({ queryKey: ["chamados"] });
       queryClient.invalidateQueries({ queryKey: ["historico", chamado?.id] });
+      if (workspaceAtual) void sinalizarNotificacoesWorkspace(workspaceAtual.id);
     },
     onError: (e: Error) => toast.error("Falha ao atualizar.", { description: e.message }),
   });
 
+  function salvarTratativaEditada() {
+    const texto = textoTratativaEdit.trim();
+    if (!texto) {
+      toast.error("A tratativa não pode ficar vazia.");
+      return;
+    }
+    atualizar.mutate(
+      { tratativa: texto },
+      {
+        onSuccess: () => {
+          setEditandoTratativa(false);
+          toast.success("Tratativa atualizada.");
+        },
+      },
+    );
+  }
+
+  // Toda mudança de status passa pelo diálogo de confirmação (botão
+  // "Salvar e confirmar"); nenhuma alteração é aplicada direto no dropdown.
   function iniciarTransicao(novo: StatusChamado) {
     if (!chamado || novo === chamado.status) return;
     if (
@@ -143,46 +226,281 @@ export function DetalheChamado({ numero }: Props) {
     ) {
       toast.error("Atribua um responsável antes de iniciar a resolução.", {
         description: ehDoDeptoDestino
-          ? "Use o botão 'Atribuir a mim' ou selecione um responsável."
-          : undefined,
+          ? "Use o botão 'Atribuir a mim' para assumir o chamado."
+          : "Um responsável do departamento precisa assumir o chamado.",
       });
       return;
     }
-    if (novo === "Agendado" || novo === "Pausado" || novo === "Resolvido") {
-      setMotivoTexto("");
-      setAgendadoPara("");
-      setTransicao(novo);
-      return;
+    setMotivoTexto("");
+    setAgendadoPara("");
+    setAnexosResolucao([]);
+    setTransicao(novo);
+  }
+
+  // Envia os arquivos para o bucket de anexos e registra em chamado_anexos.
+  // Retorna a lista de nomes que falharam (vazia = tudo certo).
+  async function enviarAnexosResolucao(arquivos: File[]): Promise<string[]> {
+    if (!chamado || arquivos.length === 0) return [];
+    const u = await obterUsuarioAtual();
+    if (!u) throw new Error("Sessão expirada");
+    const falhas: string[] = [];
+    for (const arquivo of arquivos) {
+      const nomeSeguro = arquivo.name.replace(/[^\w.\-]+/g, "_");
+      const caminho = `${chamado.workspace_id}/${chamado.id}/${crypto.randomUUID()}-${nomeSeguro}`;
+      const up = await storage
+        .from("chamado-anexos")
+        .upload(caminho, arquivo, { contentType: arquivo.type || undefined });
+      if (up.error) {
+        falhas.push(arquivo.name);
+        continue;
+      }
+      const ins = await db.from("chamado_anexos").insert({
+        workspace_id: chamado.workspace_id,
+        chamado_id: chamado.id,
+        enviado_por: u.id,
+        nome_arquivo: arquivo.name,
+        caminho_storage: caminho,
+        tipo_mime: arquivo.type || null,
+        tamanho_bytes: arquivo.size,
+      });
+      if (ins.error) falhas.push(arquivo.name);
     }
-    atualizar.mutate({ status: novo });
+    return falhas;
   }
 
   function confirmarTransicao() {
     if (!transicao) return;
+    const aoConcluir = {
+      onSuccess: () => {
+        setTransicao(null);
+        toast.success(`Status alterado para ${rotuloStatusChamado[transicao]}.`);
+      },
+    };
     if (transicao === "Agendado") {
       if (!motivoTexto.trim()) return toast.error("Informe o motivo do agendamento.");
       if (!agendadoPara) return toast.error("Informe a data do agendamento.");
-      atualizar.mutate({
-        status: "Agendado",
-        motivo_agendamento: motivoTexto.trim(),
-        agendado_para: new Date(agendadoPara).toISOString(),
-      });
+      atualizar.mutate(
+        {
+          status: "Agendado",
+          motivo_agendamento: motivoTexto.trim(),
+          agendado_para: new Date(agendadoPara).toISOString(),
+        },
+        aoConcluir,
+      );
     } else if (transicao === "Pausado") {
       if (!motivoTexto.trim()) return toast.error("Informe o motivo da pausa.");
-      atualizar.mutate({ status: "Pausado", motivo_pausa: motivoTexto.trim() });
+      atualizar.mutate({ status: "Pausado", motivo_pausa: motivoTexto.trim() }, aoConcluir);
     } else if (transicao === "Resolvido") {
       if (!motivoTexto.trim()) return toast.error("Descreva a tratativa realizada.");
-      atualizar.mutate({ status: "Resolvido", tratativa: motivoTexto.trim() });
+      const anexos = anexosResolucao;
+      atualizar.mutate(
+        { status: "Resolvido", tratativa: motivoTexto.trim() },
+        {
+          onSuccess: async () => {
+            if (anexos.length > 0) {
+              setEnviandoAnexos(true);
+              try {
+                const falhas = await enviarAnexosResolucao(anexos);
+                queryClient.invalidateQueries({ queryKey: ["anexos", chamado?.id] });
+                if (falhas.length > 0) {
+                  toast.warning(`Chamado resolvido, mas alguns anexos falharam: ${falhas.join(", ")}`);
+                } else {
+                  toast.success("Chamado resolvido e anexos enviados.");
+                }
+              } catch (e) {
+                toast.warning("Chamado resolvido, mas falhou ao enviar anexos.", {
+                  description: e instanceof Error ? e.message : undefined,
+                });
+              } finally {
+                setEnviandoAnexos(false);
+                setAnexosResolucao([]);
+                setTransicao(null);
+                if (ehSuporte && workspaceAtual) {
+                  navigate({
+                    to: "/w/$slug/suporte/resolvidos",
+                    params: { slug: workspaceAtual.slug },
+                  });
+                }
+              }
+            } else {
+              toast.success("Chamado resolvido.");
+              setAnexosResolucao([]);
+              setTransicao(null);
+              if (ehSuporte && workspaceAtual) {
+                navigate({
+                  to: "/w/$slug/suporte/resolvidos",
+                  params: { slug: workspaceAtual.slug },
+                });
+              }
+            }
+          },
+        },
+      );
+    } else {
+      atualizar.mutate({ status: transicao }, aoConcluir);
     }
-    setTransicao(null);
   }
 
   function assumirChamado() {
-    if (!usuarioId) return;
+    if (!usuarioId || !chamado) return;
+    const campos: {
+      responsavel_id: string;
+      status?: StatusChamado;
+    } = { responsavel_id: usuarioId };
+    if (chamado.status === "Aberto") campos.status = "Em andamento";
+    atualizar.mutate(campos, {
+      onSuccess: () =>
+        toast.success(
+          chamado.status === "Aberto"
+            ? "Chamado atribuído a você e em andamento."
+            : "Chamado atribuído a você.",
+        ),
+    });
+  }
+
+  const assumirChamadoColega = useMutation({
+    mutationFn: async () => {
+      if (!chamado || !usuarioId) throw new Error("Chamado não carregado");
+      const u = await obterUsuarioAtual();
+      if (!u) throw new Error("Sessão expirada");
+      const nomeColega = chamado.responsavel?.nome ?? "outro técnico";
+      const campos: { responsavel_id: string; status?: StatusChamado } = {
+        responsavel_id: usuarioId,
+      };
+      if (chamado.status === "Aberto") campos.status = "Em andamento";
+      const { error } = await db.from("chamados").update(campos).eq("id", chamado.id);
+      if (error) throw error;
+      const { error: errComentario } = await db.from("chamado_comentarios").insert({
+        workspace_id: chamado.workspace_id,
+        chamado_id: chamado.id,
+        autor_id: u.id,
+        conteudo: [
+          "🤝 ASSUMIU CHAMADO DA EQUIPE",
+          "",
+          `O técnico assumiu este chamado que estava com ${nomeColega}, para atuar presencialmente na loja.`,
+        ].join("\n"),
+        interno: true,
+      });
+      if (errComentario) throw errComentario;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chamado", workspaceAtual?.id, numero] });
+      queryClient.invalidateQueries({ queryKey: ["chamados"] });
+      queryClient.invalidateQueries({ queryKey: ["historico", chamado?.id] });
+      queryClient.invalidateQueries({ queryKey: ["comentarios", chamado?.id] });
+      if (workspaceAtual) void sinalizarNotificacoesWorkspace(workspaceAtual.id);
+      toast.success("Chamado assumido — agora está com você.");
+    },
+    onError: (e: Error) =>
+      toast.error("Não foi possível assumir o chamado.", { description: e.message }),
+  });
+
+  function confirmarAtribuicaoTecnico({ tecnicoId, dataExecucao }: DadosAtribuicaoTecnico) {
+    if (!chamado) return;
+    const campos = montarCamposAtribuicaoTecnico(tecnicoId, chamado.status, dataExecucao);
+    atualizar.mutate(campos, {
+      onSuccess: () => {
+        setDialogAtribuir(false);
+        setTecnicoPreSelecionado(null);
+        toast.success(
+          dataExecucao
+            ? "Chamado atribuído e agendado para execução."
+            : "Chamado atribuído ao técnico.",
+        );
+      },
+    });
+  }
+
+  function aceitarChamado() {
+    if (!chamado) return;
     atualizar.mutate(
-      { responsavel_id: usuarioId },
-      { onSuccess: () => toast.success("Chamado atribuído a você.") },
+      { status: "Em andamento" },
+      {
+        onSuccess: () => toast.success("Chamado aceito — em andamento."),
+      },
     );
+  }
+
+  const devolverChamado = useMutation({
+    mutationFn: async (justificativa: string) => {
+      if (!chamado) throw new Error("Chamado não carregado");
+      const u = await obterUsuarioAtual();
+      if (!u) throw new Error("Sessão expirada");
+      const { error } = await db
+        .from("chamados")
+        .update({ status: "Aberto", responsavel_id: null })
+        .eq("id", chamado.id);
+      if (error) throw error;
+      const { error: errComentario } = await db.from("chamado_comentarios").insert({
+        workspace_id: chamado.workspace_id,
+        chamado_id: chamado.id,
+        autor_id: u.id,
+        conteudo: [
+          "⚠️ DEVOLUÇÃO PELO TÉCNICO — ATRIBUIÇÃO INCORRETA",
+          "",
+          "Justificativa do técnico:",
+          justificativa.trim(),
+          "",
+          "O chamado voltou para a fila (sem responsável). O gestor deve analisar e reatribuir ao técnico correto.",
+        ].join("\n"),
+        interno: true,
+      });
+      if (errComentario) throw errComentario;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chamado", workspaceAtual?.id, numero] });
+      queryClient.invalidateQueries({ queryKey: ["chamados"] });
+      queryClient.invalidateQueries({ queryKey: ["historico", chamado?.id] });
+      queryClient.invalidateQueries({ queryKey: ["comentarios", chamado?.id] });
+      if (workspaceAtual) void sinalizarNotificacoesWorkspace(workspaceAtual.id);
+      toast.success("Chamado devolvido ao gestor.");
+      if (workspaceAtual) {
+        navigate({
+          to: "/w/$slug/suporte",
+          params: { slug: workspaceAtual.slug },
+        });
+      }
+    },
+    onError: (e: Error) =>
+      toast.error("Não foi possível devolver.", { description: e.message }),
+  });
+
+  const reabrirChamado = useMutation({
+    mutationFn: async (motivo: string) => {
+      if (!chamado) throw new Error("Chamado não carregado");
+      const u = await obterUsuarioAtual();
+      if (!u) throw new Error("Sessão expirada");
+      const { error } = await db
+        .from("chamados")
+        .update({ status: "Aberto", responsavel_id: null })
+        .eq("id", chamado.id);
+      if (error) throw error;
+      const { error: errComentario } = await db.from("chamado_comentarios").insert({
+        workspace_id: chamado.workspace_id,
+        chamado_id: chamado.id,
+        autor_id: u.id,
+        conteudo: `Chamado reaberto pelo solicitante: ${motivo}`,
+        interno: false,
+      });
+      if (errComentario) throw errComentario;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chamado", workspaceAtual?.id, numero] });
+      queryClient.invalidateQueries({ queryKey: ["chamados"] });
+      queryClient.invalidateQueries({ queryKey: ["historico", chamado?.id] });
+      queryClient.invalidateQueries({ queryKey: ["comentarios", chamado?.id] });
+      if (workspaceAtual) void sinalizarNotificacoesWorkspace(workspaceAtual.id);
+      setReabrindo(false);
+      setMotivoReabertura("");
+      toast.success("Chamado reaberto. O departamento responsável será notificado.");
+    },
+    onError: (e: Error) => toast.error("Não foi possível reabrir.", { description: e.message }),
+  });
+
+  function confirmarReabertura() {
+    const motivo = motivoReabertura.trim();
+    if (!motivo) return toast.error("Informe o motivo da reabertura.");
+    reabrirChamado.mutate(motivo);
   }
 
   const editar = useMutation({
@@ -247,11 +565,142 @@ export function DetalheChamado({ numero }: Props) {
           O chamado #{numero} não existe ou você não tem acesso.
         </p>
         <Button asChild className="mt-6">
-          <Link to="/w/$slug/chamados" params={{ slug: workspaceAtual.slug }}>
-            <ArrowLeft className="h-4 w-4" /> Voltar para chamados
+          <Link
+            to={ehSuporte ? "/w/$slug/suporte" : "/w/$slug/chamados"}
+            params={{ slug: workspaceAtual.slug }}
+          >
+            <ArrowLeft className="h-4 w-4" /> Voltar
           </Link>
         </Button>
       </div>
+    );
+  }
+
+  const dialogosCompartilhados = (
+    <>
+      <Dialog
+        open={!!transicao}
+        onOpenChange={(o) => {
+          if (o || atualizar.isPending || enviandoAnexos) return;
+          setTransicao(null);
+          setAnexosResolucao([]);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {transicao === "Agendado"
+                ? "Agendar chamado"
+                : transicao === "Pausado"
+                  ? "Pausar chamado"
+                  : transicao === "Resolvido"
+                    ? "Resolver chamado"
+                    : "Confirmar mudança de status"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {transicao === "Agendado" || transicao === "Pausado" || transicao === "Resolvido" ? (
+              <>
+                {transicao === "Agendado" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="agendado-data">Data e hora do agendamento *</Label>
+                    <Input
+                      id="agendado-data"
+                      type="datetime-local"
+                      value={agendadoPara}
+                      onChange={(e) => setAgendadoPara(e.target.value)}
+                    />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="motivo-texto">
+                    {transicao === "Resolvido" ? "Tratativa realizada *" : "Motivo *"}
+                  </Label>
+                  <Textarea
+                    id="motivo-texto"
+                    rows={transicao === "Resolvido" ? 6 : 4}
+                    value={motivoTexto}
+                    onChange={(e) => setMotivoTexto(e.target.value)}
+                    placeholder={
+                      transicao === "Agendado"
+                        ? "Por que este chamado precisa ser agendado?"
+                        : transicao === "Pausado"
+                          ? "Por que o chamado está sendo pausado?"
+                          : "Descreva como o chamado foi resolvido."
+                    }
+                  />
+                </div>
+                {transicao === "Resolvido" && (
+                  <div className="space-y-2">
+                    <Label>Anexos da resolução (opcional)</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Adicione imagens ou arquivos que mostrem como o chamado foi resolvido.
+                    </p>
+                    <SeletorAnexos
+                      arquivos={anexosResolucao}
+                      aoMudar={setAnexosResolucao}
+                      desabilitado={atualizar.isPending || enviandoAnexos}
+                    />
+                  </div>
+                )}
+              </>
+            ) : (
+              transicao && (
+                <p className="text-sm text-muted-foreground">
+                  Alterar o status de{" "}
+                  <strong className="text-foreground">
+                    {rotuloStatusChamado[chamado.status]}
+                  </strong>{" "}
+                  para{" "}
+                  <strong className="text-foreground">
+                    {rotuloStatusChamado[transicao]}
+                  </strong>
+                  ?
+                </p>
+              )
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setTransicao(null)}
+              disabled={atualizar.isPending || enviandoAnexos}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={confirmarTransicao} disabled={atualizar.isPending || enviandoAnexos}>
+              {(atualizar.isPending || enviandoAnexos) && <Loader2 className="h-4 w-4 animate-spin" />}
+              {enviandoAnexos ? "Enviando anexos..." : "Salvar e confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+
+  if (ehSuporte) {
+    return (
+      <>
+        <DetalheChamadoSuporte
+          chamado={chamado}
+          workspaceId={chamado.workspace_id}
+          slug={workspaceAtual.slug}
+          rotaVoltar={podeAssumirColega ? "/w/$slug/suporte/equipe" : "/w/$slug/suporte"}
+          podeTrabalhar={!!podeTrabalhar}
+          podeAssumirColega={!!podeAssumirColega}
+          podeDevolver={!!podeDevolver}
+          acaoPendente={
+            atualizar.isPending ||
+            enviandoAnexos ||
+            devolverChamado.isPending ||
+            assumirChamadoColega.isPending
+          }
+          onTransicao={iniciarTransicao}
+          onDevolver={(j) => devolverChamado.mutate(j)}
+          onAssumirColega={() => assumirChamadoColega.mutate()}
+        />
+        {dialogosCompartilhados}
+      </>
     );
   }
 
@@ -260,8 +709,11 @@ export function DetalheChamado({ numero }: Props) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <Button asChild variant="ghost" size="sm" className="-ml-3">
-            <Link to="/w/$slug/chamados" params={{ slug: workspaceAtual.slug }}>
-              <ArrowLeft className="h-4 w-4" /> Chamados
+            <Link
+              to={ehSuporte ? "/w/$slug/suporte" : "/w/$slug/chamados"}
+              params={{ slug: workspaceAtual.slug }}
+            >
+              <ArrowLeft className="h-4 w-4" /> {ehSuporte ? "Minha área" : "Chamados"}
             </Link>
           </Button>
           <div className="flex flex-wrap items-center gap-3">
@@ -278,13 +730,33 @@ export function DetalheChamado({ numero }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
+          {podeReabrir && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setMotivoReabertura("");
+                setReabrindo(true);
+              }}
+              disabled={reabrirChamado.isPending}
+            >
+              <RotateCcw className="h-4 w-4" />
+              Reabrir chamado
+            </Button>
+          )}
+          {podeAceitar && (
+            <Button variant="default" size="sm" onClick={aceitarChamado} disabled={atualizar.isPending}>
+              <PlayCircle className="h-4 w-4" />
+              Aceitar chamado
+            </Button>
+          )}
           {podeAssumir && (
             <Button variant="default" size="sm" onClick={assumirChamado} disabled={atualizar.isPending}>
               <UserPlus className="h-4 w-4" />
               {chamado.responsavel_id ? "Reassumir chamado" : "Atribuir a mim"}
             </Button>
           )}
-          {(podeAtender || ehDoDeptoDestino) && (
+          {podeTrabalhar && (
             <Select
               value={chamado.status}
               onValueChange={(v) => iniciarTransicao(v as StatusChamado)}
@@ -301,12 +773,14 @@ export function DetalheChamado({ numero }: Props) {
               </SelectContent>
             </Select>
           )}
-          {podeAtender && (
+          {podeAtender && !ehSuporte && (
             <AcoesIAChamado workspaceId={chamado.workspace_id} chamadoId={chamado.id} />
           )}
-          <Button variant="outline" onClick={() => setEditando(true)}>
-            <Pencil className="h-4 w-4" /> Editar
-          </Button>
+          {podeAtender && !ehSuporte && (
+            <Button variant="outline" onClick={() => setEditando(true)}>
+              <Pencil className="h-4 w-4" /> Editar
+            </Button>
+          )}
           {podeExcluir && (
             <Button
               variant="outline"
@@ -339,37 +813,116 @@ export function DetalheChamado({ numero }: Props) {
       )}
       {(chamado.status === "Resolvido" || chamado.status === "Fechado") && chamado.tratativa && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm dark:border-emerald-900 dark:bg-emerald-950/40">
-          <p className="font-semibold text-emerald-900 dark:text-emerald-100">Tratativa realizada</p>
-          <p className="mt-1 whitespace-pre-wrap text-emerald-900/80 dark:text-emerald-100/80">{chamado.tratativa}</p>
+          <div className="flex items-start justify-between gap-3">
+            <p className="font-semibold text-emerald-900 dark:text-emerald-100">Tratativa realizada</p>
+            {podeEditarTratativa && !editandoTratativa && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 shrink-0 text-emerald-900 hover:bg-emerald-100 hover:text-emerald-950 dark:text-emerald-100 dark:hover:bg-emerald-900/50"
+                onClick={() => {
+                  setTextoTratativaEdit(chamado.tratativa ?? "");
+                  setEditandoTratativa(true);
+                }}
+              >
+                <Pencil className="h-3.5 w-3.5" /> Editar
+              </Button>
+            )}
+          </div>
+          {editandoTratativa ? (
+            <div className="mt-3 space-y-3">
+              <Textarea
+                rows={6}
+                value={textoTratativaEdit}
+                onChange={(e) => setTextoTratativaEdit(e.target.value)}
+                placeholder="Descreva como o chamado foi resolvido."
+                disabled={atualizar.isPending}
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={salvarTratativaEditada}
+                  disabled={atualizar.isPending || !textoTratativaEdit.trim()}
+                >
+                  {atualizar.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Salvar tratativa
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setEditandoTratativa(false);
+                    setTextoTratativaEdit(chamado.tratativa ?? "");
+                  }}
+                  disabled={atualizar.isPending}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-1 whitespace-pre-wrap text-emerald-900/80 dark:text-emerald-100/80">
+              {chamado.tratativa}
+            </p>
+          )}
+        </div>
+      )}
+      {chamado.status === "Resolvido" && ehSolicitante && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-900 dark:bg-amber-950/40">
+          <p className="font-semibold text-amber-900 dark:text-amber-100">
+            {podeReabrir
+              ? `Você pode reabrir este chamado por mais ${diasParaReabrir} dia${diasParaReabrir === 1 ? "" : "s"}.`
+              : "O prazo de 5 dias para reabertura expirou. O chamado será fechado automaticamente."}
+          </p>
+          {podeReabrir && (
+            <p className="mt-1 text-amber-900/80 dark:text-amber-100/80">
+              Se ainda faltar algo na solução, use o botão &quot;Reabrir chamado&quot; e informe o que precisa ser ajustado.
+            </p>
+          )}
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-6">
+          {(chamado.chamado_pai_id || chamado.descricao_chamado_pai) && (
+            <BlocoDescricaoChamadoPrincipal chamado={chamado} slug={workspaceAtual.slug} />
+          )}
+
           <section className="rounded-2xl border border-border bg-card p-5">
-            <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Descrição</h2>
+            <h2 className="mb-2 text-sm font-semibold text-muted-foreground">
+              {chamado.chamado_pai_id ? "Descrição deste subchamado" : "Descrição"}
+            </h2>
             {chamado.descricao ? (
-              <p className="whitespace-pre-wrap text-sm text-foreground">{chamado.descricao}</p>
+              <TextoMultilinha
+                texto={chamado.descricao}
+                classeLinha="text-sm leading-6 text-foreground break-words"
+              />
             ) : (
               <p className="text-sm text-muted-foreground">Sem descrição.</p>
             )}
           </section>
 
-          {(chamado as unknown as { requisicao_compras?: boolean }).requisicao_compras && (
-            <RequisicaoCompras
-              chamadoId={chamado.id}
-              codigoChamado={chamado.codigo ?? `#${chamado.numero}`}
-              tituloChamado={chamado.titulo}
-            />
-          )}
+          {!ehSuporte &&
+            (chamado as unknown as { requisicao_compras?: boolean }).requisicao_compras && (
+              <RequisicaoCompras
+                chamadoId={chamado.id}
+                codigoChamado={chamado.codigo ?? `#${chamado.numero}`}
+                tituloChamado={chamado.titulo}
+              />
+            )}
 
-          <section className="rounded-2xl border border-border bg-card p-5">
-            <ArvoreSubchamados
-              chamadoPaiId={chamado.id}
-              slug={workspaceAtual.slug}
-              aoCriarSubchamado={() => setNovoSub(true)}
-            />
-          </section>
+          {!ehSuporte && (
+            <section className="rounded-2xl border border-border bg-card p-5">
+              <ArvoreSubchamados
+                chamadoPaiId={chamado.id}
+                slug={workspaceAtual.slug}
+                aoCriarSubchamado={() => setNovoSub(true)}
+              />
+            </section>
+          )}
 
           <section className="rounded-2xl border border-border bg-card p-5">
             <Tabs defaultValue="linha-tempo">
@@ -378,7 +931,7 @@ export function DetalheChamado({ numero }: Props) {
                 <TabsTrigger value="comentarios">Comentários</TabsTrigger>
                 <TabsTrigger value="anexos">Anexos</TabsTrigger>
                 <TabsTrigger value="historico">Histórico</TabsTrigger>
-                <TabsTrigger value="ia">IA</TabsTrigger>
+                {!ehSuporte && <TabsTrigger value="ia">IA</TabsTrigger>}
                 {podeExcluir && <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>}
               </TabsList>
               <TabsContent value="linha-tempo" className="pt-4">
@@ -388,7 +941,7 @@ export function DetalheChamado({ numero }: Props) {
                 <ComentariosChamado
                   chamadoId={chamado.id}
                   workspaceId={chamado.workspace_id}
-                  podeUsarInterno={!!podeAtender}
+                  podeUsarInterno={!!podeAtender && !ehSuporte}
                 />
               </TabsContent>
               <TabsContent value="anexos" className="pt-4">
@@ -401,9 +954,11 @@ export function DetalheChamado({ numero }: Props) {
               <TabsContent value="historico" className="pt-4">
                 <HistoricoChamado chamadoId={chamado.id} />
               </TabsContent>
-              <TabsContent value="ia" className="pt-4">
-                <HistoricoIAChamado chamadoId={chamado.id} />
-              </TabsContent>
+              {!ehSuporte && (
+                <TabsContent value="ia" className="pt-4">
+                  <HistoricoIAChamado chamadoId={chamado.id} />
+                </TabsContent>
+              )}
               {podeExcluir && (
                 <TabsContent value="whatsapp" className="pt-4">
                   <NotificacoesWhatsappChamado chamadoId={chamado.id} />
@@ -424,43 +979,62 @@ export function DetalheChamado({ numero }: Props) {
                   <dd>{chamado.solicitante?.nome ?? "—"}</dd>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <UserIcon className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-start gap-2">
+                <UserIcon className="mt-1 h-4 w-4 text-muted-foreground" />
                 <div className="flex-1">
-                  <dt className="text-xs text-muted-foreground">Responsável</dt>
+                  <dt className="text-xs text-muted-foreground">Responsável / técnico</dt>
                   <dd>
-                    {podeAtender ? (
+                    {podeAtender && !ehSuporte ? (
                       <Select
                         value={chamado.responsavel_id ?? "__nenhum__"}
-                        onValueChange={(v) =>
-                          atualizar.mutate({
-                            responsavel_id: v === "__nenhum__" ? null : v,
-                          })
-                        }
+                        onValueChange={(v) => {
+                          const novo = v === "__nenhum__" ? null : v;
+                          if (novo === chamado.responsavel_id) return;
+                          if (novo === null) {
+                            atualizar.mutate(
+                              { responsavel_id: null },
+                              {
+                                onSuccess: () => toast.success("Responsável removido."),
+                              },
+                            );
+                            return;
+                          }
+                          setTecnicoPreSelecionado(novo);
+                          setDialogAtribuir(true);
+                        }}
                       >
                         <SelectTrigger className="h-8">
                           <SelectValue placeholder="Sem responsável" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="__nenhum__">Sem responsável</SelectItem>
-                          {(membros ?? []).map((m) => (
-                            <SelectItem key={m.usuario_id} value={m.usuario_id}>
-                              {m.perfil.nome}
-                            </SelectItem>
-                          ))}
+                          {(membros ?? [])
+                            .filter(
+                              (m) =>
+                                m.ativo &&
+                                (m.papel === "Suporte" ||
+                                  m.usuario_id === chamado.responsavel_id),
+                            )
+                            .map((m) => (
+                              <SelectItem key={m.usuario_id} value={m.usuario_id}>
+                                {m.perfil.nome}
+                                {m.papel === "Suporte" ? " (Suporte)" : ""}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     ) : (
                       chamado.responsavel?.nome ?? "Sem responsável"
                     )}
                   </dd>
+                </div>
               </div>
               <div className="flex items-start gap-2">
                 <Building2 className="mt-1 h-4 w-4 text-muted-foreground" />
                 <div className="flex-1">
                   <dt className="text-xs text-muted-foreground">Departamento</dt>
                   <dd>
-                    {podeAtender ? (
+                    {podeAtender && !ehSuporte ? (
                       <Select
                         value={chamado.departamento_id ?? "__nenhum__"}
                         onValueChange={(v) => {
@@ -495,7 +1069,6 @@ export function DetalheChamado({ numero }: Props) {
                   </dd>
                 </div>
               </div>
-              </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <div>
@@ -526,6 +1099,16 @@ export function DetalheChamado({ numero }: Props) {
                   <dd>{chamado.categoria}</dd>
                 </div>
               )}
+              {usaFlagPropostaCriada(chamado) && workspaceAtual && (
+                <div className="pt-1">
+                  <CheckboxPropostaCriada
+                    chamadoId={chamado.id}
+                    workspaceId={workspaceAtual.id}
+                    marcado={!!chamado.proposta_criada}
+                    podeEditar={!!podeAtender && !ehSuporte}
+                  />
+                </div>
+              )}
               {chamado.chamado_pai_id && (
                 <div>
                   <dt className="text-xs text-muted-foreground">Chamado pai</dt>
@@ -537,55 +1120,51 @@ export function DetalheChamado({ numero }: Props) {
         </aside>
       </div>
 
-      <Dialog open={!!transicao} onOpenChange={(o) => !o && setTransicao(null)}>
+      <Dialog
+        open={reabrindo}
+        onOpenChange={(o) => {
+          if (o || reabrirChamado.isPending) return;
+          setReabrindo(false);
+          setMotivoReabertura("");
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {transicao === "Agendado" && "Agendar chamado"}
-              {transicao === "Pausado" && "Pausar chamado"}
-              {transicao === "Resolvido" && "Resolver chamado"}
-            </DialogTitle>
+            <DialogTitle>Reabrir chamado</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {transicao === "Agendado" && (
-              <div className="space-y-2">
-                <Label htmlFor="agendado-data">Data e hora do agendamento *</Label>
-                <Input
-                  id="agendado-data"
-                  type="datetime-local"
-                  value={agendadoPara}
-                  onChange={(e) => setAgendadoPara(e.target.value)}
-                />
-              </div>
-            )}
+            <p className="text-sm text-muted-foreground">
+              O chamado voltará para <strong className="text-foreground">Aberto</strong> e o departamento
+              responsável será notificado. Informe o que ainda precisa ser feito.
+            </p>
             <div className="space-y-2">
-              <Label htmlFor="motivo-texto">
-                {transicao === "Resolvido" ? "Tratativa realizada *" : "Motivo *"}
-              </Label>
+              <Label htmlFor="motivo-reabertura">Motivo da reabertura *</Label>
               <Textarea
-                id="motivo-texto"
-                rows={transicao === "Resolvido" ? 6 : 4}
-                value={motivoTexto}
-                onChange={(e) => setMotivoTexto(e.target.value)}
-                placeholder={
-                  transicao === "Agendado"
-                    ? "Por que este chamado precisa ser agendado?"
-                    : transicao === "Pausado"
-                    ? "Por que o chamado está sendo pausado?"
-                    : "Descreva como o chamado foi resolvido."
-                }
+                id="motivo-reabertura"
+                rows={4}
+                value={motivoReabertura}
+                onChange={(e) => setMotivoReabertura(e.target.value)}
+                placeholder="Ex.: Ainda falta enviar o documento X que foi solicitado."
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setTransicao(null)}>Cancelar</Button>
-            <Button onClick={confirmarTransicao} disabled={atualizar.isPending}>
-              {atualizar.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              Confirmar
+            <Button
+              variant="ghost"
+              onClick={() => setReabrindo(false)}
+              disabled={reabrirChamado.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={confirmarReabertura} disabled={reabrirChamado.isPending}>
+              {reabrirChamado.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Confirmar reabertura
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {dialogosCompartilhados}
 
       <Dialog open={editando} onOpenChange={setEditando}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
@@ -607,19 +1186,33 @@ export function DetalheChamado({ numero }: Props) {
       </Dialog>
 
       <Dialog open={novoSub} onOpenChange={setNovoSub}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="border-b border-border px-6 py-4">
             <DialogTitle>Novo subchamado de {chamado.codigo ?? `#${chamado.numero}`}</DialogTitle>
           </DialogHeader>
-          <NovoChamadoEmbutido
-            chamadoPaiId={chamado.id}
-            aoFinalizar={() => {
-              setNovoSub(false);
-              queryClient.invalidateQueries({ queryKey: ["subchamados", chamado.id] });
-            }}
-          />
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+            <NovoChamadoEmbutido
+              chamadoPaiId={chamado.id}
+              aoFinalizar={() => {
+                setNovoSub(false);
+                queryClient.invalidateQueries({ queryKey: ["subchamados", chamado.id] });
+              }}
+            />
+          </div>
         </DialogContent>
       </Dialog>
+
+      {podeAtender && !ehSuporte && (
+        <DialogAtribuirTecnico
+          aberto={dialogAtribuir}
+          aoAbrirChange={setDialogAtribuir}
+          membros={membros ?? []}
+          tecnicoInicial={tecnicoPreSelecionado}
+          responsavelAtualId={chamado.responsavel_id}
+          pendente={atualizar.isPending}
+          onConfirmar={confirmarAtribuicaoTecnico}
+        />
+      )}
 
       <AlertDialog open={confirmarExcluir} onOpenChange={setConfirmarExcluir}>
         <AlertDialogContent>
@@ -670,6 +1263,7 @@ function NovoChamadoEmbutido({
           categoria: dados.categoria || null,
           loja: dados.loja,
           responsavel_id: dados.responsavel_id,
+          departamento_origem_id: dados.departamento_origem_id,
           prazo: dados.prazo,
           chamado_pai_id: chamadoPaiId,
           solicitante_id: u.user.id,

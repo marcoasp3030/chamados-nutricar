@@ -1,26 +1,22 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { AppSidebar } from "@/componentes/layout/AppSidebar";
 import { Cabecalho } from "@/componentes/layout/Cabecalho";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import type { PapelMembro, WorkspaceComPapel } from "@/tipos/workspace";
 import { obterSessao } from "@/auth/atual";
-import { db } from "@/dados/atual";
+import { buscarWorkspacePorSlug } from "@/hooks/useMeusWorkspaces";
+import { ehPapelSuporte, rotaPermitidaSuporte } from "@/lib/papel-acesso";
 
 export const Route = createFileRoute("/w/$slug")({
   component: LayoutWorkspace,
 });
 
-interface LinhaMembro {
-  papel: PapelMembro;
-  workspace: WorkspaceComPapel | null;
-}
-
 function LayoutWorkspace() {
   const { slug } = Route.useParams();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { definirWorkspace, workspaceAtual } = useWorkspaceStore();
   const [carregando, setCarregando] = useState(true);
 
@@ -29,41 +25,45 @@ function LayoutWorkspace() {
 
     (async () => {
       setCarregando(true);
-      const sessao = await obterSessao().then((s) => ({ session: s.usuario ? { user: s.usuario } : null }));
-      if (!sessao.session) {
-        navigate({ to: "/login" });
-        return;
+      try {
+        const sessao = await obterSessao();
+        if (cancelado) return;
+
+        if (!sessao.usuario) {
+          navigate({ to: "/login" });
+          return;
+        }
+
+        const workspace = await buscarWorkspacePorSlug(slug);
+        if (cancelado) return;
+
+        if (!workspace) {
+          navigate({ to: "/selecionar-empresa" });
+          return;
+        }
+
+        definirWorkspace(workspace);
+      } catch (e) {
+        console.error("[workspace/layout]", e);
+        if (!cancelado) navigate({ to: "/selecionar-empresa" });
+      } finally {
+        if (!cancelado) setCarregando(false);
       }
-
-      const { data, error } = await db
-        .from("workspace_membros")
-        .select("papel, workspace:workspaces!inner(*)")
-        .eq("usuario_id", sessao.session.user.id)
-        .eq("ativo", true)
-        .eq("workspace.slug", slug)
-        .maybeSingle();
-
-      if (cancelado) return;
-
-      if (error || !data || !data.workspace) {
-        navigate({ to: "/selecionar-empresa" });
-        return;
-      }
-
-      const linha = data as unknown as LinhaMembro;
-      if (!linha.workspace) {
-        navigate({ to: "/selecionar-empresa" });
-        return;
-      }
-
-      definirWorkspace({ ...linha.workspace, papel: linha.papel });
-      setCarregando(false);
     })();
 
     return () => {
       cancelado = true;
     };
-  }, [slug, navigate, definirWorkspace]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
+
+  useEffect(() => {
+    if (!workspaceAtual || workspaceAtual.slug !== slug) return;
+    if (!ehPapelSuporte(workspaceAtual.papel)) return;
+    if (!rotaPermitidaSuporte(pathname, slug)) {
+      navigate({ to: "/w/$slug/suporte", params: { slug }, replace: true });
+    }
+  }, [workspaceAtual, pathname, slug, navigate]);
 
   if (carregando || !workspaceAtual || workspaceAtual.slug !== slug) {
     return (

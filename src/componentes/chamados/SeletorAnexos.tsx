@@ -8,6 +8,12 @@ interface Props {
   aoMudar: (arquivos: File[]) => void;
   tamanhoMaxMb?: number;
   desabilitado?: boolean;
+  /**
+   * Filtro de tipos aceitos (atributo `accept` do input). Quando começa com
+   * "image/", arquivos não-imagem arrastados/colados também são ignorados.
+   * Ex.: "image/*". Quando ausente, aceita qualquer arquivo.
+   */
+  aceitar?: string;
 }
 
 const MIME_IMAGEM = /^image\//;
@@ -23,7 +29,9 @@ export function SeletorAnexos({
   aoMudar,
   tamanhoMaxMb = 20,
   desabilitado = false,
+  aceitar,
 }: Props) {
+  const soImagens = !!aceitar && aceitar.startsWith("image/");
   const [arrastando, setArrastando] = useState(false);
   const [previas, setPrevias] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLInputElement>(null);
@@ -33,7 +41,10 @@ export function SeletorAnexos({
     (novos: File[]) => {
       if (desabilitado || novos.length === 0) return;
       const limite = tamanhoMaxMb * 1024 * 1024;
-      const validos = novos.filter((f) => f.size <= limite);
+      // Quando o seletor é só de imagens, descarta o que não for imagem
+      // (relevante para drag-and-drop e colar, que ignoram o accept do input).
+      const porTipo = soImagens ? novos.filter((f) => MIME_IMAGEM.test(f.type)) : novos;
+      const validos = porTipo.filter((f) => f.size <= limite);
       const ignorados = novos.length - validos.length;
       if (ignorados > 0) {
         // Aviso simples sem dependência de toast aqui
@@ -46,7 +57,7 @@ export function SeletorAnexos({
       if (filtrados.length === 0) return;
       aoMudar([...arquivos, ...filtrados]);
     },
-    [arquivos, aoMudar, tamanhoMaxMb, desabilitado],
+    [arquivos, aoMudar, tamanhoMaxMb, desabilitado, soImagens],
   );
 
   // Gera URLs de prévia para imagens
@@ -129,6 +140,7 @@ export function SeletorAnexos({
           ref={inputRef}
           type="file"
           multiple
+          accept={aceitar}
           className="hidden"
           disabled={desabilitado}
           onChange={(e) => {

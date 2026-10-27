@@ -1,5 +1,10 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
+import { useUsuarioAtualId } from "@/auth/atual";
+import { prefetchChamadosQuadro } from "@/hooks/useChamados";
+import { prefetchFunisKanban } from "@/hooks/useFunisKanban";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/w/$slug/chamados")({
@@ -9,7 +14,15 @@ export const Route = createFileRoute("/w/$slug/chamados")({
 
 function LayoutChamados() {
   const { workspaceAtual } = useWorkspaceStore();
+  const usuarioId = useUsuarioAtualId();
+  const queryClient = useQueryClient();
   const caminho = useRouterState({ select: (s) => s.location.pathname });
+
+  const prefetchQuadro = useCallback(() => {
+    if (!workspaceAtual?.id || !usuarioId) return;
+    void prefetchChamadosQuadro(queryClient, workspaceAtual.id);
+    void prefetchFunisKanban(queryClient, workspaceAtual.id, usuarioId);
+  }, [queryClient, workspaceAtual?.id, usuarioId]);
 
   if (!workspaceAtual) return null;
 
@@ -20,6 +33,7 @@ function LayoutChamados() {
       rotulo: "Quadro",
       href: `${base}/quadro`,
       ativoQuando: caminho.startsWith(`${base}/quadro`),
+      prefetch: true,
     },
   ];
 
@@ -31,8 +45,13 @@ function LayoutChamados() {
   const ehQuadro = caminho.startsWith(`${base}/quadro`);
 
   return (
-    <div className={cn("px-6 py-8", ehQuadro ? "mx-auto max-w-[1800px]" : "mx-auto max-w-7xl")}>
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div
+      className={cn(
+        "w-full px-3 py-6 sm:px-4 md:px-5 lg:px-6",
+        ehQuadro ? "max-w-none" : "mx-auto max-w-[min(100%,1920px)]",
+      )}
+    >
+      <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Chamados</h1>
           <p className="text-sm text-muted-foreground">
@@ -45,6 +64,8 @@ function LayoutChamados() {
               <Link
                 key={a.href}
                 to={a.href}
+                onMouseEnter={a.prefetch ? prefetchQuadro : undefined}
+                onFocus={a.prefetch ? prefetchQuadro : undefined}
                 className={cn(
                   "rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
                   a.ativoQuando

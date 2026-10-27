@@ -3,7 +3,11 @@
 // Mantido isolado de Node APIs para poder ser importado tanto no server quanto
 // no client (apenas constantes).
 
-export type Bucket = "chamado-anexos" | "avatares" | "logos-workspace";
+export type Bucket =
+  | "chamado-anexos"
+  | "checklist-anexos"
+  | "avatares"
+  | "logos-workspace";
 
 export const BUCKETS: Record<
   Bucket,
@@ -16,6 +20,10 @@ export const BUCKETS: Record<
   "chamado-anexos": {
     publico: false,
     tamanhoMaxBytes: 50 * 1024 * 1024, // 50 MB
+  },
+  "checklist-anexos": {
+    publico: false,
+    tamanhoMaxBytes: 25 * 1024 * 1024, // 25 MB por imagem/arquivo
   },
   avatares: {
     publico: true,

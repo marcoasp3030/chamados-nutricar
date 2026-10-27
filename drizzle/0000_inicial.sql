@@ -3,7 +3,7 @@ CREATE TYPE "public"."papel_membro" AS ENUM('Proprietario', 'Administrador', 'Ge
 CREATE TYPE "public"."plano_workspace" AS ENUM('Gratuito', 'Pro', 'Empresarial');--> statement-breakpoint
 CREATE TYPE "public"."prioridade_chamado" AS ENUM('Baixa', 'Media', 'Alta', 'Urgente');--> statement-breakpoint
 CREATE TYPE "public"."status_chamado" AS ENUM('Aberto', 'Em andamento', 'Pausado', 'Agendado', 'Resolvido', 'Fechado', 'Cancelado');--> statement-breakpoint
-CREATE TYPE "public"."status_item_compra" AS ENUM('Pendente', 'Aprovado', 'Comprado', 'Recebido', 'Cancelado');--> statement-breakpoint
+CREATE TYPE "public"."status_item_compra" AS ENUM('Pendente', 'Cotando', 'Aprovado', 'Comprado', 'Recebido', 'Cancelado');--> statement-breakpoint
 CREATE TYPE "public"."status_projeto" AS ENUM('Planejado', 'Em andamento', 'Pausado', 'Concluido', 'Cancelado');--> statement-breakpoint
 CREATE TYPE "public"."status_tarefa" AS ENUM('A fazer', 'Em andamento', 'Em revisao', 'Concluida', 'Cancelada');--> statement-breakpoint
 CREATE TYPE "public"."status_workspace" AS ENUM('Ativo', 'Suspenso', 'Cancelado');--> statement-breakpoint

@@ -1,18 +1,27 @@
 import { useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Building2, ChevronRight, Loader2, LogOut } from "lucide-react";
 import logo from "@/assets/nutricar-logo.png";
 import { Button } from "@/components/ui/button";
 import { useMeusWorkspaces } from "@/hooks/useMeusWorkspaces";
 import { rotuloPapel } from "@/utilitarios/traducoes";
+import { rotaInicialPorPapel } from "@/lib/papel-acesso";
 import { toast } from "sonner";
-import { sair } from "@/auth/atual";
+import { sair as authSair } from "@/auth/atual";
 
 export function SelecionarWorkspace() {
   const navigate = useNavigate();
-  const { data: workspaces = [], isLoading } = useMeusWorkspaces();
+  const { data: workspaces = [], isLoading, isError, refetch } = useMeusWorkspaces();
 
-  const sair = async () => {
-    await sair();
+  // Uma única empresa → entra direto no painel
+  useEffect(() => {
+    if (isLoading || workspaces.length !== 1) return;
+    const destino = rotaInicialPorPapel(workspaces[0].papel);
+    navigate({ to: destino, params: { slug: workspaces[0].slug }, replace: true });
+  }, [isLoading, workspaces, navigate]);
+
+  const encerrarSessao = async () => {
+    await authSair();
     toast.success("Sessão encerrada.");
     navigate({ to: "/login" });
   };
@@ -28,7 +37,7 @@ export function SelecionarWorkspace() {
       <div className="relative z-10 mx-auto flex min-h-screen max-w-3xl flex-col px-6 py-10">
         <header className="flex items-center justify-between">
           <img src={logo} alt="Nutricar" className="h-9 w-auto" />
-          <Button variant="ghost" size="sm" onClick={sair}>
+          <Button variant="ghost" size="sm" onClick={encerrarSessao}>
             <LogOut className="mr-2 h-4 w-4" />
             Sair
           </Button>
@@ -48,7 +57,22 @@ export function SelecionarWorkspace() {
             </div>
           )}
 
-          {!isLoading && workspaces.length === 0 && (
+          {!isLoading && isError && (
+            <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
+              <Building2 className="mx-auto h-10 w-10 text-muted-foreground" />
+              <h2 className="mt-4 text-lg font-semibold text-foreground">
+                Erro ao carregar empresas
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Não foi possível listar suas empresas. Tente novamente.
+              </p>
+              <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()}>
+                Tentar novamente
+              </Button>
+            </div>
+          )}
+
+          {!isLoading && !isError && workspaces.length === 0 && (
             <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
               <Building2 className="mx-auto h-10 w-10 text-muted-foreground" />
               <h2 className="mt-4 text-lg font-semibold text-foreground">
@@ -64,7 +88,12 @@ export function SelecionarWorkspace() {
           {workspaces.map((ws) => (
             <button
               key={ws.id}
-              onClick={() => navigate({ to: "/w/$slug/painel", params: { slug: ws.slug } })}
+              onClick={() =>
+                navigate({
+                  to: rotaInicialPorPapel(ws.papel),
+                  params: { slug: ws.slug },
+                })
+              }
               className="group flex w-full items-center gap-4 rounded-2xl border border-border bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]"
             >
               <div

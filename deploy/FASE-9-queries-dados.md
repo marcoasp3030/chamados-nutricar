@@ -9,7 +9,7 @@
 |---|---|
 | `src/dados/tipos.ts` | Interface `ClienteDados` (espelha `from`/`rpc` do Supabase). |
 | `src/dados/atual.ts` | API pública: `export { db } from "./atual.adapter"`. |
-| `src/dados/atual.adapter.ts` | **Modo Lovable**: `db = supabase` (preview funciona). |
+| `src/dados/atual.adapter.ts` | **Modo legado**: `db = supabase` (compatibilidade). |
 | `src/dados/atual.adapter.proprio.ts` | **Modo VPS**: `@supabase/postgrest-js` apontando para o PostgREST do stack. |
 
 ## Como funciona o modo VPS
@@ -57,7 +57,7 @@ npm run build:vps
 
 ## Status final do sistema
 
-| Camada | Lovable preview | VPS pronto |
+| Camada | Ambiente legado | VPS pronto |
 |---|---|---|
 | Auth | ✅ | ✅ |
 | Storage | ✅ | ✅ |

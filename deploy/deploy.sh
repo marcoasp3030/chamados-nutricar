@@ -26,7 +26,7 @@ for i in $(seq 1 30); do
 done
 
 echo "==> Rodando migrations Drizzle"
-docker compose --env-file .env.production run --rm app bun run db:migrate
+docker compose --env-file .env.production run --rm app npm run db:migrate
 
 echo "==> Subindo app + Caddy"
 docker compose --env-file .env.production up -d app caddy

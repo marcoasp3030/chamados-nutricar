@@ -83,7 +83,8 @@ export async function exigirPapel(
 ): Promise<void> {
   const ok = await temPapelWorkspace(userId, workspaceId, papeis);
   if (!ok) {
-    throw new Response("Forbidden", { status: 403 });
+    const { Proibido } = await import("@/repos/types");
+    throw new Proibido("Sem permissão.");
   }
 }
 

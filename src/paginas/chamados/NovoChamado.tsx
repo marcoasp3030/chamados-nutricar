@@ -11,6 +11,7 @@ import {
 } from "@/componentes/chamados/FormularioChamado";
 import { storage } from "@/storage/atual";
 import { db } from "@/dados/atual";
+import { sinalizarNotificacoesWorkspace } from "@/lib/notificacoes-chamado";
 
 interface Props {
   chamadoPaiId?: string | null;
@@ -43,6 +44,7 @@ export function NovoChamado({ chamadoPaiId }: Props) {
           loja: dados.loja,
           responsavel_id: dados.responsavel_id,
           departamento_id: dados.departamento_id,
+          departamento_origem_id: dados.departamento_origem_id,
           prazo: dados.prazo,
           chamado_pai_id: paiId,
           solicitante_id: u.user!.id,
@@ -113,6 +115,7 @@ export function NovoChamado({ chamadoPaiId }: Props) {
     onSuccess: (data) => {
       toast.success(`Chamado #${data.numero} criado.`);
       if (workspaceAtual) {
+        void sinalizarNotificacoesWorkspace(workspaceAtual.id);
         navigate({
           to: "/w/$slug/chamados/$numero",
           params: { slug: workspaceAtual.slug, numero: String(data.numero) },

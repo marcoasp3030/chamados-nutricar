@@ -31,7 +31,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { acaoIaChamado } from "@/lib/ia-chamado.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,6 +44,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";
+import { useUsuarioAtualId } from "@/auth/atual";
 import { useCategoriasChamado } from "@/componentes/configuracoes/AbaCategorias";
 import { useDepartamentos } from "@/componentes/configuracoes/AbaDepartamentos";
 import { Building2 } from "lucide-react";
@@ -70,6 +71,14 @@ import {
   rotuloStatusChamado,
   rotuloTipoChamado,
 } from "@/utilitarios/traducoes";
+import {
+  ehCategoriaDepartamentoProjetos,
+  encontrarCategoriaProjetosCanonica,
+  mesclarCategoriasDepartamentoProjetos,
+  nomeEhDepartamentoProjetos,
+  tituloAoSelecionarCategoriaProjetos,
+} from "@/utilitarios/categorias-projetos";
+import type { CategoriaChamado } from "@/componentes/configuracoes/AbaCategorias";
 
 export interface DadosFormularioChamado {
   titulo: string;
@@ -81,6 +90,9 @@ export interface DadosFormularioChamado {
   loja: string | null;
   responsavel_id: string | null;
   departamento_id: string | null;
+  // Departamento pelo qual o solicitante está ABRINDO o chamado (origem).
+  // Relevante quando o usuário pertence a mais de um departamento.
+  departamento_origem_id: string | null;
   prazo: string | null;
   chamado_pai_id: string | null;
   anexos: File[];
@@ -148,6 +160,7 @@ export function FormularioChamado({
   aoCancelar,
   aoEnviar,
 }: Props) {
+  const usuarioId = useUsuarioAtualId();
   const { data: membros } = useMembrosWorkspace(workspaceId);
   const { data: categorias } = useCategoriasChamado(workspaceId);
   const { data: departamentos } = useDepartamentos(workspaceId);
@@ -161,12 +174,36 @@ export function FormularioChamado({
     loja: (inicial as { loja?: string | null } | undefined)?.loja ?? null,
     responsavel_id: inicial?.responsavel_id ?? null,
     departamento_id: (inicial as { departamento_id?: string | null } | undefined)?.departamento_id ?? null,
+    departamento_origem_id:
+      (inicial as { departamento_origem_id?: string | null } | undefined)?.departamento_origem_id ?? null,
     prazo: inicial?.prazo ?? null,
     chamado_pai_id: chamadoPaiId ?? inicial?.chamado_pai_id ?? null,
     anexos: [],
     requisicao_compras: false,
     itens_requisicao: [],
   });
+
+  // Departamentos do próprio solicitante. Quando ele pertence a mais de um,
+  // precisa escolher por qual está abrindo o chamado (origem). Só na criação.
+  const ehEdicao = !!(inicial as { id?: string } | undefined)?.id;
+  const meusDepartamentos = useMemo(() => {
+    const meu = (membros ?? []).find((m) => m.usuario_id === usuarioId);
+    const ids = meu?.departamento_ids ?? [];
+    return (departamentos ?? []).filter((d) => ids.includes(d.id));
+  }, [membros, departamentos, usuarioId]);
+  const escolherOrigem = !ehEdicao && meusDepartamentos.length > 1;
+
+  // Se o usuário só tem um departamento, fixa a origem nele (o trigger do banco
+  // faria o mesmo, mas deixamos explícito para enviar já preenchido).
+  useEffect(() => {
+    if (ehEdicao) return;
+    if (meusDepartamentos.length === 1) {
+      const unico = meusDepartamentos[0].id;
+      setDados((d) =>
+        d.departamento_origem_id === unico ? d : { ...d, departamento_origem_id: unico },
+      );
+    }
+  }, [ehEdicao, meusDepartamentos]);
 
   useEffect(() => {
     if (chamadoPaiId) setDados((d) => ({ ...d, chamado_pai_id: chamadoPaiId }));
@@ -195,6 +232,7 @@ export function FormularioChamado({
       const categoriaPai = chamadoPai.categoria ?? "";
       const cat = (categorias ?? []).find((c) => c.nome === categoriaPai);
       let prazo = d.prazo;
+      let departamento_id = d.departamento_id;
       if (cat?.sla_resolucao_horas) {
         const dt = new Date();
         dt.setHours(dt.getHours() + cat.sla_resolucao_horas);
@@ -202,9 +240,35 @@ export function FormularioChamado({
       } else if (chamadoPai.prazo) {
         prazo = chamadoPai.prazo;
       }
-      return { ...d, categoria: categoriaPai, prazo };
+      if (cat?.departamento_id) {
+        departamento_id = cat.departamento_id;
+      }
+      return { ...d, categoria: categoriaPai, prazo, departamento_id };
     });
   }, [chamadoPai, chamadoPaiId, categorias]);
+
+  const categoriasDoDepartamento = useMemo((): CategoriaChamado[] => {
+    if (!dados.departamento_id) return [];
+    const dep = (departamentos ?? []).find((d) => d.id === dados.departamento_id);
+    const doBanco = (categorias ?? []).filter((c) => c.departamento_id === dados.departamento_id);
+    const pareceProjetos =
+      nomeEhDepartamentoProjetos(dep?.nome) ||
+      (!dep && doBanco.some((c) => ehCategoriaDepartamentoProjetos(c.nome)));
+
+    if (pareceProjetos) {
+      return mesclarCategoriasDepartamentoProjetos(
+        categorias ?? [],
+        dados.departamento_id,
+        workspaceId,
+      );
+    }
+    return doBanco;
+  }, [categorias, dados.departamento_id, departamentos, workspaceId]);
+
+  const departamentoDestinoEhProjetos = useMemo(() => {
+    const dep = (departamentos ?? []).find((d) => d.id === dados.departamento_id);
+    return nomeEhDepartamentoProjetos(dep?.nome);
+  }, [departamentos, dados.departamento_id]);
 
   const [corrigindo, setCorrigindo] = useState(false);
   const [tentouEnviar, setTentouEnviar] = useState(false);
@@ -225,14 +289,13 @@ export function FormularioChamado({
     }
     setCorrigindo(true);
     try {
-      const { data, error } = await supabase.functions.invoke("ia-chamado", {
-        body: {
-          workspace_id: workspaceId,
+      const data = await acaoIaChamado({
+        data: {
+          workspaceId,
           acao: "corrigir_escrita",
           texto,
         },
       });
-      if (error) throw error;
       const resp = data as { error?: string; resultado?: string };
       if (resp.error) throw new Error(resp.error);
       const corrigido = (resp.resultado ?? "").trim();
@@ -258,11 +321,21 @@ export function FormularioChamado({
       toast.error("Selecione o departamento de destino do chamado.");
       return;
     }
+    if (!dados.categoria.trim()) {
+      toast.error("Selecione a categoria do chamado.");
+      return;
+    }
+    if (escolherOrigem && !dados.departamento_origem_id) {
+      toast.error("Selecione por qual departamento você está abrindo o chamado.");
+      return;
+    }
     aoEnviar({ ...dados, titulo: dados.titulo.trim() });
   }
 
   const tituloInvalido = tentouEnviar && !dados.titulo.trim();
   const deptoInvalido = tentouEnviar && !dados.departamento_id;
+  const categoriaInvalida = tentouEnviar && !dados.categoria.trim();
+  const origemInvalido = tentouEnviar && escolherOrigem && !dados.departamento_origem_id;
 
   return (
     <form onSubmit={submeter} className="space-y-5">
@@ -468,118 +541,36 @@ export function FormularioChamado({
 
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                <Tag className="h-3 w-3" /> Categoria
-              </Label>
-              <Select
-                value={dados.categoria || "__nenhuma__"}
-                onValueChange={(v) => {
-                  const novaCategoria = v === "__nenhuma__" ? "" : v;
-                  const cat = (categorias ?? []).find((c) => c.nome === novaCategoria);
-                  setDados((d) => {
-                    let prazo = d.prazo;
-                    if (cat?.sla_resolucao_horas && !d.prazo) {
-                      const dt = new Date();
-                      dt.setHours(dt.getHours() + cat.sla_resolucao_horas);
-                      prazo = dt.toISOString();
-                    }
-                    // Se a categoria tiver departamento vinculado, preenche/sobrescreve.
-                    let departamento_id = d.departamento_id;
-                    let requisicao_compras = d.requisicao_compras;
-                    let itens_requisicao = d.itens_requisicao;
-                    let responsavel_id = d.responsavel_id;
-                    if (cat?.departamento_id) {
-                      departamento_id = cat.departamento_id;
-                      responsavel_id = null;
-                      const dep = (departamentos ?? []).find((x) => x.id === cat.departamento_id);
-                      const ehCompras = !!dep && dep.nome.trim().toLowerCase() === "compras";
-                      if (!ehCompras) {
-                        requisicao_compras = false;
-                        itens_requisicao = [];
-                      }
-                    }
-                    return {
-                      ...d,
-                      categoria: novaCategoria,
-                      prazo,
-                      departamento_id,
-                      responsavel_id,
-                      requisicao_compras,
-                      itens_requisicao,
-                    };
-                  });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__nenhuma__">Sem categoria</SelectItem>
-                  {(categorias ?? []).map((c) => (
-                    <SelectItem key={c.id} value={c.nome}>
-                      <span className="flex items-center gap-2">
-                        <span
-                          className="h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: c.cor }}
-                        />
-                        <span className="flex-1">{c.nome}</span>
-                        {c.sla_resolucao_horas != null && (
-                          <span className="text-xs text-muted-foreground">
-                            SLA {c.sla_resolucao_horas}h
-                          </span>
-                        )}
-                      </span>
-                    </SelectItem>
-                  ))}
-                  {dados.categoria &&
-                    !(categorias ?? []).some((c) => c.nome === dados.categoria) && (
-                      <SelectItem value={dados.categoria}>{dados.categoria}</SelectItem>
-                    )}
-                </SelectContent>
-              </Select>
-              {(() => {
-                const cat = (categorias ?? []).find((c) => c.nome === dados.categoria);
-                if (!cat) return null;
-                if (cat.sla_resposta_horas == null && cat.sla_resolucao_horas == null) return null;
-                return (
-                  <p className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                    {cat.sla_resposta_horas != null && (
-                      <span>SLA resposta: <strong className="text-foreground">{cat.sla_resposta_horas}h</strong></span>
-                    )}
-                    {cat.sla_resolucao_horas != null && (
-                      <span>SLA resolução: <strong className="text-foreground">{cat.sla_resolucao_horas}h</strong></span>
-                    )}
-                  </p>
-                );
-              })()}
-              {(!categorias || categorias.length === 0) && (
-                <p className="text-xs text-muted-foreground">
-                  Cadastre categorias em Configurações → Categorias.
-                </p>
-              )}
-            </div>
-          </Cartao>
-
-          <Cartao titulo="Atribuição e prazo" icone={UserCircle2}>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 <Building2 className="h-3 w-3" /> Departamento destino <span className="text-destructive">*</span>
               </Label>
               <Select
-                value={dados.departamento_id ?? ""}
+                value={dados.departamento_id || undefined}
                 onValueChange={(v) => {
                   const dep = (departamentos ?? []).find((x) => x.id === v);
                   const ehCompras =
                     !!dep && dep.nome.trim().toLowerCase() === "compras";
-                  setDados((d) => ({
-                    ...d,
-                    departamento_id: v,
-                    // Ao escolher um departamento, limpamos o responsável individual:
-                    // todos os membros do departamento ficam vinculados.
-                    responsavel_id: null,
-                    // Se mudou para um depto que não é Compras, desativa a requisição.
-                    requisicao_compras: ehCompras ? d.requisicao_compras : false,
-                    itens_requisicao: ehCompras ? d.itens_requisicao : [],
-                  }));
+                  setDados((d) => {
+                    const catAtual = (categorias ?? []).find((c) => c.nome === d.categoria);
+                    const categoriaValida =
+                      d.categoria &&
+                      (catAtual?.departamento_id === v ||
+                        (nomeEhDepartamentoProjetos(dep?.nome) &&
+                          ehCategoriaDepartamentoProjetos(d.categoria)))
+                        ? d.categoria
+                        : "";
+                    const tituloAuto = encontrarCategoriaProjetosCanonica(d.categoria);
+                    const tituloLimpo =
+                      tituloAuto && d.titulo === tituloAuto ? "" : d.titulo;
+                    return {
+                      ...d,
+                      departamento_id: v,
+                      categoria: categoriaValida,
+                      titulo: tituloLimpo,
+                      responsavel_id: null,
+                      requisicao_compras: ehCompras ? d.requisicao_compras : false,
+                      itens_requisicao: ehCompras ? d.itens_requisicao : [],
+                    };
+                  });
                 }}
               >
                 <SelectTrigger
@@ -649,6 +640,151 @@ export function FormularioChamado({
                   </div>
                 );
               })()}
+            </div>
+          </Cartao>
+
+          <Cartao titulo="Atribuição e prazo" icone={UserCircle2}>
+            {escolherOrigem && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <Building2 className="h-3 w-3" /> Abrir em nome do departamento{" "}
+                  <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={dados.departamento_origem_id || undefined}
+                  onValueChange={(v) => atualizar("departamento_origem_id", v)}
+                >
+                  <SelectTrigger
+                    className={cn(
+                      origemInvalido && "border-destructive focus-visible:ring-destructive",
+                    )}
+                    aria-invalid={origemInvalido}
+                  >
+                    <SelectValue placeholder="Selecionar seu departamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {meusDepartamentos.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {origemInvalido && (
+                  <p className="flex items-center gap-1 text-xs text-destructive">
+                    <AlertCircle className="h-3 w-3" /> Escolha por qual departamento você está abrindo.
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Você pertence a mais de um departamento. Escolha em nome de qual está abrindo este chamado.
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <Tag className="h-3 w-3" /> Categoria <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={dados.categoria || undefined}
+                onValueChange={(v) => {
+                  const cat = (categorias ?? []).find((c) => c.nome === v);
+                  setDados((d) => {
+                    let prazo = d.prazo;
+                    if (cat?.sla_resolucao_horas && !d.prazo) {
+                      const dt = new Date();
+                      dt.setHours(dt.getHours() + cat.sla_resolucao_horas);
+                      prazo = dt.toISOString();
+                    }
+                    const dep = cat?.departamento_id
+                      ? (departamentos ?? []).find((x) => x.id === cat.departamento_id)
+                      : (departamentos ?? []).find((x) => x.id === d.departamento_id);
+                    const ehCompras =
+                      !!dep && dep.nome.trim().toLowerCase() === "compras";
+                    const tituloCategoria = tituloAoSelecionarCategoriaProjetos(v);
+                    return {
+                      ...d,
+                      categoria: v,
+                      titulo: tituloCategoria ?? d.titulo,
+                      prazo,
+                      requisicao_compras: ehCompras ? d.requisicao_compras : false,
+                      itens_requisicao: ehCompras ? d.itens_requisicao : [],
+                    };
+                  });
+                }}
+                disabled={!dados.departamento_id}
+              >
+                <SelectTrigger
+                  className={cn(categoriaInvalida && "border-destructive focus-visible:ring-destructive")}
+                  aria-invalid={categoriaInvalida}
+                >
+                  <SelectValue
+                    placeholder={
+                      dados.departamento_id
+                        ? "Selecionar categoria"
+                        : "Selecione o departamento destino primeiro"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoriasDoDepartamento.map((c) => (
+                    <SelectItem key={c.id} value={c.nome}>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: c.cor }}
+                        />
+                        <span className="flex-1">{c.nome}</span>
+                        {c.sla_resolucao_horas != null && (
+                          <span className="text-xs text-muted-foreground">
+                            SLA {c.sla_resolucao_horas}h
+                          </span>
+                        )}
+                      </span>
+                    </SelectItem>
+                  ))}
+                  {dados.categoria &&
+                    !categoriasDoDepartamento.some((c) => c.nome === dados.categoria) && (
+                      <SelectItem value={dados.categoria}>{dados.categoria}</SelectItem>
+                    )}
+                </SelectContent>
+              </Select>
+              {categoriaInvalida && (
+                <p className="flex items-center gap-1 text-xs text-destructive">
+                  <AlertCircle className="h-3 w-3" /> Selecione uma categoria para continuar.
+                </p>
+              )}
+              {dados.departamento_id && categoriasDoDepartamento.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Nenhuma categoria vinculada a este departamento. Cadastre em Configurações → Categorias.
+                </p>
+              )}
+              {departamentoDestinoEhProjetos && (
+                <p className="text-xs text-muted-foreground">
+                  As categorias «Solicitação de Projeto…» preenchem o título automaticamente; as
+                  demais mantêm o título que você digitar.
+                </p>
+              )}
+              {(() => {
+                const cat = (categorias ?? []).find((c) => c.nome === dados.categoria);
+                if (!cat) return null;
+                if (cat.sla_resposta_horas == null && cat.sla_resolucao_horas == null) return null;
+                return (
+                  <p className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                    {cat.sla_resposta_horas != null && (
+                      <span>SLA resposta: <strong className="text-foreground">{cat.sla_resposta_horas}h</strong></span>
+                    )}
+                    {cat.sla_resolucao_horas != null && (
+                      <span>SLA resolução: <strong className="text-foreground">{cat.sla_resolucao_horas}h</strong></span>
+                    )}
+                  </p>
+                );
+              })()}
+              {!dados.departamento_id && (
+                <p className="text-xs text-muted-foreground">
+                  Escolha o departamento destino para ver as categorias disponíveis.
+                </p>
+              )}
             </div>
 
 
@@ -811,7 +947,8 @@ export function FormularioChamado({
                 aoMudar={(v) => atualizar("loja", v)}
               />
               <p className="text-xs text-muted-foreground">
-                Lojas sincronizadas da VMPay.
+                Locais da VMPay agrupados por cidade. Se não houver endereços,
+                lista as lojas (clientes).
               </p>
             </div>
           </Cartao>
@@ -839,7 +976,13 @@ export function FormularioChamado({
             <Button
               type="submit"
               size="lg"
-              disabled={enviando || !dados.titulo.trim()}
+              disabled={
+                enviando ||
+                !dados.titulo.trim() ||
+                !dados.departamento_id ||
+                !dados.categoria.trim() ||
+                (escolherOrigem && !dados.departamento_origem_id)
+              }
               className="min-w-[160px]"
             >
               {enviando && <Loader2 className="h-4 w-4 animate-spin" />}

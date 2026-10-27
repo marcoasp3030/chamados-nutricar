@@ -70,14 +70,14 @@ DOMAIN=nutricarhub.nutricarbrasil.com.br
 # Integrações (preencha se for usar)
 OPENAI_API_KEY=
 VMPAY_API_KEY=
-LOVABLE_API_KEY=
+OPENAI_API_KEY=
 ```
 
 ---
 
 ## 4. ATIVAR os adapters próprios (substitui Supabase)
 
-Esses 4 comandos trocam o app de Supabase → backend próprio (auth + DB + storage + realtime). **Só rode na VPS**, nunca no preview Lovable.
+Esses 4 comandos trocam o app de Supabase → backend próprio (auth + DB + storage + realtime). **Só rode na VPS**, nunca no ambiente legado.
 
 ```bash
 cd /opt/chamados

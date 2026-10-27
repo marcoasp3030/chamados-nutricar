@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowLeft, FileDown, History, Loader2, MessageSquare, Save } from "lucide-react";
+import { ArrowLeft, FileDown, History, Image as ImageIcon, Loader2, MessageSquare, Save, Trash2 } from "lucide-react";
 import { PainelComentarios } from "@/componentes/checklists/PainelComentarios";
+import { GaleriaAnexosChecklist } from "@/componentes/checklists/GaleriaAnexosChecklist";
 import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,16 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { obterUsuarioAtual } from "@/auth/atual";
 import {
@@ -46,6 +57,7 @@ type Valor = boolean | string | number | null;
 export function DetalheChecklist({ checklistId }: Props) {
   const { workspaceAtual } = useWorkspaceStore();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { data: checklist, isLoading } = useChecklist(checklistId);
   const { data: itens } = useItensTemplate(checklist?.template_id);
   const { data: respostas } = useRespostasChecklist(checklistId);
@@ -53,6 +65,11 @@ export function DetalheChecklist({ checklistId }: Props) {
   const [valores, setValores] = useState<Record<string, Valor>>({});
   const [iniciais, setIniciais] = useState<Record<string, Valor>>({});
   const [historicoAberto, setHistoricoAberto] = useState(false);
+  const [confirmarExcluir, setConfirmarExcluir] = useState(false);
+
+  const ehAdmin =
+    !!workspaceAtual &&
+    ["Proprietario", "Administrador"].includes(workspaceAtual.papel);
 
   useEffect(() => {
     if (!respostas) return;
@@ -142,6 +159,27 @@ export function DetalheChecklist({ checklistId }: Props) {
     onError: (e: Error) => toast.error("Falha ao salvar.", { description: e.message }),
   });
 
+  const excluir = useMutation({
+    mutationFn: async () => {
+      if (!checklist) return;
+      // As respostas, histórico e comentários são removidos em cascata (FK ON DELETE CASCADE).
+      const { error } = await db.from("checklists").delete().eq("id", checklist.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Checklist excluído.");
+      queryClient.invalidateQueries({ queryKey: ["checklists"] });
+      if (workspaceAtual) {
+        navigate({
+          to: "/w/$slug/checklists",
+          params: { slug: workspaceAtual.slug },
+        });
+      }
+    },
+    onError: (e: Error) =>
+      toast.error("Falha ao excluir.", { description: e.message }),
+  });
+
   const alterarStatus = useMutation({
     mutationFn: async (status: string) => {
       if (!checklist) return;
@@ -228,6 +266,16 @@ export function DetalheChecklist({ checklistId }: Props) {
             )}
             Salvar
           </Button>
+          {ehAdmin && (
+            <Button
+              variant="outline"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => setConfirmarExcluir(true)}
+              disabled={excluir.isPending}
+            >
+              <Trash2 className="h-4 w-4" /> Excluir
+            </Button>
+          )}
         </div>
       </div>
 
@@ -263,6 +311,23 @@ export function DetalheChecklist({ checklistId }: Props) {
           </section>
         ))}
       </div>
+
+      {workspaceAtual && (
+        <section className="rounded-2xl border border-border bg-card p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-lg font-semibold">Imagens do projeto</h2>
+          </div>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Anexe fotos do projeto/inauguração. Clique em uma imagem para ampliar e navegar entre elas.
+          </p>
+          <GaleriaAnexosChecklist
+            checklistId={checklistId}
+            workspaceId={workspaceAtual.id}
+            podeExcluirTodos={ehAdmin}
+          />
+        </section>
+      )}
 
       {workspaceAtual && (
         <section className="rounded-2xl border border-border bg-card p-5">
@@ -308,6 +373,32 @@ export function DetalheChecklist({ checklistId }: Props) {
           </div>
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={confirmarExcluir} onOpenChange={setConfirmarExcluir}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir este checklist?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. Todas as respostas, o histórico e os comentários de
+              <strong> {checklist.nome} </strong> serão removidos. Não é possível desfazer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluir.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                excluir.mutate();
+              }}
+              disabled={excluir.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {excluir.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

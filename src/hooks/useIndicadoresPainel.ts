@@ -33,6 +33,21 @@ export interface IndicadoresPainel {
   departamentosPiorIndiceResolucao: RankingItem[];
 }
 
+export interface FiltrosPainel {
+  /** Apenas chamados do usuário logado. */
+  responsavel?: "MEUS";
+  /** Status específico. */
+  status?: StatusChamado;
+  /** Apenas encerrados (Fechado/Cancelado). */
+  encerrados?: boolean;
+  /** Apenas ativos com prazo expirado. */
+  vencidos?: boolean;
+  /** Departamento de destino. */
+  departamento_id?: string;
+  /** Nome da categoria. */
+  categoria?: string;
+}
+
 export interface RankingItem {
   chave: string;
   rotulo: string;
@@ -70,10 +85,14 @@ const PRIO_VAZIO: Record<PrioridadeChamado, number> = {
   Urgente: 0,
 };
 
-export function useIndicadoresPainel(workspaceId: string | undefined) {
+export function useIndicadoresPainel(
+  workspaceId: string | undefined,
+  filtros: FiltrosPainel = {},
+) {
   return useQuery({
-    queryKey: ["painel", workspaceId],
+    queryKey: ["painel", workspaceId, filtros],
     enabled: !!workspaceId,
+    retry: 1,
     queryFn: async (): Promise<IndicadoresPainel> => {
       const inicioMes = new Date();
       inicioMes.setDate(1);
@@ -86,7 +105,7 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
         db
           .from("chamados")
           .select(
-            "id, numero, codigo, titulo, status, prioridade, prazo, criado_em, primeiro_resposta_em, resolvido_em, fechado_em, responsavel_id, loja, categoria, departamento_id",
+            "id, numero, codigo, titulo, status, prioridade, prazo, criado_em, primeiro_resposta_em, resolvido_em, fechado_em, responsavel_id, loja, categoria, departamento_id, departamento_origem_id",
           )
           .eq("workspace_id", workspaceId!)
           .order("criado_em", { ascending: false })
@@ -100,7 +119,38 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
 
       if (chamadosRes.error) throw chamadosRes.error;
 
-      const lista = chamadosRes.data ?? [];
+      // Aplica os filtros de "Meus atalhos" ANTES de qualquer agregação, para
+      // que todas as visões (cards, gráficos, rankings, últimos) reflitam o filtro.
+      const ehAtivo = (c: { status: string }) =>
+        c.status !== "Fechado" && c.status !== "Cancelado" && c.status !== "Resolvido";
+      const agoraFiltro = new Date();
+      let lista = chamadosRes.data ?? [];
+      if (filtros.responsavel === "MEUS" && meuId)
+        lista = lista.filter((c) => c.responsavel_id === meuId);
+      if (filtros.status) lista = lista.filter((c) => c.status === filtros.status);
+      if (filtros.encerrados)
+        lista = lista.filter((c) => c.status === "Fechado" || c.status === "Cancelado");
+      if (filtros.vencidos)
+        lista = lista.filter(
+          (c) => ehAtivo(c) && c.prazo && new Date(c.prazo) < agoraFiltro,
+        );
+      if (filtros.departamento_id)
+        lista = lista.filter((c) => {
+          const cc = c as {
+            departamento_id?: string | null;
+            departamento_origem_id?: string | null;
+          };
+          // Casa destino OU origem (igual ao filtro da lista de chamados).
+          return (
+            cc.departamento_id === filtros.departamento_id ||
+            cc.departamento_origem_id === filtros.departamento_id
+          );
+        });
+      if (filtros.categoria)
+        lista = lista.filter(
+          (c) => ((c as { categoria?: string | null }).categoria ?? "") === filtros.categoria,
+        );
+
       const comSet = new Set(
         (comentariosRes.data ?? []).map((c) => c.chamado_id as string),
       );
@@ -162,8 +212,18 @@ export function useIndicadoresPainel(workspaceId: string | undefined) {
         if (criado >= inicioMes) totalMes++;
         const foiResolvido =
           !!c.resolvido_em || c.status === "Resolvido" || c.status === "Fechado";
-        if (c.resolvido_em && new Date(c.resolvido_em) >= inicioMes) resolvidosMes++;
-        if (c.fechado_em && new Date(c.fechado_em) >= inicioMes) fechadosMes++;
+        if (
+          c.status === "Resolvido" &&
+          c.resolvido_em &&
+          new Date(c.resolvido_em) >= inicioMes
+        )
+          resolvidosMes++;
+        if (
+          c.status === "Fechado" &&
+          c.fechado_em &&
+          new Date(c.fechado_em) >= inicioMes
+        )
+          fechadosMes++;
 
         addAcum(acumLoja, (c as { loja?: string | null }).loja, ativo, c.id);
         addAcum(acumDep, (c as { departamento_id?: string | null }).departamento_id, ativo, c.id);

@@ -75,7 +75,11 @@ export function useMembrosWorkspace(
           telefone: null,
           avatar_url: null,
         },
-      }));
+      })).sort((a, b) =>
+        (a.perfil.nome || "").localeCompare(b.perfil.nome || "", "pt-BR", {
+          sensitivity: "base",
+        }),
+      );
     },
   });
 }

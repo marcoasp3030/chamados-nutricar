@@ -1,7 +1,7 @@
 // Cliente Postgres centralizado para a versão "VPS" do app.
 //
 // IMPORTANTE: este arquivo só funciona quando o app rodar em ambiente Node
-// (na VPS, com DATABASE_URL configurado). Na preview Lovable atual, que ainda
+// (na VPS, com DATABASE_URL configurado). No ambiente de compatibilidade, que ainda
 // usa Supabase + Cloudflare Workers, ele não é importado por nenhum código de
 // produção — convive em paralelo até o cutover.
 //

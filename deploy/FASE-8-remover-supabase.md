@@ -2,7 +2,7 @@
 
 > Este passo só deve ser executado **depois** que você migrar todas as telas/hooks para usar
 > os repos (Fase 3), o auth próprio (Fase 2), o storage local (Fase 4) e o realtime SSE (Fase 6).
-> No preview do Lovable o Supabase continua sendo o backend ativo, então **não rode isso aqui**.
+> No ambiente legado o Supabase continua sendo o backend ativo, então **não rode isso aqui**.
 
 ## Estado atual
 
@@ -41,7 +41,7 @@ Padrões e seus substitutos:
 
 ## Roteiro de migração das telas
 
-Faça em lotes pequenos, fora do Lovable (no editor da VPS ou local com `bun run dev`
+Faça em lotes pequenos, no editor da VPS ou local com `bun run dev`
 apontando para Postgres local). Sequência sugerida:
 
 1. **Auth provider** (`src/hooks/use-auth.tsx` ou similar) → trocar para `src/auth/client.ts`.
@@ -97,7 +97,7 @@ Ficam apenas as variáveis listadas em `.env.production.example` (Fase 7).
 
 ## Por que dois `vite.config.*`?
 
-- `vite.config.ts` → usado pelo Lovable (preview/published em Cloudflare Workers).
+- `vite.config.ts` → usado no desenvolvimento e no build padrão.
   **Não mexer**, é o que mantém o preview funcionando.
 - `vite.config.vps.ts` → usado pelo Docker da Fase 7 (`build:vps`). Preset Node,
   sem Workers. É o que vai pra produção na sua VPS.

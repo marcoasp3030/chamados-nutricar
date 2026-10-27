@@ -5,6 +5,7 @@ import type {
   HistoricoChamado,
 } from "@/tipos/chamado";
 import { db } from "@/dados/atual";
+import { fecharChamadosResolvidosExpirados } from "@/lib/chamados-manutencao";
 
 async function carregarPerfis(ids: string[]) {
   const unicos = [...new Set(ids.filter(Boolean))];
@@ -18,6 +19,8 @@ export function useChamadoPorNumero(workspaceId: string | undefined, numero: num
     queryKey: ["chamado", workspaceId, numero],
     enabled: !!workspaceId && Number.isFinite(numero),
     queryFn: async (): Promise<ChamadoComPessoas | null> => {
+      await fecharChamadosResolvidosExpirados(workspaceId!);
+
       const { data, error } = await db
         .from("chamados")
         .select("*")

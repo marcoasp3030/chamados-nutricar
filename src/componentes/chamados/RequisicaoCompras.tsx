@@ -163,60 +163,161 @@ export function RequisicaoCompras({ chamadoId, codigoChamado, tituloChamado }: P
   ).length;
   const progresso = itens.length > 0 ? Math.round((concluidos / itens.length) * 100) : 0;
 
+  const pesoPrioridade: Record<PrioridadeChamado, number> = {
+    Urgente: 4,
+    Alta: 3,
+    Media: 2,
+    Baixa: 1,
+  };
+
   function exportarExcel() {
     if (itens.length === 0) {
       toast.info("Nenhum item para exportar.");
       return;
     }
-    const linhas = itens.map((it, i) => ({
-      "#": i + 1,
-      Descrição: it.descricao,
-      Quantidade: Number(it.quantidade),
-      Unidade: it.unidade ?? "",
-      "Referência / Marca / Link": it.referencia ?? "",
-      "Data de necessidade": it.data_necessidade
-        ? format(new Date(it.data_necessidade), "dd/MM/yyyy", { locale: ptBR })
-        : "",
-      Prioridade: rotuloPrioridade[it.prioridade],
-      "Status compra": it.status_compra,
-      Observação: it.observacao_compra ?? "",
-      "Atualizado em": it.atualizado_compra_em
-        ? format(new Date(it.atualizado_compra_em), "dd/MM/yyyy HH:mm", { locale: ptBR })
-        : "",
-    }));
+
+    const ordenados = [...itens].sort((a, b) => {
+      const pa = pesoPrioridade[a.prioridade] - pesoPrioridade[b.prioridade];
+      if (pa !== 0) return -pa;
+      return a.ordem - b.ordem;
+    });
+
+    const COLS = 14;
+    const linhaCabecalho = 7; // 0-indexed — linha dos títulos das colunas
+    const linhaInicioDados = linhaCabecalho + 1;
+
+    const cabecalho: (string | number)[][] = [
+      ["REQUISIÇÃO DE COMPRAS — PLANILHA DO COMPRADOR"],
+      [`Chamado: ${codigoChamado ?? "—"}`],
+      [`Título: ${tituloChamado ?? "—"}`],
+      [`Exportado em: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`],
+      [
+        `Resumo: ${itens.length} item(ns) | ${urgentes} urgente(s) | ${altas} alta(s) | ${concluidos} concluído(s) (${progresso}%)`,
+      ],
+      [
+        "Instruções: preencha Fornecedor, Valores, Previsão de entrega e Nº pedido/NF. Itens ordenados por prioridade (urgentes primeiro).",
+      ],
+      [],
+      [
+        "#",
+        "Descrição do item",
+        "Qtd",
+        "Un",
+        "Referência / Marca / Link",
+        "Data necessidade",
+        "Prioridade",
+        "Status atual",
+        "Fornecedor",
+        "Valor unit. (R$)",
+        "Valor total (R$)",
+        "Previsão entrega",
+        "Nº pedido / NF",
+        "Observação",
+      ],
+    ];
+
+    const linhasDados = ordenados.map((it, i) => {
+      const numLinha = linhaInicioDados + i + 1; // 1-indexed para fórmula Excel
+      return [
+        i + 1,
+        it.descricao,
+        Number(it.quantidade),
+        it.unidade ?? "",
+        it.referencia ?? "",
+        it.data_necessidade
+          ? format(new Date(it.data_necessidade), "dd/MM/yyyy", { locale: ptBR })
+          : "",
+        rotuloPrioridade[it.prioridade],
+        it.status_compra,
+        "", // Fornecedor — comprador preenche
+        "", // Valor unit.
+        { f: `C${numLinha}*J${numLinha}`, t: "n" as const }, // Qtd × unit.
+        "", // Previsão entrega
+        "", // Nº pedido
+        it.observacao_compra ?? "",
+      ];
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet([...cabecalho, ...linhasDados.map((l) =>
+      l.map((c) => (typeof c === "object" && c !== null && "f" in c ? "" : c)),
+    )]);
+
+    // Fórmulas de valor total
+    linhasDados.forEach((linha, i) => {
+      const colTotal = 10; // K
+      const r = linhaInicioDados + i;
+      const cel = linha[colTotal];
+      if (typeof cel === "object" && cel !== null && "f" in cel) {
+        const addr = XLSX.utils.encode_cell({ r, c: colTotal });
+        ws[addr] = cel;
+      }
+    });
+
+    ws["!cols"] = [
+      { wch: 4 },
+      { wch: 42 },
+      { wch: 8 },
+      { wch: 6 },
+      { wch: 32 },
+      { wch: 14 },
+      { wch: 11 },
+      { wch: 12 },
+      { wch: 22 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 36 },
+    ];
+
+    ws["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: COLS - 1 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: COLS - 1 } },
+      { s: { r: 2, c: 0 }, e: { r: 2, c: COLS - 1 } },
+      { s: { r: 3, c: 0 }, e: { r: 3, c: COLS - 1 } },
+      { s: { r: 4, c: 0 }, e: { r: 4, c: COLS - 1 } },
+      { s: { r: 5, c: 0 }, e: { r: 5, c: COLS - 1 } },
+    ];
+
+    const ultimaLinha = linhaInicioDados + ordenados.length - 1;
+    ws["!autofilter"] = {
+      ref: XLSX.utils.encode_range({
+        s: { r: linhaCabecalho, c: 0 },
+        e: { r: ultimaLinha, c: COLS - 1 },
+      }),
+    };
+
+    ws["!views"] = [{ state: "frozen", ySplit: linhaInicioDados, activeCell: "A9" }];
+
+    // Aba de legenda para o comprador
+    const wsLegenda = XLSX.utils.aoa_to_sheet([
+      ["Como usar esta planilha"],
+      [],
+      ["Colunas preenchidas pelo solicitante", "Descrição"],
+      ["#", "Ordem do item na requisição"],
+      ["Descrição do item", "O que deve ser comprado"],
+      ["Qtd / Un", "Quantidade e unidade de medida"],
+      ["Referência / Marca / Link", "Sugestão de produto ou URL"],
+      ["Data necessidade", "Prazo desejado pelo solicitante"],
+      ["Prioridade", "Urgente > Alta > Média > Baixa"],
+      ["Status atual", "Situação no sistema de chamados"],
+      [],
+      ["Colunas para o COMPRADOR preencher", ""],
+      ["Fornecedor", "Nome do fornecedor escolhido"],
+      ["Valor unit. (R$)", "Preço unitário negociado"],
+      ["Valor total (R$)", "Calculado automaticamente (Qtd × unit.)"],
+      ["Previsão entrega", "Data prevista de recebimento"],
+      ["Nº pedido / NF", "Número do pedido ou nota fiscal"],
+      ["Observação", "Complementos da cotação/compra"],
+      [],
+      ["Fluxo de status no sistema", ""],
+      ...STATUS_COMPRA.map((s) => [s, ""]),
+    ]);
+    wsLegenda["!cols"] = [{ wch: 28 }, { wch: 48 }];
 
     const wb = XLSX.utils.book_new();
-
-    // Cabeçalho informativo
-    const cabecalho: (string | number)[][] = [
-      ["Requisição de Compras"],
-      [`Chamado: ${codigoChamado ?? ""}`],
-      [`Título: ${tituloChamado ?? ""}`],
-      [`Exportado em: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`],
-      [`Total de itens: ${itens.length} | Concluídos: ${concluidos} (${progresso}%)`],
-      [],
-    ];
-    const ws = XLSX.utils.aoa_to_sheet(cabecalho);
-    XLSX.utils.sheet_add_json(ws, linhas, { origin: "A7" });
-
-    // Larguras de coluna
-    ws["!cols"] = [
-      { wch: 5 },
-      { wch: 45 },
-      { wch: 11 },
-      { wch: 10 },
-      { wch: 35 },
-      { wch: 18 },
-      { wch: 12 },
-      { wch: 14 },
-      { wch: 40 },
-      { wch: 18 },
-    ];
-
-    // Mesclar título
-    ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } }];
-
     XLSX.utils.book_append_sheet(wb, ws, "Requisição");
+    XLSX.utils.book_append_sheet(wb, wsLegenda, "Instruções");
 
     const nomeArq = `requisicao-${(codigoChamado ?? chamadoId).replace(/[^\w-]/g, "_")}-${format(
       new Date(),

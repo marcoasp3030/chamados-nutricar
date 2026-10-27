@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useChamados } from "@/hooks/useChamados";
+import { useChamados, type FiltrosChamados } from "@/hooks/useChamados";
 import { BadgeStatus } from "@/componentes/chamados/BadgeStatus";
 import { BadgePrioridade } from "@/componentes/chamados/BadgePrioridade";
 import {
@@ -25,12 +25,24 @@ import {
 import { rotuloPrioridade, rotuloStatusChamado } from "@/utilitarios/traducoes";
 import { cn } from "@/lib/utils";
 
+type CampoDataPeriodo = NonNullable<FiltrosChamados["campoData"]>;
+
 export interface FiltrosPrevia {
   status?: StatusChamado | "Todos";
+  /** Vários status (ex.: ambos os tipos de Aguardando). */
+  statusIn?: StatusChamado[];
   prioridade?: PrioridadeChamado | "Todas";
   responsavel?: "Todos" | "MEUS";
   periodo?: "todos" | "mes";
+  /** Campo de data usado com periodo "mes" (padrão: criado_em). */
+  campoData?: CampoDataPeriodo;
   vencidos?: boolean;
+  /** Apenas chamados encerrados (Fechado ou Cancelado). */
+  encerrados?: boolean;
+  /** Nome da categoria. */
+  categoria?: string;
+  /** Id do departamento de destino. */
+  departamento_id?: string;
   /** Restringe a lista a um conjunto fixo de IDs (usado por rankings do painel). */
   chamadoIds?: string[];
 }
@@ -60,17 +72,35 @@ export function PreviaIndicador({
     if (aberto) setFiltros(filtrosIniciais);
   }, [aberto, filtrosIniciais]);
 
-  const { data, isLoading } = useChamados(aberto ? workspaceId : undefined, {
-    status: filtros.status,
-    prioridade: filtros.prioridade,
-    responsavel_id: filtros.responsavel,
-  });
+  const queryFiltros = useMemo((): FiltrosChamados => {
+    const base: FiltrosChamados = {
+      status: filtros.statusIn?.length ? undefined : filtros.status,
+      statusIn: filtros.statusIn,
+      prioridade: filtros.prioridade,
+      responsavel_id: filtros.responsavel,
+      categoria: filtros.categoria,
+      departamento_id: filtros.departamento_id,
+      somenteRaiz: false,
+    };
+    if (filtros.periodo === "mes") {
+      base.dataInicio = startOfMonth(new Date()).toISOString();
+      base.campoData = filtros.campoData ?? "criado_em";
+    }
+    return base;
+  }, [filtros]);
+
+  const { data, isLoading } = useChamados(aberto ? workspaceId : undefined, queryFiltros);
 
   const chamadosFiltrados = useMemo(() => {
     let lista = data ?? [];
     if (filtros.chamadoIds && filtros.chamadoIds.length > 0) {
       const set = new Set(filtros.chamadoIds);
       lista = lista.filter((c) => set.has(c.id));
+    }
+    if (filtros.encerrados) {
+      lista = lista.filter(
+        (c) => c.status === "Fechado" || c.status === "Cancelado",
+      );
     }
     if (filtros.vencidos) {
       lista = lista.filter(
@@ -82,26 +112,38 @@ export function PreviaIndicador({
           c.status !== "Resolvido",
       );
     }
-    if (filtros.periodo === "mes") {
-      const ini = startOfMonth(new Date());
-      lista = lista.filter((c) => new Date(c.criado_em) >= ini);
-    }
     return lista;
-  }, [data, filtros.vencidos, filtros.periodo, filtros.chamadoIds]);
+  }, [data, filtros.vencidos, filtros.encerrados, filtros.chamadoIds]);
 
   const top = filtros.chamadoIds
     ? chamadosFiltrados.slice(0, 50)
     : chamadosFiltrados.slice(0, 6);
 
   const search: Record<string, unknown> = {};
-  if (filtros.status && filtros.status !== "Todos") search.status = filtros.status;
+  if (filtros.statusIn?.length) {
+    search.statusIn = filtros.statusIn.join(",");
+  } else if (filtros.status && filtros.status !== "Todos") {
+    search.status = filtros.status;
+  }
   if (filtros.prioridade && filtros.prioridade !== "Todas") search.prioridade = filtros.prioridade;
   if (filtros.responsavel && filtros.responsavel !== "Todos") search.responsavel = filtros.responsavel;
   if (filtros.periodo && filtros.periodo !== "todos") search.periodo = filtros.periodo;
+  if (filtros.periodo === "mes" && filtros.campoData && filtros.campoData !== "criado_em") {
+    search.campoData = filtros.campoData;
+  }
   if (filtros.vencidos) search.vencidos = true;
+  if (filtros.encerrados) search.encerrados = true;
+  if (filtros.categoria) search.categoria = filtros.categoria;
+  if (filtros.departamento_id) search.departamento = filtros.departamento_id;
+  search.incluirSubchamados = true;
 
   function alternarStatus(s: StatusChamado) {
-    setFiltros((f) => ({ ...f, status: f.status === s ? "Todos" : s }));
+    setFiltros((f) => {
+      if (f.statusIn?.length) {
+        return { ...f, statusIn: undefined, status: f.status === s ? "Todos" : s };
+      }
+      return { ...f, status: f.status === s ? "Todos" : s };
+    });
   }
   function alternarPrioridade(p: PrioridadeChamado) {
     setFiltros((f) => ({ ...f, prioridade: f.prioridade === p ? "Todas" : p }));
@@ -122,7 +164,8 @@ export function PreviaIndicador({
             </p>
             <div className="flex flex-wrap gap-1.5">
               {STATUS_CHAMADO.map((s) => {
-                const ativo = filtros.status === s;
+                const ativo =
+                  filtros.status === s || (filtros.statusIn?.includes(s) ?? false);
                 return (
                   <button
                     key={s}
@@ -197,6 +240,18 @@ export function PreviaIndicador({
               )}
             >
               Apenas vencidos
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltros((f) => ({ ...f, encerrados: !f.encerrados }))}
+              className={cn(
+                "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                filtros.encerrados
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-background hover:bg-muted",
+              )}
+            >
+              Apenas encerrados
             </button>
             <button
               type="button"

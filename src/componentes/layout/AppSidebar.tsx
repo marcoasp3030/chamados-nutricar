@@ -6,9 +6,10 @@ import {
   CheckSquare,
   PartyPopper,
   Boxes,
-  Users,
-  BarChart3,
   Settings,
+  HandMetal,
+  CheckCircle2,
+  Users,
 } from "lucide-react";
 import {
   Sidebar,
@@ -24,6 +25,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
+import { ehPapelSuporte } from "@/lib/papel-acesso";
 import logo from "@/assets/nutricar-logo.png";
 import { cn } from "@/lib/utils";
 
@@ -37,9 +39,13 @@ const itensPrincipais = [
 ];
 
 const itensGestao = [
-  { rotulo: "Clientes", para: "/w/$slug/clientes" as const, icone: Users },
-  { rotulo: "Relatórios", para: "/w/$slug/relatorios" as const, icone: BarChart3 },
   { rotulo: "Configurações", para: "/w/$slug/configuracoes" as const, icone: Settings },
+];
+
+const itensSuporte = [
+  { rotulo: "Minha área", para: "/w/$slug/suporte" as const, icone: HandMetal },
+  { rotulo: "Equipe", para: "/w/$slug/suporte/equipe" as const, icone: Users },
+  { rotulo: "Resolvidos", para: "/w/$slug/suporte/resolvidos" as const, icone: CheckCircle2 },
 ];
 
 export function AppSidebar() {
@@ -50,9 +56,25 @@ export function AppSidebar() {
 
   if (!workspaceAtual) return null;
 
+  const modoSuporte = ehPapelSuporte(workspaceAtual.papel);
+  const menuItens = modoSuporte ? itensSuporte : itensPrincipais;
+  const rotuloGrupo = modoSuporte ? "Suporte" : "Operação";
+
   const renderItem = (item: { rotulo: string; para: string; icone: typeof Ticket }) => {
     const href = item.para.replace("$slug", workspaceAtual.slug);
-    const ativo = caminho === href || caminho.startsWith(href + "/");
+    const ehMinhaArea = item.para === "/w/$slug/suporte";
+    const ehEquipe = item.para === "/w/$slug/suporte/equipe";
+    const ehResolvidos = item.para === "/w/$slug/suporte/resolvidos";
+    const ativo = modoSuporte
+      ? ehResolvidos
+        ? caminho.startsWith(href)
+        : ehEquipe
+          ? caminho.startsWith(href)
+          : ehMinhaArea &&
+            (caminho === href ||
+              caminho === `${href}/` ||
+              (/^\/w\/[^/]+\/chamados\/\d+/.test(caminho) && !caminho.includes("/suporte/equipe")))
+      : caminho === href || caminho.startsWith(href + "/");
     const Icone = item.icone;
     return (
       <SidebarMenuItem key={item.para}>
@@ -93,18 +115,20 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Operação</SidebarGroupLabel>
+          <SidebarGroupLabel>{rotuloGrupo}</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>{itensPrincipais.map(renderItem)}</SidebarMenu>
+            <SidebarMenu>{menuItens.map(renderItem)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Gestão</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>{itensGestao.map(renderItem)}</SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {!modoSuporte && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Gestão</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>{itensGestao.map(renderItem)}</SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       {!collapsed && (
@@ -115,7 +139,7 @@ export function AppSidebar() {
               style={{ background: workspaceAtual.cor_primaria }}
             />
             <span className="truncate">
-              {workspaceAtual.nome} · {workspaceAtual.plano}
+              {workspaceAtual.nome} · {modoSuporte ? "Suporte" : workspaceAtual.plano}
             </span>
           </div>
         </SidebarFooter>

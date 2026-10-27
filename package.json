@@ -8,17 +8,16 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "build:vps": "NITRO_PRESET=node-server vite build --config vite.config.vps.ts",
-    "start:vps": "node .output/server/index.mjs",
+    "start:vps": "node dist/server/server.js",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "bun run scripts/migrate.ts",
+    "db:migrate": "tsx scripts/migrate.ts",
     "db:studio": "drizzle-kit studio",
-    "vps:migrar-storage": "bun run scripts/migrar-storage.ts"
+    "vps:migrar-storage": "tsx scripts/migrar-storage.ts"
   },
   "dependencies": {
-    "@cloudflare/vite-plugin": "^1.25.5",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -82,12 +81,12 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
-    "@lovable.dev/vite-tanstack-config": "^1.5.1",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",
+    "nitro": "3.0.260603-beta",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
@@ -98,6 +97,7 @@
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
+    "tsx": "^4.20.6",
     "vite": "^7.3.1"
   }
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Sparkles, Loader2, Copy } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { acaoIaChamado } from "@/lib/ia-chamado.functions";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -41,10 +41,9 @@ export function AcoesIAChamado({ workspaceId, chamadoId }: Props) {
     setResultado("");
     setAberto(true);
     try {
-      const { data, error } = await supabase.functions.invoke("ia-chamado", {
-        body: { workspace_id: workspaceId, chamado_id: chamadoId, acao },
+      const data = await acaoIaChamado({
+        data: { workspaceId, chamadoId, acao },
       });
-      if (error) throw error;
       if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
       setResultado((data as { resultado: string }).resultado || "(resposta vazia)");
     } catch (e) {

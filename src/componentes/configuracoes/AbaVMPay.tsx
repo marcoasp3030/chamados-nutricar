@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Save, CreditCard, Eye, EyeOff, Trash2, PlugZap, Store } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { listarClientesVmpayFn } from "@/lib/vmpay.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,10 +92,9 @@ export function AbaVMPay() {
   const teste = useMutation({
     mutationFn: async (): Promise<TesteResp> => {
       if (!workspaceAtual) throw new Error("Workspace inválido.");
-      const { data, error } = await supabase.functions.invoke<TesteResp>("vmpay-clients", {
-        body: { workspaceId: workspaceAtual.id },
+      const data = await listarClientesVmpayFn({
+        data: { workspaceId: workspaceAtual.id },
       });
-      if (error) throw error;
       return data ?? { ok: false, erro: "Resposta vazia.", clientes: [] };
     },
     onSuccess: (r) => {

@@ -1,6 +1,6 @@
-# Runbook — Cutover Lovable Cloud → VPS própria
+# Runbook — Cutover do ambiente legado para VPS própria
 
-> **Objetivo**: migrar o sistema do backend Supabase (Lovable Cloud) para uma
+> **Objetivo**: migrar o sistema do backend Supabase legado para uma
 > VPS auto-hospedada com Postgres + PostgREST + MinIO + Node, **sem perda de
 > dados e com janela de indisponibilidade < 15 min**.
 >
@@ -46,7 +46,7 @@ MINIO_ROOT_USER=admin
 MINIO_ROOT_PASSWORD=<gerar 32 chars>
 
 # Integrações
-LOVABLE_API_KEY=<copiar do projeto Lovable>
+OPENAI_API_KEY=<configurar no cofre de segredos>
 UAZAPI_TOKEN=<se aplicável>
 VMPAY_API_KEY=<se aplicável>
 
@@ -317,7 +317,7 @@ curl -N -H "Cookie: ..." https://app.seudominio.com.br/api/realtime/eventos
 
 ### 5.8. T+12min — Apontar DNS (se mudou)
 
-Se o domínio era `chamados-nutricar.lovable.app` e agora é
+Se o domínio legado era diferente e agora é
 `app.seudominio.com.br`:
 
 - Atualizar registro A para o IP da VPS (TTL 300s)
@@ -428,11 +428,11 @@ END$$;
 ```
 
 ```bash
-# 2. Reverter DNS (se mudou) para o domínio Lovable
+# 2. Reverter DNS (se mudou) para o domínio anterior
 # 3. Comunicar: "Migração revertida, sistema operando normal"
 ```
 
-✅ **Estado**: voltou 100% ao Lovable Cloud, **zero perda de dados** (nada
+✅ **Estado**: voltou 100% ao ambiente anterior, **zero perda de dados** (nada
 foi escrito na VPS depois do dump).
 
 ### Rollback estendido (> 1h após cutover) — já houve escritas na VPS
@@ -519,7 +519,7 @@ docker compose exec postgres psql -U postgres -d app -c "
 | Tech lead | _____ | _____ |
 | DBA / Postgres | _____ | _____ |
 | Provedor VPS (suporte) | Hetzner / DO | tickets |
-| Suporte Lovable (caso reverta) | — | suporte |
+| Suporte do ambiente anterior (caso reverta) | — | suporte |
 
 ---
 

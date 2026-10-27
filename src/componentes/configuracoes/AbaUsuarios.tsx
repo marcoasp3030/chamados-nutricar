@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { Copy, KeyRound, Loader2, Mail, Pencil, Plus, RefreshCw, Trash2, UserPlus, Users } from "lucide-react";
+import { Copy, KeyRound, Loader2, Mail, Pencil, Plus, RefreshCw, Search, Trash2, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  criarUsuarioDireto as fnCriarUsuario,
+  definirSenhaUsuario as fnDefinirSenha,
+  atualizarEmailUsuario as fnAtualizarEmail,
+} from "@/lib/admin-usuarios.functions";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
 import { useDepartamentos } from "./AbaDepartamentos";
 import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";
@@ -47,6 +51,7 @@ type Cargo = (typeof CARGOS)[number];
 
 const PAPEIS = [
   "Solicitante",
+  "Suporte",
   "Atendente",
   "Gestor",
   "Administrador",
@@ -63,6 +68,7 @@ const rotuloCargo: Record<Cargo, string> = {
 
 const rotuloPapel: Record<Papel, string> = {
   Solicitante: "Solicitante",
+  Suporte: "Suporte (técnico)",
   Atendente: "Atendente",
   Gestor: "Gestor",
   Administrador: "Administrador",
@@ -130,6 +136,7 @@ export function AbaUsuarios() {
     null,
   );
   const [removerConvite, setRemoverConvite] = useState<Convite | null>(null);
+  const [busca, setBusca] = useState("");
 
   // Edição / remoção de membros ativos
   type MembroAtivo = NonNullable<typeof membros>[number];
@@ -137,6 +144,7 @@ export function AbaUsuarios() {
   const [removerMembro, setRemoverMembro] = useState<MembroAtivo | null>(null);
   const [formMembro, setFormMembro] = useState({
     nome: "",
+    email: "",
     telefone: "",
     cargo: "Funcionario" as Cargo,
     papel: "Solicitante" as Papel,
@@ -152,16 +160,14 @@ export function AbaUsuarios() {
   const definirSenha = useMutation({
     mutationFn: async ({ usuarioId, senha }: { usuarioId: string; senha: string | null }) => {
       if (!workspaceAtual) throw new Error("Workspace inválido");
-      const { data, error } = await supabase.functions.invoke("definir-senha-usuario", {
-        body: {
-          workspace_id: workspaceAtual.id,
-          usuario_id: usuarioId,
+      const data = await fnDefinirSenha({
+        data: {
+          workspaceId: workspaceAtual.id,
+          usuarioId,
           senha: senha || null,
         },
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data as { senha: string };
+      return data;
     },
     onSuccess: (data) => {
       const email = senhaMembro?.perfil.email ?? "";
@@ -176,6 +182,8 @@ export function AbaUsuarios() {
 
   const podeAdministrar =
     workspaceAtual?.papel === "Proprietario" || workspaceAtual?.papel === "Administrador";
+  const podeGerenciarUsuarios =
+    podeAdministrar || workspaceAtual?.papel === "Gestor";
 
   const [usuarioAtualId, setUsuarioAtualId] = useState<string | null>(null);
   useEffect(() => {
@@ -186,6 +194,7 @@ export function AbaUsuarios() {
     setErrosMembro({});
     setFormMembro({
       nome: m.perfil.nome ?? "",
+      email: m.perfil.email ?? "",
       telefone: m.perfil.telefone ?? "",
       cargo: (m.cargo as Cargo) ?? "Funcionario",
       papel: (m.papel as Papel) ?? "Solicitante",
@@ -199,6 +208,7 @@ export function AbaUsuarios() {
       if (!editandoMembro) throw new Error("Membro inválido");
       const schema = z.object({
         nome: z.string().trim().min(2, "Informe o nome").max(120),
+        email: z.string().trim().email("E-mail inválido").max(255),
         telefone: z.string().trim().max(30).optional().or(z.literal("")),
         cargo: z.enum(CARGOS as unknown as [string, ...string[]]),
         papel: z.enum(PAPEIS as unknown as [string, ...string[]]),
@@ -212,6 +222,20 @@ export function AbaUsuarios() {
         }
         setErrosMembro(f);
         throw new Error("Verifique os campos");
+      }
+
+      // Troca de e-mail (login + perfil) só por Administrador/Proprietário e via
+      // função de servidor, pois atualiza a credencial de login (tabela usuarios).
+      const emailNovo = parse.data.email.toLowerCase().trim();
+      const emailAtual = (editandoMembro.perfil.email ?? "").toLowerCase().trim();
+      if (podeAdministrar && emailNovo !== emailAtual && workspaceAtual) {
+        await fnAtualizarEmail({
+          data: {
+            workspaceId: workspaceAtual.id,
+            usuarioId: editandoMembro.usuario_id,
+            email: emailNovo,
+          },
+        });
       }
 
       const { error: erroPerfil } = await db
@@ -329,6 +353,59 @@ export function AbaUsuarios() {
     [departamentos],
   );
 
+  const termoBusca = busca.trim().toLowerCase();
+
+  const membrosFiltrados = useMemo(() => {
+    const lista = membros ?? [];
+    if (!termoBusca) return lista;
+    return lista.filter((m) => {
+      const nome = (m.perfil.nome ?? "").toLowerCase();
+      const email = (m.perfil.email ?? "").toLowerCase();
+      const telefone = (m.perfil.telefone ?? "").toLowerCase();
+      const deptos = (m.departamento_ids ?? [])
+        .map((id) => mapaDepartamentos.get(id) ?? "")
+        .join(" ")
+        .toLowerCase();
+      const cargo = (rotuloCargo[m.cargo as Cargo] ?? m.cargo ?? "").toLowerCase();
+      const papel = (rotuloPapel[m.papel as Papel] ?? m.papel ?? "").toLowerCase();
+      return (
+        nome.includes(termoBusca) ||
+        email.includes(termoBusca) ||
+        telefone.includes(termoBusca) ||
+        deptos.includes(termoBusca) ||
+        cargo.includes(termoBusca) ||
+        papel.includes(termoBusca)
+      );
+    });
+  }, [membros, termoBusca, mapaDepartamentos]);
+
+  const convitesFiltrados = useMemo(() => {
+    const lista = [...(convites ?? [])].sort((a, b) =>
+      (a.nome ?? a.email).localeCompare(b.nome ?? b.email, "pt-BR", {
+        sensitivity: "base",
+      }),
+    );
+    if (!termoBusca) return lista;
+    return lista.filter((c) => {
+      const nome = (c.nome ?? "").toLowerCase();
+      const email = c.email.toLowerCase();
+      const telefone = (c.telefone ?? "").toLowerCase();
+      const depto = c.departamento_id
+        ? (mapaDepartamentos.get(c.departamento_id) ?? "").toLowerCase()
+        : "";
+      const cargo = (rotuloCargo[c.cargo as Cargo] ?? c.cargo ?? "").toLowerCase();
+      const papel = (rotuloPapel[c.papel as Papel] ?? c.papel ?? "").toLowerCase();
+      return (
+        nome.includes(termoBusca) ||
+        email.includes(termoBusca) ||
+        telefone.includes(termoBusca) ||
+        depto.includes(termoBusca) ||
+        cargo.includes(termoBusca) ||
+        papel.includes(termoBusca)
+      );
+    });
+  }, [convites, termoBusca, mapaDepartamentos]);
+
   function resetar() {
     setForm({
       nome: "",
@@ -354,20 +431,21 @@ export function AbaUsuarios() {
       }
       if (!workspaceAtual) throw new Error("Workspace inválido");
 
-      const { data, error } = await supabase.functions.invoke("criar-usuario-direto", {
-        body: {
-          workspace_id: workspaceAtual.id,
+      const data = await fnCriarUsuario({
+        data: {
+          workspaceId: workspaceAtual.id,
           nome: parse.data.nome,
           email: parse.data.email.toLowerCase(),
           telefone: parse.data.telefone || null,
           papel: parse.data.papel,
           cargo: parse.data.cargo,
-          departamento_ids: parse.data.departamento_ids,
+          departamentoIds: parse.data.departamento_ids,
         },
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data as { email: string; senha_temporaria: string };
+      return {
+        email: data.email,
+        senha_temporaria: data.senhaTemporaria,
+      };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["membros-workspace"] });
@@ -411,9 +489,21 @@ export function AbaUsuarios() {
             Convide pessoas para acessar o workspace, defina cargo, departamento e nível de acesso.
           </p>
         </div>
-        <Button onClick={() => { resetar(); setAberto(true); }}>
-          <UserPlus className="h-4 w-4" /> Novo usuário
-        </Button>
+        {podeGerenciarUsuarios && (
+          <Button onClick={() => { resetar(); setAberto(true); }}>
+            <UserPlus className="h-4 w-4" /> Novo usuário
+          </Button>
+        )}
+      </div>
+
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Buscar por nome, e-mail, departamento ou cargo..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          className="pl-9"
+        />
       </div>
 
       {/* Membros ativos */}
@@ -423,7 +513,11 @@ export function AbaUsuarios() {
             <Users className="h-4 w-4 text-muted-foreground" />
             <h3 className="text-sm font-semibold">Membros ativos</h3>
           </div>
-          <Badge variant="secondary">{membros?.length ?? 0}</Badge>
+          <Badge variant="secondary">
+            {termoBusca
+              ? `${membrosFiltrados.length} de ${membros?.length ?? 0}`
+              : (membros?.length ?? 0)}
+          </Badge>
         </header>
         {carregandoMembros ? (
           <div className="flex justify-center py-10">
@@ -433,12 +527,16 @@ export function AbaUsuarios() {
           <p className="px-6 py-10 text-center text-sm text-muted-foreground">
             Nenhum membro ainda.
           </p>
+        ) : membrosFiltrados.length === 0 ? (
+          <p className="px-6 py-10 text-center text-sm text-muted-foreground">
+            Nenhum membro encontrado para &quot;{busca.trim()}&quot;.
+          </p>
         ) : (
           <ul className="divide-y divide-border">
-            {membros.map((m) => {
+            {membrosFiltrados.map((m) => {
               const ehProprio = m.usuario_id === usuarioAtualId;
               const ehProprietario = m.papel === "Proprietario";
-              const podeEditar = podeAdministrar;
+              const podeEditar = podeGerenciarUsuarios;
               const podeRemover = podeAdministrar && !ehProprietario && !ehProprio;
               return (
                 <li key={m.usuario_id} className="flex items-center gap-3 px-4 py-3">
@@ -497,7 +595,7 @@ export function AbaUsuarios() {
                           <Pencil className="h-4 w-4" />
                         </Button>
                       )}
-                      {podeAdministrar && !ehProprio && (
+                      {podeGerenciarUsuarios && !ehProprio && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -534,7 +632,11 @@ export function AbaUsuarios() {
             <Mail className="h-4 w-4 text-muted-foreground" />
             <h3 className="text-sm font-semibold">Convites pendentes</h3>
           </div>
-          <Badge variant="secondary">{convites?.length ?? 0}</Badge>
+          <Badge variant="secondary">
+            {termoBusca
+              ? `${convitesFiltrados.length} de ${convites?.length ?? 0}`
+              : (convites?.length ?? 0)}
+          </Badge>
         </header>
         {carregandoConvites ? (
           <div className="flex justify-center py-10">
@@ -544,9 +646,13 @@ export function AbaUsuarios() {
           <p className="px-6 py-10 text-center text-sm text-muted-foreground">
             Nenhum convite pendente.
           </p>
+        ) : convitesFiltrados.length === 0 ? (
+          <p className="px-6 py-10 text-center text-sm text-muted-foreground">
+            Nenhum convite encontrado para &quot;{busca.trim()}&quot;.
+          </p>
         ) : (
           <ul className="divide-y divide-border">
-            {convites.map((c) => {
+            {convitesFiltrados.map((c) => {
               const url = `${window.location.origin}/convite/${c.token}`;
               return (
                 <li key={c.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
@@ -799,8 +905,28 @@ export function AbaUsuarios() {
               )}
             </div>
             <div className="space-y-1.5">
-              <Label>E-mail</Label>
-              <Input value={editandoMembro?.perfil.email ?? ""} disabled />
+              <Label htmlFor="m-email">E-mail{podeAdministrar ? " *" : ""}</Label>
+              {podeAdministrar ? (
+                <>
+                  <Input
+                    id="m-email"
+                    type="email"
+                    maxLength={255}
+                    value={formMembro.email}
+                    onChange={(e) =>
+                      setFormMembro((f) => ({ ...f, email: e.target.value }))
+                    }
+                  />
+                  {errosMembro.email && (
+                    <p className="text-xs text-destructive">{errosMembro.email}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Alterar o e-mail muda o login de acesso do usuário.
+                  </p>
+                </>
+              ) : (
+                <Input value={editandoMembro?.perfil.email ?? ""} disabled />
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="m-tel">Celular</Label>

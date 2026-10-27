@@ -15,7 +15,7 @@ ON CONFLICT (chave) DO NOTHING;
 
 INSERT INTO public.app_config (chave, valor)
 VALUES ('whatsapp_notify_url',
-  'https://project--98165f9e-498c-4810-868e-07ed8362bbd9.lovable.app/api/public/whatsapp-notify')
+  'https://nutricarhub.nutricarbrasil.com.br/api/public/whatsapp-notify')
 ON CONFLICT (chave) DO NOTHING;
 
 -- ============ tabela de log/dedup ============

@@ -7,6 +7,7 @@ export const rotuloPapel: Record<PapelMembro, string> = {
   Administrador: "Administrador",
   Gestor: "Gestor",
   Atendente: "Atendente",
+  Suporte: "Suporte",
   Solicitante: "Solicitante",
 };
 

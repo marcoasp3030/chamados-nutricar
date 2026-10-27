@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { entrarComSenha, obterSessao } from "@/auth/atual";
+import { preaquecerTokenPostgrest } from "@/dados/atual";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -60,6 +61,7 @@ function LoginPage() {
       setErrors({ form: r.mensagem });
       return;
     }
+    await preaquecerTokenPostgrest().catch(() => {});
     toast.success("Bem-vindo!");
     navigate({ to: "/" });
   };

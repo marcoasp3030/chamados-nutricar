@@ -39,12 +39,61 @@ const CORES_PADRAO: Record<StatusChamado, string> = {
   Cancelado: "#ef4444",
 };
 
+/** Funis padrão exibidos instantaneamente enquanto o banco responde. */
+export function funisKanbanPadrao(
+  workspaceId: string,
+  usuarioId: string,
+): FunilKanban[] {
+  return STATUS_KANBAN.map((s, i) => ({
+    id: `__padrao_${s}__`,
+    workspace_id: workspaceId,
+    usuario_id: usuarioId,
+    nome: rotuloStatusChamado[s],
+    cor: CORES_PADRAO[s],
+    ordem: i,
+    tipo: "status" as const,
+    status_origem: s,
+    filtros: {},
+    criado_em: "",
+    atualizado_em: "",
+  }));
+}
+
+export async function prefetchFunisKanban(
+  queryClient: import("@tanstack/react-query").QueryClient,
+  workspaceId: string,
+  usuarioId: string,
+) {
+  await queryClient.prefetchQuery({
+    queryKey: ["kanban_funis", workspaceId, usuarioId],
+    queryFn: async (): Promise<FunilKanban[]> => {
+      const { data, error } = await db
+        .from("kanban_funis")
+        .select("*")
+        .eq("workspace_id", workspaceId)
+        .eq("usuario_id", usuarioId)
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        return funisKanbanPadrao(workspaceId, usuarioId);
+      }
+      return data as FunilKanban[];
+    },
+  });
+}
+
 export function useFunisKanban(workspaceId: string | undefined, usuarioId: string | null) {
   const qc = useQueryClient();
 
   const query = useQuery({
     queryKey: ["kanban_funis", workspaceId, usuarioId],
     enabled: !!workspaceId && !!usuarioId,
+    staleTime: 60_000,
+    placeholderData: (prev) =>
+      prev ??
+      (workspaceId && usuarioId
+        ? funisKanbanPadrao(workspaceId, usuarioId)
+        : undefined),
     queryFn: async (): Promise<FunilKanban[]> => {
       const { data, error } = await db
         .from("kanban_funis")
@@ -55,7 +104,7 @@ export function useFunisKanban(workspaceId: string | undefined, usuarioId: strin
       if (error) throw error;
 
       if (!data || data.length === 0) {
-        // Sementeira: cria funis padrão a partir do STATUS_KANBAN
+        // Sementeira em segundo plano — a UI já usa funisKanbanPadrao via placeholderData.
         const seed = STATUS_KANBAN.map((s, i) => ({
           workspace_id: workspaceId!,
           usuario_id: usuarioId!,
@@ -70,7 +119,7 @@ export function useFunisKanban(workspaceId: string | undefined, usuarioId: strin
           .from("kanban_funis")
           .insert(seed)
           .select("*");
-        if (errIns) throw errIns;
+        if (errIns) return funisKanbanPadrao(workspaceId!, usuarioId!);
         return (novos ?? []) as FunilKanban[];
       }
       return data as FunilKanban[];

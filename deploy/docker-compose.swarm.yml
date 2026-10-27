@@ -1,0 +1,62 @@
+services:
+  chamados_app:
+    image: chamados-nutricar:latest
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOST: 0.0.0.0
+
+      STORAGE_DIR: /data/storage
+      DATABASE_URL: ${DATABASE_URL}
+      POSTGREST_URL: http://chamados_postgrest:3000
+
+      JWT_SECRET: ${JWT_SECRET}
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME}
+      SESSION_TTL_DIAS: ${SESSION_TTL_DIAS}
+
+      APP_BASE_URL: ${APP_BASE_URL}
+      STORAGE_URL_SECRET: ${STORAGE_URL_SECRET}
+
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      VMPAY_API_KEY: ${VMPAY_API_KEY}
+    volumes:
+      - type: bind
+        source: /data/storage/chamados
+        target: /data/storage
+    networks:
+      - network_swarm_public
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=network_swarm_public"
+        - "traefik.http.routers.chamados-https.rule=Host(`${DOMAIN}`)"
+        - "traefik.http.routers.chamados-https.entrypoints=websecure"
+        - "traefik.http.routers.chamados-https.tls=true"
+        - "traefik.http.routers.chamados-https.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.chamados-https.service=chamados-svc"
+        - "traefik.http.routers.chamados-http.rule=Host(`${DOMAIN}`)"
+        - "traefik.http.routers.chamados-http.entrypoints=web"
+        - "traefik.http.routers.chamados-http.service=chamados-svc"
+        - "traefik.http.services.chamados-svc.loadbalancer.server.port=3000"
+
+  postgrest:
+    image: postgrest/postgrest:v12.2.3
+    environment:
+      PGRST_DB_URI: ${POSTGREST_DB_URI}
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_DB_EXTRA_SEARCH_PATH: public
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+    networks:
+      - network_swarm_public
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+networks:
+  network_swarm_public:
+    external: true

@@ -16,6 +16,10 @@ dist-ssr
 .nitro
 *.local
 
+# Deploy VPS (segredos — não commitar)
+deploy/.env.swarm
+.env.production
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

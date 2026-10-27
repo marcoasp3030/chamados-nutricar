@@ -31,16 +31,17 @@ export const papelMembro = pgEnum("papel_membro", [
   "Administrador",
   "Gestor",
   "Atendente",
+  "Suporte",
   "Solicitante",
 ]);
-export const cargoMembro = pgEnum("cargo_membro", [
-  "TI",
-  "Compras",
-  "Financeiro",
-  "Operacional",
-  "Comercial",
-  "Outro",
+export const cargoWorkspace = pgEnum("cargo_workspace", [
+  "Funcionario",
+  "Supervisor",
+  "Gestor",
+  "Gerente",
 ]);
+/** @deprecated use cargoWorkspace — mantido só para referência histórica do Drizzle inicial */
+export const cargoMembro = cargoWorkspace;
 export const statusChamado = pgEnum("status_chamado", [
   "Aberto",
   "Em andamento",
@@ -57,13 +58,15 @@ export const prioridadeChamado = pgEnum("prioridade_chamado", [
   "Urgente",
 ]);
 export const tipoChamado = pgEnum("tipo_chamado", [
-  "Solicitacao",
   "Incidente",
-  "Problema",
-  "Mudanca",
+  "Solicitacao",
+  "Duvida",
+  "Melhoria",
+  "Bug",
 ]);
 export const statusItemCompra = pgEnum("status_item_compra", [
   "Pendente",
+  "Cotando",
   "Aprovado",
   "Comprado",
   "Recebido",
@@ -162,7 +165,7 @@ export const workspaceMembros = pgTable(
     workspaceId: uuid("workspace_id").notNull(),
     usuarioId: uuid("usuario_id").notNull(),
     papel: papelMembro("papel").notNull().default("Solicitante"),
-    cargo: cargoMembro("cargo"),
+    cargo: cargoWorkspace("cargo"),
     departamentoId: uuid("departamento_id"),
     convidadoPor: uuid("convidado_por"),
     aceitoEm: timestamp("aceito_em", { withTimezone: true }),
@@ -206,6 +209,7 @@ export const categoriasChamado = pgTable("categorias_chamado", {
   cor: text("cor").notNull().default("#88BE46"),
   slaRespostaHoras: integer("sla_resposta_horas"),
   slaResolucaoHoras: integer("sla_resolucao_horas"),
+  departamentoId: uuid("departamento_id"),
   criadoPor: uuid("criado_por").notNull(),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
   atualizadoEm: timestamp("atualizado_em", { withTimezone: true }).notNull().defaultNow(),
@@ -232,6 +236,10 @@ export const chamados = pgTable(
     departamentoId: uuid("departamento_id"),
     departamentoOrigemId: uuid("departamento_origem_id"),
     chamadoPaiId: uuid("chamado_pai_id"),
+    descricaoChamadoPai: text("descricao_chamado_pai"),
+    tituloChamadoPai: text("titulo_chamado_pai"),
+    numeroChamadoPai: integer("numero_chamado_pai"),
+    codigoChamadoPai: text("codigo_chamado_pai"),
     prazo: timestamp("prazo", { withTimezone: true }),
     primeiroRespostaEm: timestamp("primeiro_resposta_em", { withTimezone: true }),
     resolvidoEm: timestamp("resolvido_em", { withTimezone: true }),
@@ -240,6 +248,7 @@ export const chamados = pgTable(
     agendadoPara: timestamp("agendado_para", { withTimezone: true }),
     motivoPausa: text("motivo_pausa"),
     tratativa: text("tratativa"),
+    propostaCriada: boolean("proposta_criada").notNull().default(false),
     criadoPor: uuid("criado_por").notNull(),
     criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
     atualizadoEm: timestamp("atualizado_em", { withTimezone: true }).notNull().defaultNow(),
@@ -410,20 +419,45 @@ export const checklists = pgTable("checklists", {
   atualizadoEm: timestamp("atualizado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const checklistRespostas = pgTable("checklist_respostas", {
+export const checklistRespostas = pgTable(
+  "checklist_respostas",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    workspaceId: uuid("workspace_id").notNull(),
+    checklistId: uuid("checklist_id")
+      .notNull()
+      .references(() => checklists.id, { onDelete: "cascade" }),
+    itemId: uuid("item_id").notNull(),
+    valor: jsonb("valor"),
+    atualizadoPor: uuid("atualizado_por"),
+    atualizadoEm: timestamp("atualizado_em", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    // Necessário para o upsert (ON CONFLICT) por resposta de item.
+    porChecklistItem: uniqueIndex("idx_cr_checklist_item").on(t.checklistId, t.itemId),
+  }),
+);
+
+export const checklistAnexos = pgTable("checklist_anexos", {
   id: uuid("id").primaryKey().defaultRandom(),
   workspaceId: uuid("workspace_id").notNull(),
-  checklistId: uuid("checklist_id").notNull(),
-  itemId: uuid("item_id").notNull(),
-  valor: jsonb("valor"),
-  atualizadoPor: uuid("atualizado_por"),
-  atualizadoEm: timestamp("atualizado_em", { withTimezone: true }).notNull().defaultNow(),
+  checklistId: uuid("checklist_id")
+    .notNull()
+    .references(() => checklists.id, { onDelete: "cascade" }),
+  enviadoPor: uuid("enviado_por").notNull(),
+  nomeArquivo: text("nome_arquivo").notNull(),
+  caminhoStorage: text("caminho_storage").notNull(),
+  tipoMime: text("tipo_mime"),
+  tamanhoBytes: bigint("tamanho_bytes", { mode: "number" }).notNull().default(0),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const checklistComentarios = pgTable("checklist_comentarios", {
   id: uuid("id").primaryKey().defaultRandom(),
   workspaceId: uuid("workspace_id").notNull(),
-  checklistId: uuid("checklist_id").notNull(),
+  checklistId: uuid("checklist_id")
+    .notNull()
+    .references(() => checklists.id, { onDelete: "cascade" }),
   autorId: uuid("autor_id").notNull(),
   conteudo: text("conteudo").notNull(),
   mencionados: uuid("mencionados").array().notNull().default([]),
@@ -434,7 +468,9 @@ export const checklistComentarios = pgTable("checklist_comentarios", {
 export const checklistHistorico = pgTable("checklist_historico", {
   id: uuid("id").primaryKey().defaultRandom(),
   workspaceId: uuid("workspace_id").notNull(),
-  checklistId: uuid("checklist_id").notNull(),
+  checklistId: uuid("checklist_id")
+    .notNull()
+    .references(() => checklists.id, { onDelete: "cascade" }),
   itemId: uuid("item_id"),
   usuarioId: uuid("usuario_id"),
   acao: text("acao").notNull(),
@@ -466,7 +502,7 @@ export const workspaceConvites = pgTable("workspace_convites", {
   nome: text("nome"),
   telefone: text("telefone"),
   papel: papelMembro("papel").notNull().default("Solicitante"),
-  cargo: cargoMembro("cargo"),
+  cargo: cargoWorkspace("cargo"),
   departamentoId: uuid("departamento_id"),
   token: text("token").notNull().unique(),
   aceito: boolean("aceito").notNull().default(false),

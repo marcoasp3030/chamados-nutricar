@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAuth } from "@/auth/middleware.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { registrarLogUazapi, uazapiFetch, normalizeServerUrl } from "./uazapi.server";
 
@@ -110,7 +110,7 @@ async function chamarConnect(serverUrl: string, instanceName: string, token: str
 
 // ======================== SALVAR + VALIDAR ========================
 export const salvarUazapiConfig = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((d: { workspaceId: string; serverUrl: string; adminToken?: string }) =>
     z
       .object({
@@ -181,7 +181,7 @@ export const salvarUazapiConfig = createServerFn({ method: "POST" })
 
 // ======================== CRIAR INSTÂNCIA ========================
 export const criarInstanciaUazapi = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((d: { workspaceId: string; nome?: string }) =>
     z.object({ workspaceId: z.string().uuid(), nome: z.string().min(1).max(80).optional() }).parse(d),
   )
@@ -229,7 +229,7 @@ export const criarInstanciaUazapi = createServerFn({ method: "POST" })
 
 // ======================== STATUS / QR ========================
 export const obterStatusUazapi = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((d: { workspaceId: string }) => z.object({ workspaceId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -317,7 +317,7 @@ export const obterStatusUazapi = createServerFn({ method: "POST" })
 
 // ======================== RECONECTAR ========================
 export const reconectarUazapi = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((d: { workspaceId: string }) => z.object({ workspaceId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -344,7 +344,7 @@ export const reconectarUazapi = createServerFn({ method: "POST" })
 
 // ======================== DESCONECTAR ========================
 export const desconectarUazapi = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((d: { workspaceId: string }) => z.object({ workspaceId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -374,7 +374,7 @@ export const desconectarUazapi = createServerFn({ method: "POST" })
 
 // ======================== ENVIAR MENSAGEM DE TESTE ========================
 export const enviarMensagemTesteUazapi = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((d: { workspaceId: string; numero: string; mensagem: string }) =>
     z
       .object({
@@ -435,7 +435,7 @@ export const enviarMensagemTesteUazapi = createServerFn({ method: "POST" })
 
 // ======================== EXCLUIR INSTÂNCIA ========================
 export const excluirInstanciaUazapi = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAuth])
   .inputValidator((d: { workspaceId: string }) => z.object({ workspaceId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;

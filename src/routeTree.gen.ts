@@ -17,6 +17,7 @@ import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
 import { Route as WSlugIndexRouteImport } from './routes/w.$slug.index'
 import { Route as WSlugProjetosRouteImport } from './routes/w.$slug.projetos'
 import { Route as WSlugPainelRouteImport } from './routes/w.$slug.painel'
+import { Route as WSlugSuporteRouteImport } from './routes/w.$slug.suporte'
 import { Route as WSlugInventarioRouteImport } from './routes/w.$slug.inventario'
 import { Route as WSlugInauguracoesRouteImport } from './routes/w.$slug.inauguracoes'
 import { Route as WSlugConfiguracoesRouteImport } from './routes/w.$slug.configuracoes'
@@ -74,6 +75,11 @@ const WSlugProjetosRoute = WSlugProjetosRouteImport.update({
 const WSlugPainelRoute = WSlugPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
+  getParentRoute: () => WSlugRoute,
+} as any)
+const WSlugSuporteRoute = WSlugSuporteRouteImport.update({
+  id: '/suporte',
+  path: '/suporte',
   getParentRoute: () => WSlugRoute,
 } as any)
 const WSlugInventarioRoute = WSlugInventarioRouteImport.update({
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/w/$slug/inauguracoes': typeof WSlugInauguracoesRoute
   '/w/$slug/inventario': typeof WSlugInventarioRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
+  '/w/$slug/suporte': typeof WSlugSuporteRoute
   '/w/$slug/projetos': typeof WSlugProjetosRouteWithChildren
   '/w/$slug/': typeof WSlugIndexRoute
   '/w/$slug/chamados/$numero': typeof WSlugChamadosNumeroRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/w/$slug/inauguracoes': typeof WSlugInauguracoesRoute
   '/w/$slug/inventario': typeof WSlugInventarioRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
+  '/w/$slug/suporte': typeof WSlugSuporteRoute
   '/w/$slug': typeof WSlugIndexRoute
   '/w/$slug/chamados/$numero': typeof WSlugChamadosNumeroRoute
   '/w/$slug/chamados/novo': typeof WSlugChamadosNovoRoute
@@ -236,6 +244,7 @@ export interface FileRoutesById {
   '/w/$slug/inauguracoes': typeof WSlugInauguracoesRoute
   '/w/$slug/inventario': typeof WSlugInventarioRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
+  '/w/$slug/suporte': typeof WSlugSuporteRoute
   '/w/$slug/projetos': typeof WSlugProjetosRouteWithChildren
   '/w/$slug/': typeof WSlugIndexRoute
   '/w/$slug/chamados/$numero': typeof WSlugChamadosNumeroRoute
@@ -266,6 +275,7 @@ export interface FileRouteTypes {
     | '/w/$slug/inauguracoes'
     | '/w/$slug/inventario'
     | '/w/$slug/painel'
+    | '/w/$slug/suporte'
     | '/w/$slug/projetos'
     | '/w/$slug/'
     | '/w/$slug/chamados/$numero'
@@ -291,6 +301,7 @@ export interface FileRouteTypes {
     | '/w/$slug/inauguracoes'
     | '/w/$slug/inventario'
     | '/w/$slug/painel'
+    | '/w/$slug/suporte'
     | '/w/$slug'
     | '/w/$slug/chamados/$numero'
     | '/w/$slug/chamados/novo'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/w/$slug/inauguracoes'
     | '/w/$slug/inventario'
     | '/w/$slug/painel'
+    | '/w/$slug/suporte'
     | '/w/$slug/projetos'
     | '/w/$slug/'
     | '/w/$slug/chamados/$numero'
@@ -400,6 +412,13 @@ declare module '@tanstack/react-router' {
       path: '/painel'
       fullPath: '/w/$slug/painel'
       preLoaderRoute: typeof WSlugPainelRouteImport
+      parentRoute: typeof WSlugRoute
+    }
+    '/w/$slug/suporte': {
+      id: '/w/$slug/suporte'
+      path: '/suporte'
+      fullPath: '/w/$slug/suporte'
+      preLoaderRoute: typeof WSlugSuporteRouteImport
       parentRoute: typeof WSlugRoute
     }
     '/w/$slug/inventario': {
@@ -586,6 +605,7 @@ interface WSlugRouteChildren {
   WSlugInauguracoesRoute: typeof WSlugInauguracoesRoute
   WSlugInventarioRoute: typeof WSlugInventarioRoute
   WSlugPainelRoute: typeof WSlugPainelRoute
+  WSlugSuporteRoute: typeof WSlugSuporteRoute
   WSlugProjetosRoute: typeof WSlugProjetosRouteWithChildren
   WSlugIndexRoute: typeof WSlugIndexRoute
   WSlugMembrosUsuarioIdRoute: typeof WSlugMembrosUsuarioIdRoute
@@ -598,6 +618,7 @@ const WSlugRouteChildren: WSlugRouteChildren = {
   WSlugInauguracoesRoute: WSlugInauguracoesRoute,
   WSlugInventarioRoute: WSlugInventarioRoute,
   WSlugPainelRoute: WSlugPainelRoute,
+  WSlugSuporteRoute: WSlugSuporteRoute,
   WSlugProjetosRoute: WSlugProjetosRouteWithChildren,
   WSlugIndexRoute: WSlugIndexRoute,
   WSlugMembrosUsuarioIdRoute: WSlugMembrosUsuarioIdRoute,
@@ -618,3 +639,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

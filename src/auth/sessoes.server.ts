@@ -49,15 +49,20 @@ export async function rotacionarSessao(refreshTokenAtual: string): Promise<{
     return null;
   }
 
-  // Rotaciona: emite novo refresh e invalida o antigo.
-  const { token, hash: novoHash } = gerarRefreshToken();
+  // Estende a validade sem rotacionar o refresh — evita invalidar outras abas
+  // e mantém o usuário logado após períodos de inatividade.
   const expiraEm = new Date(Date.now() + TTL.REFRESH_SEG * 1000);
   await db
     .update(sessoes)
-    .set({ refreshTokenHash: novoHash, expiraEm })
+    .set({ expiraEm })
     .where(eq(sessoes.id, sess.id));
 
-  return { novoRefresh: token, usuarioId: sess.usuarioId, email: sess.email, expiraEm };
+  return {
+    novoRefresh: refreshTokenAtual,
+    usuarioId: sess.usuarioId,
+    email: sess.email,
+    expiraEm,
+  };
 }
 
 export async function revogarSessao(refreshToken: string): Promise<void> {

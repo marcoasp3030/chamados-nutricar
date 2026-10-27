@@ -1,29 +1,41 @@
-// Vite config para build em VPS Node (sem Cloudflare Workers).
-// Uso: `vite build --config vite.config.vps.ts`
-// Ou via env: NITRO_PRESET=node-server bun run build:vps
-//
-// Diferenças vs vite.config.ts:
-// - Não usa o plugin Cloudflare (preset Node do Nitro/TanStack)
-// - Mantém os mesmos plugins padrão do @lovable.dev/vite-tanstack-config
-// - Pronto para rodar atrás de Caddy/Nginx no Docker (Fase 7)
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import tailwindcss from "@tailwindcss/vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import react from "@vitejs/plugin-react";
+import { nitro } from "nitro/vite";
+import { defineConfig } from "vite";
+import tsConfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  tanstackStart: {
-    server: { entry: "server" },
-    // Preset Node para gerar .output/server/index.mjs
-    target: "node-server",
+  plugins: [
+    tailwindcss(),
+    tsConfigPaths({ projects: ["./tsconfig.json"] }),
+    tanstackStart({
+      server: { entry: "server" },
+      // Server functions importam middleware.server de propósito; o check
+      // de import-protection trata isso como vazamento no client.
+      importProtection: {
+        ignoreImporters: [
+          "**/src/lib/*.functions.ts",
+          "**/src/storage/*.functions.ts",
+          "**/src/auth/*.functions.ts",
+        ],
+      },
+    }),
+    nitro({ defaultPreset: "node-server" }),
+    react(),
+  ],
+  resolve: {
+    alias: { "@": new URL("./src", import.meta.url).pathname },
+    dedupe: ["react", "react-dom", "@tanstack/react-query", "@tanstack/query-core"],
   },
-  vite: {
-    build: {
-      // Reduz tamanho do bundle do servidor
-      minify: "esbuild",
-      sourcemap: false,
-    },
-    ssr: {
-      // No Node nativo não precisamos do shim do Cloudflare;
-      // deixar pacotes Node como external melhora cold start.
-      noExternal: ["@tanstack/react-start", "@tanstack/react-router"],
-    },
+  server: { watch: { ignored: ["**/routeTree.gen.ts"] } },
+  build: {
+    minify: "esbuild",
+    sourcemap: false,
+    rollupOptions: { maxParallelFileOps: 1 },
+  },
+  ssr: {
+    noExternal: ["@tanstack/react-start", "@tanstack/react-router"],
+    external: ["postgres", "drizzle-orm", "drizzle-orm/postgres-js", "bcryptjs", "jose"],
   },
 });

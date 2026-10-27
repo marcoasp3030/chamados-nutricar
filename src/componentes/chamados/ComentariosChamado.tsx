@@ -12,6 +12,7 @@ import { useComentariosChamado } from "@/hooks/useChamado";
 import { cn } from "@/lib/utils";
 import { obterUsuarioAtual } from "@/auth/atual";
 import { db } from "@/dados/atual";
+import { sinalizarNotificacoesWorkspace } from "@/lib/notificacoes-chamado";
 
 interface Props {
   chamadoId: string;
@@ -43,6 +44,7 @@ export function ComentariosChamado({ chamadoId, workspaceId, podeUsarInterno }: 
       setInterno(false);
       queryClient.invalidateQueries({ queryKey: ["comentarios", chamadoId] });
       queryClient.invalidateQueries({ queryKey: ["historico", chamadoId] });
+      void sinalizarNotificacoesWorkspace(workspaceId);
       toast.success("Comentário enviado.");
     },
     onError: (e: Error) => toast.error("Não foi possível enviar.", { description: e.message }),

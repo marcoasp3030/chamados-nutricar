@@ -1,6 +1,6 @@
 // Server functions de auth — chamadas pelo frontend via useServerFn.
 // IMPORTANTE: estes endpoints só funcionam em runtime Node (VPS), pois usam
-// `db` (Postgres direto) e cookies do servidor TanStack. No preview Lovable
+// `db` (Postgres direto) e cookies do servidor TanStack. No ambiente legado
 // atual (Cloudflare + Supabase) eles NÃO são chamados — convivem em paralelo.
 
 import { createServerFn } from "@tanstack/react-start";

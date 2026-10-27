@@ -1,10 +1,20 @@
 // Geração e verificação de JWT (HS256) usando `jose`.
-// Access token curto (15 min) + refresh token longo (30 dias) armazenado em sessoes.
+// Sessão persistente: duração configurável via SESSION_TTL_DIAS (padrão 365 dias).
+// Access e refresh usam o mesmo TTL — sem deslogar por inatividade antes desse prazo.
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import { randomBytes, createHash } from "crypto";
 
-const ACCESS_TTL_SEG = 60 * 15; // 15 minutos
-const REFRESH_TTL_SEG = 60 * 60 * 24 * 30; // 30 dias
+function lerTtlSegundos(): number {
+  const dias = Number(process.env.SESSION_TTL_DIAS ?? "365");
+  if (!Number.isFinite(dias) || dias <= 0) {
+    return 60 * 60 * 24 * 365;
+  }
+  return Math.floor(dias * 24 * 60 * 60);
+}
+
+const SESSAO_TTL_SEG = lerTtlSegundos();
+const ACCESS_TTL_SEG = SESSAO_TTL_SEG;
+const REFRESH_TTL_SEG = SESSAO_TTL_SEG;
 
 function getSecret(): Uint8Array {
   const s = process.env.JWT_SECRET;
@@ -19,13 +29,14 @@ function getSecret(): Uint8Array {
 export interface ClaimsAcesso extends JWTPayload {
   sub: string; // usuario.id
   email: string;
+  role?: string;
 }
 
 export async function gerarAccessToken(usuario: {
   id: string;
   email: string;
 }): Promise<string> {
-  return new SignJWT({ email: usuario.email })
+  return new SignJWT({ email: usuario.email, role: "authenticated" })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(usuario.id)
     .setIssuedAt()

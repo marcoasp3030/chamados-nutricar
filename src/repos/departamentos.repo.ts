@@ -1,6 +1,6 @@
 // Departamentos.
 // SELECT: membro
-// INSERT/UPDATE/DELETE: Proprietario|Administrador
+// INSERT/UPDATE/DELETE: Proprietario|Administrador|Gestor
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { departamentos } from "@/db/schema";
@@ -20,7 +20,7 @@ export async function criarDepartamento(
   ctx: CtxWs,
   input: Omit<typeof departamentos.$inferInsert, "workspaceId" | "criadoPor" | "id">,
 ) {
-  await exigirPapel(ctx.userId, ctx.workspaceId, ["Proprietario", "Administrador"]);
+  await exigirPapel(ctx.userId, ctx.workspaceId, ["Proprietario", "Administrador", "Gestor"]);
   const [r] = await db
     .insert(departamentos)
     .values({ ...input, workspaceId: ctx.workspaceId, criadoPor: ctx.userId })
@@ -33,7 +33,7 @@ export async function atualizarDepartamento(
   id: string,
   patch: Partial<typeof departamentos.$inferInsert>,
 ) {
-  await exigirPapel(ctx.userId, ctx.workspaceId, ["Proprietario", "Administrador"]);
+  await exigirPapel(ctx.userId, ctx.workspaceId, ["Proprietario", "Administrador", "Gestor"]);
   delete (patch as Record<string, unknown>).id;
   delete (patch as Record<string, unknown>).workspaceId;
   const [r] = await db
@@ -45,7 +45,7 @@ export async function atualizarDepartamento(
 }
 
 export async function excluirDepartamento(ctx: CtxWs, id: string) {
-  await exigirPapel(ctx.userId, ctx.workspaceId, ["Proprietario", "Administrador"]);
+  await exigirPapel(ctx.userId, ctx.workspaceId, ["Proprietario", "Administrador", "Gestor"]);
   await db
     .delete(departamentos)
     .where(and(eq(departamentos.id, id), eq(departamentos.workspaceId, ctx.workspaceId)));

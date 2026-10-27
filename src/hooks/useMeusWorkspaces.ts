@@ -1,31 +1,36 @@
 import { useQuery } from "@tanstack/react-query";
-import type { WorkspaceComPapel, PapelMembro } from "@/tipos/workspace";
-import { obterSessao } from "@/auth/atual";
-import { db } from "@/dados/atual";
+import type { WorkspaceComPapel } from "@/tipos/workspace";
 
-interface LinhaMembro {
-  papel: PapelMembro;
-  workspace: WorkspaceComPapel | null;
+const URL_API = import.meta.env.VITE_API_URL ?? "/api";
+
+async function fetchWorkspaces(): Promise<WorkspaceComPapel[]> {
+  const resp = await fetch(`${URL_API}/workspaces/me`, { credentials: "include" });
+  if (resp.status === 401) return [];
+  if (!resp.ok) {
+    const msg = await resp.text().catch(() => "");
+    throw new Error(msg || `HTTP ${resp.status}`);
+  }
+  const j = (await resp.json()) as { workspaces: WorkspaceComPapel[] };
+  return j.workspaces ?? [];
 }
 
 export function useMeusWorkspaces() {
   return useQuery({
     queryKey: ["meus-workspaces"],
-    queryFn: async (): Promise<WorkspaceComPapel[]> => {
-      const sessao = await obterSessao().then((s) => ({ session: s.usuario ? { user: s.usuario } : null }));
-      if (!sessao.session) return [];
-
-      const { data, error } = await db
-        .from("workspace_membros")
-        .select("papel, workspace:workspaces(*)")
-        .eq("usuario_id", sessao.session.user.id)
-        .eq("ativo", true);
-
-      if (error) throw error;
-
-      return (data as unknown as LinhaMembro[])
-        .filter((linha) => linha.workspace !== null)
-        .map((linha) => ({ ...(linha.workspace as WorkspaceComPapel), papel: linha.papel }));
-    },
+    queryFn: fetchWorkspaces,
+    staleTime: 30_000,
+    retry: 2,
   });
+}
+
+export { fetchWorkspaces as listarMinhasWorkspacesApi };
+
+export async function buscarWorkspacePorSlug(slug: string): Promise<WorkspaceComPapel | null> {
+  const resp = await fetch(`${URL_API}/workspaces/me?slug=${encodeURIComponent(slug)}`, {
+    credentials: "include",
+  });
+  if (resp.status === 404 || resp.status === 401) return null;
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const j = (await resp.json()) as { workspace: WorkspaceComPapel };
+  return j.workspace ?? null;
 }

@@ -50,6 +50,18 @@ export const requireAuth = createMiddleware({ type: "function" }).server(
   },
 );
 
+/** Auth para handlers que importam este módulo dinamicamente (evita bundle no client). */
+export async function requireAuthContext(): Promise<{
+  usuario: UsuarioPublico;
+  userId: string;
+}> {
+  const usuario = await resolverUsuario();
+  if (!usuario) {
+    throw new Response("Unauthorized", { status: 401 });
+  }
+  return { usuario, userId: usuario.id };
+}
+
 // Variante que NÃO bloqueia — só anexa o usuário se houver.
 export const optionalAuth = createMiddleware({ type: "function" }).server(
   async ({ next }) => {

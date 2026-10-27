@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Canais, useInscricaoRealtime } from "@/realtime/atual";
+import { obterUsuarioAtualId } from "@/auth/atual";
 import { db } from "@/dados/atual";
 
 export interface Notificacao {
@@ -24,15 +25,19 @@ export function useNotificacoes(workspaceId: string | undefined) {
     queryKey: ["notificacoes", workspaceId],
     enabled: !!workspaceId,
     queryFn: async (): Promise<Notificacao[]> => {
+      const usuarioId = await obterUsuarioAtualId();
+      if (!usuarioId) return [];
       const { data, error } = await db
         .from("notificacoes")
         .select("*")
         .eq("workspace_id", workspaceId!)
+        .eq("destinatario_id", usuarioId)
         .order("criado_em", { ascending: false })
         .limit(50);
       if (error) throw error;
       return (data ?? []) as Notificacao[];
     },
+    refetchInterval: 60_000,
   });
 
   useInscricaoRealtime(

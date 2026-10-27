@@ -3,6 +3,7 @@ export type PapelMembro =
   | "Administrador"
   | "Gestor"
   | "Atendente"
+  | "Suporte"
   | "Solicitante";
 
 export type PlanoWorkspace = "Gratuito" | "Inicial" | "Profissional" | "Empresarial";

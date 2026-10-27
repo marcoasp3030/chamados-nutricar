@@ -1,10 +1,4 @@
-// Adapter Supabase — usado HOJE no preview Lovable.
-// Ao migrar para a VPS, basta substituir o conteúdo deste arquivo pelo
-// adapter de `src/auth/atual.adapter.proprio.ts` (drop-in com a mesma API).
-//
-// Exporta funções "puras" (sem hooks). O hook useUsuarioAtual fica em atual.ts.
-
-import { supabase } from "@/integrations/supabase/client";
+// Adapter auth próprio — usa rotas HTTP (/api/auth/*) em vez de server functions.
 
 export type UsuarioAtual = {
   id: string;
@@ -15,57 +9,59 @@ export type SessaoAtual = {
   usuario: UsuarioAtual | null;
 };
 
+async function parseJson(resp: Response): Promise<Record<string, unknown>> {
+  try {
+    return (await resp.json()) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
 export async function obterSessao(): Promise<SessaoAtual> {
-  const { data } = await supabase.auth.getSession();
-  const u = data.session?.user;
-  if (!u) return { usuario: null };
+  const resp = await fetch("/api/auth/session", { credentials: "include" });
+  if (!resp.ok) return { usuario: null };
+  const j = await parseJson(resp);
+  const u = j.usuario as { id?: string; email?: string } | null | undefined;
+  if (!u?.id) return { usuario: null };
   return { usuario: { id: u.id, email: u.email ?? "" } };
 }
 
 export async function obterUsuarioAtual(): Promise<UsuarioAtual | null> {
-  const { data } = await supabase.auth.getUser();
-  const u = data.user;
-  if (!u) return null;
-  return { id: u.id, email: u.email ?? "" };
+  const s = await obterSessao();
+  return s.usuario;
 }
 
 export async function obterUsuarioAtualId(): Promise<string | null> {
-  const { data } = await supabase.auth.getUser();
-  return data.user?.id ?? null;
+  return (await obterSessao()).usuario?.id ?? null;
 }
 
 export async function entrarComSenha(
   email: string,
   senha: string,
 ): Promise<{ ok: true } | { ok: false; mensagem: string }> {
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password: senha,
+  const resp = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ email, senha }),
   });
-  if (error) {
-    const msg =
-      error.message === "Invalid login credentials"
-        ? "E-mail ou senha incorretos."
-        : error.message;
-    return { ok: false, mensagem: msg };
+  const j = await parseJson(resp);
+  if (!resp.ok || j.ok === false) {
+    const mensagem =
+      j.erro === "reset_obrigatorio"
+        ? "Você precisa redefinir sua senha antes de entrar."
+        : "E-mail ou senha incorretos.";
+    return { ok: false, mensagem };
   }
   return { ok: true };
 }
 
 export async function sair(): Promise<void> {
-  await supabase.auth.signOut();
+  await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
 }
 
-// Inscreve callback nas mudanças de sessão (login/logout/refresh).
-// Retorna função de unsubscribe.
 export function aoMudarSessao(
-  cb: (sessao: SessaoAtual) => void,
+  _cb: (sessao: SessaoAtual) => void,
 ): () => void {
-  const { data } = supabase.auth.onAuthStateChange((_evt, session) => {
-    const u = session?.user;
-    cb({
-      usuario: u ? { id: u.id, email: u.email ?? "" } : null,
-    });
-  });
-  return () => data.subscription.unsubscribe();
+  return () => {};
 }

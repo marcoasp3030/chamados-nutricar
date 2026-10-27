@@ -13,7 +13,9 @@ const baseOpts = {
 };
 
 export function setarCookiesSessao(accessToken: string, refreshToken: string) {
-  setCookie(COOKIE_ACCESS, accessToken, { ...baseOpts, maxAge: TTL.ACCESS_SEG });
+  // Ambos os cookies vivem pelo TTL da sessão — evita o browser apagar o access
+  // após 15 min e forçar reautenticação por inatividade.
+  setCookie(COOKIE_ACCESS, accessToken, { ...baseOpts, maxAge: TTL.REFRESH_SEG });
   setCookie(COOKIE_REFRESH, refreshToken, { ...baseOpts, maxAge: TTL.REFRESH_SEG });
 }
 

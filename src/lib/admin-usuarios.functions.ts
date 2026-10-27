@@ -1,40 +1,83 @@
-// Server functions de administração de usuários.
-// Equivale às edge functions `criar-usuario-direto` e `definir-senha-usuario`.
+// Chamadas HTTP para administração de usuários (VPS — evita server functions / Seroval).
 
-import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
-import { requireAuth } from "@/auth/middleware.server";
-import {
-  criarUsuarioDireto as svcCriar,
-  definirSenhaUsuario as svcDefinirSenha,
-} from "./admin-usuarios.server";
+export type InputCriarUsuario = {
+  workspaceId: string;
+  nome: string;
+  email: string;
+  telefone?: string | null;
+  papel: string;
+  cargo: string;
+  departamentoIds?: string[];
+};
 
-const SchemaCriar = z.object({
-  workspaceId: z.string().uuid(),
-  nome: z.string().min(1).max(200),
-  email: z.string().email().max(254),
-  telefone: z.string().max(40).nullable().optional(),
-  papel: z.string().min(1).max(40),
-  cargo: z.string().min(1).max(120),
-  departamentoIds: z.array(z.string().uuid()).max(50).optional(),
-});
+export type InputDefinirSenha = {
+  workspaceId: string;
+  usuarioId: string;
+  senha?: string | null;
+};
 
-export const criarUsuarioDireto = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
-  .inputValidator((input: unknown) => SchemaCriar.parse(input))
-  .handler(async ({ data, context }) => {
-    return svcCriar(context.userId, data);
+export type InputAtualizarEmail = {
+  workspaceId: string;
+  usuarioId: string;
+  email: string;
+};
+
+async function parseJson(resp: Response): Promise<Record<string, unknown>> {
+  try {
+    return (await resp.json()) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+export async function criarUsuarioDireto(payload: {
+  data: InputCriarUsuario;
+}): Promise<{ email: string; senhaTemporaria: string; usuarioId?: string }> {
+  const resp = await fetch("/api/admin/usuarios/criar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload.data),
   });
+  const j = await parseJson(resp);
+  if (!resp.ok) {
+    throw new Error((j.error as string) || "Não foi possível criar o usuário.");
+  }
+  return {
+    email: j.email as string,
+    senhaTemporaria: j.senhaTemporaria as string,
+    usuarioId: j.usuarioId as string | undefined,
+  };
+}
 
-const SchemaSenha = z.object({
-  workspaceId: z.string().uuid(),
-  usuarioId: z.string().uuid(),
-  senha: z.string().min(8).max(128).nullable().optional(),
-});
-
-export const definirSenhaUsuario = createServerFn({ method: "POST" })
-  .middleware([requireAuth])
-  .inputValidator((input: unknown) => SchemaSenha.parse(input))
-  .handler(async ({ data, context }) => {
-    return svcDefinirSenha(context.userId, data);
+export async function definirSenhaUsuario(payload: {
+  data: InputDefinirSenha;
+}): Promise<{ senha: string }> {
+  const resp = await fetch("/api/admin/usuarios/definir-senha", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload.data),
   });
+  const j = await parseJson(resp);
+  if (!resp.ok) {
+    throw new Error((j.error as string) || "Não foi possível alterar a senha.");
+  }
+  return { senha: j.senha as string };
+}
+
+export async function atualizarEmailUsuario(payload: {
+  data: InputAtualizarEmail;
+}): Promise<{ email: string }> {
+  const resp = await fetch("/api/admin/usuarios/atualizar-email", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload.data),
+  });
+  const j = await parseJson(resp);
+  if (!resp.ok) {
+    throw new Error((j.error as string) || "Não foi possível alterar o e-mail.");
+  }
+  return { email: j.email as string };
+}

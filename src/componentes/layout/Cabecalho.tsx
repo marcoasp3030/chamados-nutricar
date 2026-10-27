@@ -52,8 +52,22 @@ export function Cabecalho() {
 
   const abrir = (link: string | null, id: string, lida: boolean) => {
     if (!lida) marcar.mutate([id]);
-    if (link) navigate({ to: link as never });
+    if (link?.startsWith("/w/")) {
+      navigate({ to: link as never });
+    }
   };
+
+  function rotuloTipoNotificacao(tipo: string) {
+    if (tipo.startsWith("chamado_criado")) return "Novo chamado";
+    if (tipo.startsWith("chamado_status")) return "Status";
+    if (tipo.startsWith("chamado_responsavel")) return "Responsável";
+    if (tipo.startsWith("chamado_comentario")) return "Comentário";
+    if (tipo.startsWith("chamado_anexo")) return "Anexo";
+    if (tipo.startsWith("chamado_prioridade")) return "Prioridade";
+    if (tipo.startsWith("chamado_prazo")) return "Prazo";
+    if (tipo.startsWith("chamado_departamento")) return "Departamento";
+    return "Aviso";
+  }
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-card/95 px-3 backdrop-blur md:gap-3 md:px-6">
@@ -110,7 +124,12 @@ export function Cabecalho() {
                         <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
                       )}
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{n.titulo}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                            {rotuloTipoNotificacao(n.tipo)}
+                          </span>
+                          <p className="truncate text-sm font-medium">{n.titulo}</p>
+                        </div>
                         {n.mensagem && (
                           <p className="line-clamp-2 text-xs text-muted-foreground">
                             {n.mensagem}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
@@ -8,6 +8,7 @@ import {
   Building2,
   CheckCircle2,
   Clock,
+  Filter,
   FolderTree,
   Inbox,
   Loader2,
@@ -21,10 +22,22 @@ import {
   Trophy,
   UserCheck,
   Users,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/estado/workspaceStore";
-import { useIndicadoresPainel } from "@/hooks/useIndicadoresPainel";
+import { useIndicadoresPainel, type FiltrosPainel } from "@/hooks/useIndicadoresPainel";
+import { useMembrosWorkspace } from "@/hooks/useMembrosWorkspace";
+import { useDepartamentos } from "@/componentes/configuracoes/AbaDepartamentos";
+import { useCategoriasChamado } from "@/componentes/configuracoes/AbaCategorias";
+import { useUsuarioAtualId } from "@/auth/atual";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { BadgeStatus } from "@/componentes/chamados/BadgeStatus";
 import { BadgePrioridade } from "@/componentes/chamados/BadgePrioridade";
 import {
@@ -323,15 +336,99 @@ function CartaoRanking({
   );
 }
 
+function ChipAtalho({
+  rotulo,
+  icone: Icone,
+  ativo = false,
+  onClick,
+}: {
+  rotulo: string;
+  icone?: typeof Inbox;
+  ativo?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={ativo}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all hover:-translate-y-0.5 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-ring",
+        ativo
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-border bg-background text-foreground hover:border-primary/40 hover:bg-muted",
+      )}
+    >
+      {Icone && (
+        <Icone
+          className={cn("h-3.5 w-3.5", ativo ? "text-primary-foreground" : "text-muted-foreground")}
+        />
+      )}
+      {rotulo}
+    </button>
+  );
+}
+
+function GrupoAtalhos({
+  titulo,
+  children,
+}: {
+  titulo: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        {titulo}
+      </p>
+      <div className="flex flex-wrap gap-1.5">{children}</div>
+    </div>
+  );
+}
+
+interface FiltroAtalho {
+  chave: string;
+  rotulo: string;
+  filtros: FiltrosPainel;
+}
+
 function Painel() {
   const { workspaceAtual } = useWorkspaceStore();
-  const { data, isLoading } = useIndicadoresPainel(workspaceAtual?.id);
+  const [filtroAtalho, setFiltroAtalho] = useState<FiltroAtalho | null>(null);
+  const { data, isLoading, isError, refetch } = useIndicadoresPainel(
+    workspaceAtual?.id,
+    filtroAtalho?.filtros ?? {},
+  );
+  const { data: membros } = useMembrosWorkspace(workspaceAtual?.id);
+  const { data: departamentos } = useDepartamentos(workspaceAtual?.id);
+  const { data: categorias } = useCategoriasChamado(workspaceAtual?.id);
+  const usuarioId = useUsuarioAtualId();
   const [previa, setPrevia] = useState<PreviaState | null>(null);
+
+  // Clicar num atalho aplica (ou remove, se já ativo) o filtro em todas as visões.
+  const alternarFiltro = (chave: string, rotulo: string, filtros: FiltrosPainel) =>
+    setFiltroAtalho((atual) =>
+      atual?.chave === chave ? null : { chave, rotulo, filtros },
+    );
+
+  // Departamentos aos quais o usuário logado pertence (para "Minha área").
+  const meusDepartamentos = useMemo(() => {
+    const meu = (membros ?? []).find((m) => m.usuario_id === usuarioId);
+    const ids = meu?.departamento_ids ?? [];
+    return (departamentos ?? []).filter((d) => ids.includes(d.id));
+  }, [membros, departamentos, usuarioId]);
 
   if (!workspaceAtual) return null;
 
-  const abrir = (titulo: string, filtros: FiltrosPrevia, descricao?: string) =>
-    setPrevia({ titulo, filtros, descricao });
+  const abrir = (titulo: string, filtros: FiltrosPrevia, descricao?: string) => {
+    // Mescla o filtro ativo de "Meus atalhos" para que a visão (modal) mostre os
+    // mesmos números dos cartões. Em rankings (chamadoIds) o filtro já está
+    // embutido nos ids calculados, então não re-aplicamos para evitar conflito.
+    const base: FiltrosPrevia = filtros.chamadoIds
+      ? {}
+      : (filtroAtalho?.filtros ?? {});
+    setPrevia({ titulo, filtros: { ...base, ...filtros }, descricao });
+  };
 
   const hora = new Date().getHours();
   const saudacao = hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite";
@@ -368,12 +465,194 @@ function Painel() {
         </div>
       </header>
 
-      {isLoading || !data ? (
+      {isLoading ? (
         <div className="flex justify-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
+      ) : isError || !data ? (
+        <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+          <p className="text-sm text-muted-foreground">
+            Não foi possível carregar os indicadores do painel.
+          </p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Tentar novamente
+          </Button>
+        </div>
       ) : (
         <>
+          <section className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)] md:p-5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/10">
+                  <Filter className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold tracking-tight">Meus atalhos</h2>
+                  <p className="text-[11px] text-muted-foreground">
+                    {filtroAtalho
+                      ? `Visões filtradas por: ${filtroAtalho.rotulo}`
+                      : "Clique num atalho para filtrar todas as visões abaixo."}
+                  </p>
+                </div>
+              </div>
+              {filtroAtalho && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setFiltroAtalho(null)}
+                >
+                  <X className="h-3.5 w-3.5" /> Limpar filtro
+                </Button>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <GrupoAtalhos titulo="Meus chamados">
+                <ChipAtalho
+                  rotulo="Todos os meus"
+                  icone={UserCheck}
+                  ativo={filtroAtalho?.chave === "meus"}
+                  onClick={() => alternarFiltro("meus", "Atribuídos a mim", { responsavel: "MEUS" })}
+                />
+                <ChipAtalho
+                  rotulo="Abertos"
+                  icone={Inbox}
+                  ativo={filtroAtalho?.chave === "meus-abertos"}
+                  onClick={() =>
+                    alternarFiltro("meus-abertos", "Meus abertos", {
+                      responsavel: "MEUS",
+                      status: "Aberto",
+                    })
+                  }
+                />
+                <ChipAtalho
+                  rotulo="Em andamento"
+                  icone={PlayCircle}
+                  ativo={filtroAtalho?.chave === "meus-andamento"}
+                  onClick={() =>
+                    alternarFiltro("meus-andamento", "Meus em andamento", {
+                      responsavel: "MEUS",
+                      status: "Em andamento",
+                    })
+                  }
+                />
+                <ChipAtalho
+                  rotulo="Resolvidos"
+                  icone={CheckCircle2}
+                  ativo={filtroAtalho?.chave === "meus-resolvidos"}
+                  onClick={() =>
+                    alternarFiltro("meus-resolvidos", "Meus resolvidos", {
+                      responsavel: "MEUS",
+                      status: "Resolvido",
+                    })
+                  }
+                />
+                <ChipAtalho
+                  rotulo="Encerrados"
+                  icone={CheckCircle2}
+                  ativo={filtroAtalho?.chave === "meus-encerrados"}
+                  onClick={() =>
+                    alternarFiltro("meus-encerrados", "Meus encerrados", {
+                      responsavel: "MEUS",
+                      encerrados: true,
+                    })
+                  }
+                />
+                <ChipAtalho
+                  rotulo="Vencidos"
+                  icone={AlertTriangle}
+                  ativo={filtroAtalho?.chave === "meus-vencidos"}
+                  onClick={() =>
+                    alternarFiltro("meus-vencidos", "Meus vencidos", {
+                      responsavel: "MEUS",
+                      vencidos: true,
+                    })
+                  }
+                />
+              </GrupoAtalhos>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    <Building2 className="h-3 w-3" /> Departamento
+                  </p>
+                  <Select
+                    value={filtroAtalho?.filtros.departamento_id ?? "Todos"}
+                    onValueChange={(v) => {
+                      if (v === "Todos") {
+                        setFiltroAtalho((a) => (a?.filtros.departamento_id ? null : a));
+                        return;
+                      }
+                      const nome =
+                        (departamentos ?? []).find((d) => d.id === v)?.nome ?? "Departamento";
+                      setFiltroAtalho({
+                        chave: `dep-${v}`,
+                        rotulo: `Departamento: ${nome}`,
+                        filtros: { departamento_id: v },
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Todos os departamentos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Todos">Todos os departamentos</SelectItem>
+                      {meusDepartamentos.length > 0 && (
+                        <>
+                          {meusDepartamentos.map((d) => (
+                            <SelectItem key={`meu-${d.id}`} value={d.id}>
+                              {d.nome} (minha área)
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
+                      {(departamentos ?? [])
+                        .filter((d) => !meusDepartamentos.some((m) => m.id === d.id))
+                        .map((d) => (
+                          <SelectItem key={d.id} value={d.id}>
+                            {d.nome}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    <FolderTree className="h-3 w-3" /> Categoria
+                  </p>
+                  <Select
+                    value={filtroAtalho?.filtros.categoria ?? "Todas"}
+                    onValueChange={(v) => {
+                      if (v === "Todas") {
+                        setFiltroAtalho((a) => (a?.filtros.categoria ? null : a));
+                        return;
+                      }
+                      setFiltroAtalho({
+                        chave: `cat-${v}`,
+                        rotulo: `Categoria: ${v}`,
+                        filtros: { categoria: v },
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Todas as categorias" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Todas">Todas as categorias</SelectItem>
+                      {(categorias ?? []).map((c) => (
+                        <SelectItem key={c.id} value={c.nome}>
+                          {c.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Operação atual</h2>
           <section className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
             <CartaoIndicador
@@ -397,7 +676,13 @@ function Painel() {
               cor="bg-purple-500/10 text-purple-600 dark:text-purple-400"
               rodape="Solicitante ou terceiros"
               onClick={() =>
-                abrir("Aguardando", { status: "Aguardando solicitante" }, "Solicitante ou terceiros")
+                abrir(
+                  "Aguardando",
+                  {
+                    statusIn: ["Aguardando solicitante", "Aguardando terceiros"],
+                  },
+                  "Solicitante ou terceiros",
+                )
               }
             />
             <CartaoIndicador
@@ -406,7 +691,11 @@ function Painel() {
               icone={CheckCircle2}
               cor="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
               onClick={() =>
-                abrir("Resolvidos no mês", { status: "Resolvido", periodo: "mes" })
+                abrir("Resolvidos no mês", {
+                  status: "Resolvido",
+                  periodo: "mes",
+                  campoData: "resolvido_em",
+                })
               }
             />
           </section>
@@ -435,7 +724,9 @@ function Painel() {
               valor={data.totalMes}
               icone={TrendingUp}
               cor="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
-              onClick={() => abrir("Abertos no mês", { periodo: "mes" })}
+              onClick={() =>
+                abrir("Abertos no mês", { periodo: "mes", campoData: "criado_em" })
+              }
             />
             <CartaoIndicador
               rotulo="Fechados no mês"
@@ -443,7 +734,11 @@ function Painel() {
               icone={CheckCircle2}
               cor="bg-slate-500/10 text-slate-600 dark:text-slate-300"
               onClick={() =>
-                abrir("Fechados no mês", { status: "Fechado", periodo: "mes" })
+                abrir("Fechados no mês", {
+                  status: "Fechado",
+                  periodo: "mes",
+                  campoData: "fechado_em",
+                })
               }
             />
           </section>

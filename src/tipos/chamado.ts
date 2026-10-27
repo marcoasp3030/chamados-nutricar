@@ -35,7 +35,12 @@ export interface Chamado {
   solicitante_id: string;
   responsavel_id: string | null;
   chamado_pai_id: string | null;
+  descricao_chamado_pai?: string | null;
+  titulo_chamado_pai?: string | null;
+  numero_chamado_pai?: number | null;
+  codigo_chamado_pai?: string | null;
   prazo: string | null;
+  proposta_criada?: boolean;
   primeiro_resposta_em: string | null;
   resolvido_em: string | null;
   fechado_em: string | null;
