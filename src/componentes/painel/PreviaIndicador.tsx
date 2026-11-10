@@ -33,6 +33,7 @@ export interface FiltrosPrevia {
   statusIn?: StatusChamado[];
   prioridade?: PrioridadeChamado | "Todas";
   responsavel?: "Todos" | "MEUS";
+  solicitante?: "Todos" | "MEUS";
   periodo?: "todos" | "mes";
   /** Campo de data usado com periodo "mes" (padrão: criado_em). */
   campoData?: CampoDataPeriodo;
@@ -78,6 +79,7 @@ export function PreviaIndicador({
       statusIn: filtros.statusIn,
       prioridade: filtros.prioridade,
       responsavel_id: filtros.responsavel,
+      solicitante_id: filtros.solicitante,
       categoria: filtros.categoria,
       departamento_id: filtros.departamento_id,
       somenteRaiz: false,
@@ -127,6 +129,7 @@ export function PreviaIndicador({
   }
   if (filtros.prioridade && filtros.prioridade !== "Todas") search.prioridade = filtros.prioridade;
   if (filtros.responsavel && filtros.responsavel !== "Todos") search.responsavel = filtros.responsavel;
+  if (filtros.solicitante && filtros.solicitante !== "Todos") search.solicitante = filtros.solicitante;
   if (filtros.periodo && filtros.periodo !== "todos") search.periodo = filtros.periodo;
   if (filtros.periodo === "mes" && filtros.campoData && filtros.campoData !== "criado_em") {
     search.campoData = filtros.campoData;
@@ -228,6 +231,23 @@ export function PreviaIndicador({
               )}
             >
               Atribuídos a mim
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setFiltros((f) => ({
+                  ...f,
+                  solicitante: f.solicitante === "MEUS" ? "Todos" : "MEUS",
+                }))
+              }
+              className={cn(
+                "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                filtros.solicitante === "MEUS"
+                  ? "border-cyan-500 bg-cyan-500 text-white"
+                  : "border-border bg-background hover:bg-muted",
+              )}
+            >
+              Abertos por mim
             </button>
             <button
               type="button"

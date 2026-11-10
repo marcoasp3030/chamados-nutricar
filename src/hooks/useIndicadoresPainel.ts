@@ -11,10 +11,20 @@ export interface IndicadoresPainel {
   fechadosMes: number;
   vencidos: number;
   meusAtribuidos: number;
+  meusSolicitados: number;
   totalMes: number;
   porStatus: Record<StatusChamado, number>;
   porPrioridade: Record<PrioridadeChamado, number>;
   ultimos: Array<{
+    id: string;
+    numero: number;
+    codigo: string | null;
+    titulo: string;
+    status: StatusChamado;
+    prioridade: PrioridadeChamado;
+    criado_em: string;
+  }>;
+  meusChamados: Array<{
     id: string;
     numero: number;
     codigo: string | null;
@@ -105,7 +115,7 @@ export function useIndicadoresPainel(
         db
           .from("chamados")
           .select(
-            "id, numero, codigo, titulo, status, prioridade, prazo, criado_em, primeiro_resposta_em, resolvido_em, fechado_em, responsavel_id, loja, categoria, departamento_id, departamento_origem_id",
+            "id, numero, codigo, titulo, status, prioridade, prazo, criado_em, primeiro_resposta_em, resolvido_em, fechado_em, responsavel_id, solicitante_id, loja, categoria, departamento_id, departamento_origem_id",
           )
           .eq("workspace_id", workspaceId!)
           .order("criado_em", { ascending: false })
@@ -165,6 +175,7 @@ export function useIndicadoresPainel(
       let fechadosMes = 0;
       let vencidos = 0;
       let meusAtribuidos = 0;
+      let meusSolicitados = 0;
       let totalMes = 0;
 
       const novoAcum = (): Acumulador => new Map();
@@ -207,6 +218,7 @@ export function useIndicadoresPainel(
         const slaEstourado = !!(ativo && c.prazo && new Date(c.prazo) < agora);
         if (slaEstourado) vencidos++;
         if (meuId && c.responsavel_id === meuId && ativo) meusAtribuidos++;
+        if (meuId && c.solicitante_id === meuId && ativo) meusSolicitados++;
 
         const criado = new Date(c.criado_em);
         if (criado >= inicioMes) totalMes++;
@@ -344,6 +356,19 @@ export function useIndicadoresPainel(
         .sort((a, b) => b.total - a.total)
         .slice(0, 5);
 
+      const meusChamados = lista
+        .filter((c) => meuId && c.solicitante_id === meuId)
+        .slice(0, 6)
+        .map((c) => ({
+          id: c.id,
+          numero: c.numero,
+          codigo: (c as { codigo?: string | null }).codigo ?? null,
+          titulo: c.titulo,
+          status: c.status as StatusChamado,
+          prioridade: c.prioridade as PrioridadeChamado,
+          criado_em: c.criado_em,
+        }));
+
       return {
         abertos,
         emAndamento,
@@ -352,6 +377,7 @@ export function useIndicadoresPainel(
         fechadosMes,
         vencidos,
         meusAtribuidos,
+        meusSolicitados,
         totalMes,
         porStatus,
         porPrioridade,
@@ -364,6 +390,7 @@ export function useIndicadoresPainel(
           prioridade: c.prioridade as PrioridadeChamado,
           criado_em: c.criado_em,
         })),
+        meusChamados,
         topLojas: construirRanking(acumLoja, (k) => k),
         topDepartamentos: construirRanking(acumDep, rotuloDepartamento),
         topCategorias: construirRanking(acumCat, (k) => k),

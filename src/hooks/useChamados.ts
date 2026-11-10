@@ -11,6 +11,7 @@ export interface FiltrosChamados {
   responsavel_id?: string | "Todos" | "MEUS";
   categoria?: string | "Todas";
   departamento_id?: string | "Todos";
+  solicitante_id?: string | "Todos" | "MEUS";
   /** true = oculta subchamados; false (padrão na lista) = inclui subchamados. */
   somenteRaiz?: boolean;
   dataInicio?: string; // ISO
@@ -70,6 +71,15 @@ async function buscarChamadosComPerfis(
       if (u.user) q = q.eq("responsavel_id", u.user.id);
     } else {
       q = q.eq("responsavel_id", filtros.responsavel_id);
+    }
+  }
+
+  if (filtros.solicitante_id && filtros.solicitante_id !== "Todos") {
+    if (filtros.solicitante_id === "MEUS") {
+      const u = { user: await obterUsuarioAtual() };
+      if (u.user) q = q.eq("solicitante_id", u.user.id);
+    } else {
+      q = q.eq("solicitante_id", filtros.solicitante_id);
     }
   }
 

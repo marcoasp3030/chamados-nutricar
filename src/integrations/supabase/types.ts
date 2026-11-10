@@ -729,6 +729,7 @@ export type Database = {
       checklists: {
         Row: {
           atualizado_em: string
+          coluna_manual: string | null
           criado_em: string
           criado_por: string
           id: string
@@ -740,6 +741,7 @@ export type Database = {
         }
         Insert: {
           atualizado_em?: string
+          coluna_manual?: string | null
           criado_em?: string
           criado_por: string
           id?: string
@@ -751,6 +753,7 @@ export type Database = {
         }
         Update: {
           atualizado_em?: string
+          coluna_manual?: string | null
           criado_em?: string
           criado_por?: string
           id?: string
@@ -799,6 +802,50 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: []
+      }
+      inauguracao_funis: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          chave: string
+          criado_em: string
+          descricao: string | null
+          id: string
+          ordem: number
+          rotulo: string
+          workspace_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          chave: string
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          ordem?: number
+          rotulo: string
+          workspace_id: string
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          chave?: string
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          ordem?: number
+          rotulo?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inauguracao_funis_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventario_compartilhamentos: {
         Row: {
@@ -1539,6 +1586,7 @@ export type Database = {
         Args: { _departamento_id: string; _workspace_id: string }
         Returns: boolean
       }
+      eh_super_admin: { Args: never; Returns: boolean }
       pode_editar_inventario_departamento: {
         Args: { _departamento_id: string; _workspace_id: string }
         Returns: boolean
