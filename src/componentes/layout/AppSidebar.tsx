@@ -10,6 +10,7 @@ import {
   HandMetal,
   CheckCircle2,
   Users,
+  BarChart3,
 } from "lucide-react";
 import {
   Sidebar,
@@ -32,6 +33,7 @@ import { cn } from "@/lib/utils";
 const itensPrincipais = [
   { rotulo: "Painel", para: "/w/$slug/painel" as const, icone: LayoutDashboard },
   { rotulo: "Chamados", para: "/w/$slug/chamados" as const, icone: Ticket },
+  { rotulo: "Relatórios", para: "/w/$slug/relatorios" as const, icone: BarChart3 },
   { rotulo: "Projetos", para: "/w/$slug/projetos" as const, icone: FolderKanban },
   { rotulo: "Checklists", para: "/w/$slug/checklists" as const, icone: CheckSquare },
   { rotulo: "Inventário", para: "/w/$slug/inventario" as const, icone: Boxes },

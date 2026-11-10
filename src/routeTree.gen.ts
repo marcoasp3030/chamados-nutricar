@@ -14,20 +14,32 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WSlugRouteImport } from './routes/w.$slug'
 import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as WSlugIndexRouteImport } from './routes/w.$slug.index'
+import { Route as WSlugSuporteRouteImport } from './routes/w.$slug.suporte'
+import { Route as WSlugRelatoriosRouteImport } from './routes/w.$slug.relatorios'
 import { Route as WSlugProjetosRouteImport } from './routes/w.$slug.projetos'
 import { Route as WSlugPainelRouteImport } from './routes/w.$slug.painel'
-import { Route as WSlugSuporteRouteImport } from './routes/w.$slug.suporte'
 import { Route as WSlugInventarioRouteImport } from './routes/w.$slug.inventario'
 import { Route as WSlugInauguracoesRouteImport } from './routes/w.$slug.inauguracoes'
 import { Route as WSlugConfiguracoesRouteImport } from './routes/w.$slug.configuracoes'
 import { Route as WSlugChecklistsRouteImport } from './routes/w.$slug.checklists'
 import { Route as WSlugChamadosRouteImport } from './routes/w.$slug.chamados'
+import { Route as ApiWorkspacesMeRouteImport } from './routes/api/workspaces/me'
 import { Route as ApiRealtimeCanalRouteImport } from './routes/api/realtime/$canal'
 import { Route as ApiPublicWhatsappNotifyRouteImport } from './routes/api/public/whatsapp-notify'
+import { Route as ApiPostgrestSplatRouteImport } from './routes/api/postgrest/$'
+import { Route as ApiNotificacoesSinalizarRouteImport } from './routes/api/notificacoes/sinalizar'
+import { Route as ApiAuthTokenRouteImport } from './routes/api/auth/token'
+import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
+import { Route as ApiAuthLogoutRouteImport } from './routes/api/auth/logout'
+import { Route as ApiAuthLoginRouteImport } from './routes/api/auth/login'
+import { Route as WSlugSuporteIndexRouteImport } from './routes/w.$slug.suporte.index'
 import { Route as WSlugProjetosIndexRouteImport } from './routes/w.$slug.projetos.index'
 import { Route as WSlugChecklistsIndexRouteImport } from './routes/w.$slug.checklists.index'
 import { Route as WSlugChamadosIndexRouteImport } from './routes/w.$slug.chamados.index'
+import { Route as WSlugSuporteResolvidosRouteImport } from './routes/w.$slug.suporte.resolvidos'
+import { Route as WSlugSuporteEquipeRouteImport } from './routes/w.$slug.suporte.equipe'
 import { Route as WSlugProjetosProjetoIdRouteImport } from './routes/w.$slug.projetos.$projetoId'
 import { Route as WSlugMembrosUsuarioIdRouteImport } from './routes/w.$slug.membros.$usuarioId'
 import { Route as WSlugChecklistsTemplateRouteImport } from './routes/w.$slug.checklists.template'
@@ -35,6 +47,9 @@ import { Route as WSlugChecklistsChecklistIdRouteImport } from './routes/w.$slug
 import { Route as WSlugChamadosQuadroRouteImport } from './routes/w.$slug.chamados.quadro'
 import { Route as WSlugChamadosNovoRouteImport } from './routes/w.$slug.chamados.novo'
 import { Route as WSlugChamadosNumeroRouteImport } from './routes/w.$slug.chamados.$numero'
+import { Route as ApiAdminUsuariosDefinirSenhaRouteImport } from './routes/api/admin/usuarios/definir-senha'
+import { Route as ApiAdminUsuariosCriarRouteImport } from './routes/api/admin/usuarios/criar'
+import { Route as ApiAdminUsuariosAtualizarEmailRouteImport } from './routes/api/admin/usuarios/atualizar-email'
 import { Route as ApiPublicStorageBucketSplatRouteImport } from './routes/api/public/storage/$bucket/$'
 
 const SelecionarEmpresaRoute = SelecionarEmpresaRouteImport.update({
@@ -62,9 +77,24 @@ const ConviteTokenRoute = ConviteTokenRouteImport.update({
   path: '/convite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WSlugIndexRoute = WSlugIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => WSlugRoute,
+} as any)
+const WSlugSuporteRoute = WSlugSuporteRouteImport.update({
+  id: '/suporte',
+  path: '/suporte',
+  getParentRoute: () => WSlugRoute,
+} as any)
+const WSlugRelatoriosRoute = WSlugRelatoriosRouteImport.update({
+  id: '/relatorios',
+  path: '/relatorios',
   getParentRoute: () => WSlugRoute,
 } as any)
 const WSlugProjetosRoute = WSlugProjetosRouteImport.update({
@@ -75,11 +105,6 @@ const WSlugProjetosRoute = WSlugProjetosRouteImport.update({
 const WSlugPainelRoute = WSlugPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
-  getParentRoute: () => WSlugRoute,
-} as any)
-const WSlugSuporteRoute = WSlugSuporteRouteImport.update({
-  id: '/suporte',
-  path: '/suporte',
   getParentRoute: () => WSlugRoute,
 } as any)
 const WSlugInventarioRoute = WSlugInventarioRouteImport.update({
@@ -107,6 +132,11 @@ const WSlugChamadosRoute = WSlugChamadosRouteImport.update({
   path: '/chamados',
   getParentRoute: () => WSlugRoute,
 } as any)
+const ApiWorkspacesMeRoute = ApiWorkspacesMeRouteImport.update({
+  id: '/api/workspaces/me',
+  path: '/api/workspaces/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRealtimeCanalRoute = ApiRealtimeCanalRouteImport.update({
   id: '/api/realtime/$canal',
   path: '/api/realtime/$canal',
@@ -116,6 +146,42 @@ const ApiPublicWhatsappNotifyRoute = ApiPublicWhatsappNotifyRouteImport.update({
   id: '/api/public/whatsapp-notify',
   path: '/api/public/whatsapp-notify',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPostgrestSplatRoute = ApiPostgrestSplatRouteImport.update({
+  id: '/api/postgrest/$',
+  path: '/api/postgrest/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNotificacoesSinalizarRoute =
+  ApiNotificacoesSinalizarRouteImport.update({
+    id: '/api/notificacoes/sinalizar',
+    path: '/api/notificacoes/sinalizar',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAuthTokenRoute = ApiAuthTokenRouteImport.update({
+  id: '/api/auth/token',
+  path: '/api/auth/token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSessionRoute = ApiAuthSessionRouteImport.update({
+  id: '/api/auth/session',
+  path: '/api/auth/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthLogoutRoute = ApiAuthLogoutRouteImport.update({
+  id: '/api/auth/logout',
+  path: '/api/auth/logout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthLoginRoute = ApiAuthLoginRouteImport.update({
+  id: '/api/auth/login',
+  path: '/api/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WSlugSuporteIndexRoute = WSlugSuporteIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WSlugSuporteRoute,
 } as any)
 const WSlugProjetosIndexRoute = WSlugProjetosIndexRouteImport.update({
   id: '/',
@@ -131,6 +197,16 @@ const WSlugChamadosIndexRoute = WSlugChamadosIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => WSlugChamadosRoute,
+} as any)
+const WSlugSuporteResolvidosRoute = WSlugSuporteResolvidosRouteImport.update({
+  id: '/resolvidos',
+  path: '/resolvidos',
+  getParentRoute: () => WSlugSuporteRoute,
+} as any)
+const WSlugSuporteEquipeRoute = WSlugSuporteEquipeRouteImport.update({
+  id: '/equipe',
+  path: '/equipe',
+  getParentRoute: () => WSlugSuporteRoute,
 } as any)
 const WSlugProjetosProjetoIdRoute = WSlugProjetosProjetoIdRouteImport.update({
   id: '/$projetoId',
@@ -168,6 +244,23 @@ const WSlugChamadosNumeroRoute = WSlugChamadosNumeroRouteImport.update({
   path: '/$numero',
   getParentRoute: () => WSlugChamadosRoute,
 } as any)
+const ApiAdminUsuariosDefinirSenhaRoute =
+  ApiAdminUsuariosDefinirSenhaRouteImport.update({
+    id: '/api/admin/usuarios/definir-senha',
+    path: '/api/admin/usuarios/definir-senha',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAdminUsuariosCriarRoute = ApiAdminUsuariosCriarRouteImport.update({
+  id: '/api/admin/usuarios/criar',
+  path: '/api/admin/usuarios/criar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminUsuariosAtualizarEmailRoute =
+  ApiAdminUsuariosAtualizarEmailRouteImport.update({
+    id: '/api/admin/usuarios/atualizar-email',
+    path: '/api/admin/usuarios/atualizar-email',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicStorageBucketSplatRoute =
   ApiPublicStorageBucketSplatRouteImport.update({
     id: '/api/public/storage/$bucket/$',
@@ -179,19 +272,31 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
+  '/api/health': typeof ApiHealthRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug': typeof WSlugRouteWithChildren
+  '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/auth/token': typeof ApiAuthTokenRoute
+  '/api/notificacoes/sinalizar': typeof ApiNotificacoesSinalizarRoute
+  '/api/postgrest/$': typeof ApiPostgrestSplatRoute
   '/api/public/whatsapp-notify': typeof ApiPublicWhatsappNotifyRoute
   '/api/realtime/$canal': typeof ApiRealtimeCanalRoute
+  '/api/workspaces/me': typeof ApiWorkspacesMeRoute
   '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
   '/w/$slug/checklists': typeof WSlugChecklistsRouteWithChildren
   '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
   '/w/$slug/inauguracoes': typeof WSlugInauguracoesRoute
   '/w/$slug/inventario': typeof WSlugInventarioRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
-  '/w/$slug/suporte': typeof WSlugSuporteRoute
   '/w/$slug/projetos': typeof WSlugProjetosRouteWithChildren
+  '/w/$slug/relatorios': typeof WSlugRelatoriosRoute
+  '/w/$slug/suporte': typeof WSlugSuporteRouteWithChildren
   '/w/$slug/': typeof WSlugIndexRoute
+  '/api/admin/usuarios/atualizar-email': typeof ApiAdminUsuariosAtualizarEmailRoute
+  '/api/admin/usuarios/criar': typeof ApiAdminUsuariosCriarRoute
+  '/api/admin/usuarios/definir-senha': typeof ApiAdminUsuariosDefinirSenhaRoute
   '/w/$slug/chamados/$numero': typeof WSlugChamadosNumeroRoute
   '/w/$slug/chamados/novo': typeof WSlugChamadosNovoRoute
   '/w/$slug/chamados/quadro': typeof WSlugChamadosQuadroRoute
@@ -199,24 +304,38 @@ export interface FileRoutesByFullPath {
   '/w/$slug/checklists/template': typeof WSlugChecklistsTemplateRoute
   '/w/$slug/membros/$usuarioId': typeof WSlugMembrosUsuarioIdRoute
   '/w/$slug/projetos/$projetoId': typeof WSlugProjetosProjetoIdRoute
+  '/w/$slug/suporte/equipe': typeof WSlugSuporteEquipeRoute
+  '/w/$slug/suporte/resolvidos': typeof WSlugSuporteResolvidosRoute
   '/w/$slug/chamados/': typeof WSlugChamadosIndexRoute
   '/w/$slug/checklists/': typeof WSlugChecklistsIndexRoute
   '/w/$slug/projetos/': typeof WSlugProjetosIndexRoute
+  '/w/$slug/suporte/': typeof WSlugSuporteIndexRoute
   '/api/public/storage/$bucket/$': typeof ApiPublicStorageBucketSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
+  '/api/health': typeof ApiHealthRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/auth/token': typeof ApiAuthTokenRoute
+  '/api/notificacoes/sinalizar': typeof ApiNotificacoesSinalizarRoute
+  '/api/postgrest/$': typeof ApiPostgrestSplatRoute
   '/api/public/whatsapp-notify': typeof ApiPublicWhatsappNotifyRoute
   '/api/realtime/$canal': typeof ApiRealtimeCanalRoute
+  '/api/workspaces/me': typeof ApiWorkspacesMeRoute
   '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
   '/w/$slug/inauguracoes': typeof WSlugInauguracoesRoute
   '/w/$slug/inventario': typeof WSlugInventarioRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
-  '/w/$slug/suporte': typeof WSlugSuporteRoute
+  '/w/$slug/relatorios': typeof WSlugRelatoriosRoute
   '/w/$slug': typeof WSlugIndexRoute
+  '/api/admin/usuarios/atualizar-email': typeof ApiAdminUsuariosAtualizarEmailRoute
+  '/api/admin/usuarios/criar': typeof ApiAdminUsuariosCriarRoute
+  '/api/admin/usuarios/definir-senha': typeof ApiAdminUsuariosDefinirSenhaRoute
   '/w/$slug/chamados/$numero': typeof WSlugChamadosNumeroRoute
   '/w/$slug/chamados/novo': typeof WSlugChamadosNovoRoute
   '/w/$slug/chamados/quadro': typeof WSlugChamadosQuadroRoute
@@ -224,9 +343,12 @@ export interface FileRoutesByTo {
   '/w/$slug/checklists/template': typeof WSlugChecklistsTemplateRoute
   '/w/$slug/membros/$usuarioId': typeof WSlugMembrosUsuarioIdRoute
   '/w/$slug/projetos/$projetoId': typeof WSlugProjetosProjetoIdRoute
+  '/w/$slug/suporte/equipe': typeof WSlugSuporteEquipeRoute
+  '/w/$slug/suporte/resolvidos': typeof WSlugSuporteResolvidosRoute
   '/w/$slug/chamados': typeof WSlugChamadosIndexRoute
   '/w/$slug/checklists': typeof WSlugChecklistsIndexRoute
   '/w/$slug/projetos': typeof WSlugProjetosIndexRoute
+  '/w/$slug/suporte': typeof WSlugSuporteIndexRoute
   '/api/public/storage/$bucket/$': typeof ApiPublicStorageBucketSplatRoute
 }
 export interface FileRoutesById {
@@ -234,19 +356,31 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/selecionar-empresa': typeof SelecionarEmpresaRoute
+  '/api/health': typeof ApiHealthRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/w/$slug': typeof WSlugRouteWithChildren
+  '/api/auth/login': typeof ApiAuthLoginRoute
+  '/api/auth/logout': typeof ApiAuthLogoutRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/auth/token': typeof ApiAuthTokenRoute
+  '/api/notificacoes/sinalizar': typeof ApiNotificacoesSinalizarRoute
+  '/api/postgrest/$': typeof ApiPostgrestSplatRoute
   '/api/public/whatsapp-notify': typeof ApiPublicWhatsappNotifyRoute
   '/api/realtime/$canal': typeof ApiRealtimeCanalRoute
+  '/api/workspaces/me': typeof ApiWorkspacesMeRoute
   '/w/$slug/chamados': typeof WSlugChamadosRouteWithChildren
   '/w/$slug/checklists': typeof WSlugChecklistsRouteWithChildren
   '/w/$slug/configuracoes': typeof WSlugConfiguracoesRoute
   '/w/$slug/inauguracoes': typeof WSlugInauguracoesRoute
   '/w/$slug/inventario': typeof WSlugInventarioRoute
   '/w/$slug/painel': typeof WSlugPainelRoute
-  '/w/$slug/suporte': typeof WSlugSuporteRoute
   '/w/$slug/projetos': typeof WSlugProjetosRouteWithChildren
+  '/w/$slug/relatorios': typeof WSlugRelatoriosRoute
+  '/w/$slug/suporte': typeof WSlugSuporteRouteWithChildren
   '/w/$slug/': typeof WSlugIndexRoute
+  '/api/admin/usuarios/atualizar-email': typeof ApiAdminUsuariosAtualizarEmailRoute
+  '/api/admin/usuarios/criar': typeof ApiAdminUsuariosCriarRoute
+  '/api/admin/usuarios/definir-senha': typeof ApiAdminUsuariosDefinirSenhaRoute
   '/w/$slug/chamados/$numero': typeof WSlugChamadosNumeroRoute
   '/w/$slug/chamados/novo': typeof WSlugChamadosNovoRoute
   '/w/$slug/chamados/quadro': typeof WSlugChamadosQuadroRoute
@@ -254,9 +388,12 @@ export interface FileRoutesById {
   '/w/$slug/checklists/template': typeof WSlugChecklistsTemplateRoute
   '/w/$slug/membros/$usuarioId': typeof WSlugMembrosUsuarioIdRoute
   '/w/$slug/projetos/$projetoId': typeof WSlugProjetosProjetoIdRoute
+  '/w/$slug/suporte/equipe': typeof WSlugSuporteEquipeRoute
+  '/w/$slug/suporte/resolvidos': typeof WSlugSuporteResolvidosRoute
   '/w/$slug/chamados/': typeof WSlugChamadosIndexRoute
   '/w/$slug/checklists/': typeof WSlugChecklistsIndexRoute
   '/w/$slug/projetos/': typeof WSlugProjetosIndexRoute
+  '/w/$slug/suporte/': typeof WSlugSuporteIndexRoute
   '/api/public/storage/$bucket/$': typeof ApiPublicStorageBucketSplatRoute
 }
 export interface FileRouteTypes {
@@ -265,19 +402,31 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/selecionar-empresa'
+    | '/api/health'
     | '/convite/$token'
     | '/w/$slug'
+    | '/api/auth/login'
+    | '/api/auth/logout'
+    | '/api/auth/session'
+    | '/api/auth/token'
+    | '/api/notificacoes/sinalizar'
+    | '/api/postgrest/$'
     | '/api/public/whatsapp-notify'
     | '/api/realtime/$canal'
+    | '/api/workspaces/me'
     | '/w/$slug/chamados'
     | '/w/$slug/checklists'
     | '/w/$slug/configuracoes'
     | '/w/$slug/inauguracoes'
     | '/w/$slug/inventario'
     | '/w/$slug/painel'
-    | '/w/$slug/suporte'
     | '/w/$slug/projetos'
+    | '/w/$slug/relatorios'
+    | '/w/$slug/suporte'
     | '/w/$slug/'
+    | '/api/admin/usuarios/atualizar-email'
+    | '/api/admin/usuarios/criar'
+    | '/api/admin/usuarios/definir-senha'
     | '/w/$slug/chamados/$numero'
     | '/w/$slug/chamados/novo'
     | '/w/$slug/chamados/quadro'
@@ -285,24 +434,38 @@ export interface FileRouteTypes {
     | '/w/$slug/checklists/template'
     | '/w/$slug/membros/$usuarioId'
     | '/w/$slug/projetos/$projetoId'
+    | '/w/$slug/suporte/equipe'
+    | '/w/$slug/suporte/resolvidos'
     | '/w/$slug/chamados/'
     | '/w/$slug/checklists/'
     | '/w/$slug/projetos/'
+    | '/w/$slug/suporte/'
     | '/api/public/storage/$bucket/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/selecionar-empresa'
+    | '/api/health'
     | '/convite/$token'
+    | '/api/auth/login'
+    | '/api/auth/logout'
+    | '/api/auth/session'
+    | '/api/auth/token'
+    | '/api/notificacoes/sinalizar'
+    | '/api/postgrest/$'
     | '/api/public/whatsapp-notify'
     | '/api/realtime/$canal'
+    | '/api/workspaces/me'
     | '/w/$slug/configuracoes'
     | '/w/$slug/inauguracoes'
     | '/w/$slug/inventario'
     | '/w/$slug/painel'
-    | '/w/$slug/suporte'
+    | '/w/$slug/relatorios'
     | '/w/$slug'
+    | '/api/admin/usuarios/atualizar-email'
+    | '/api/admin/usuarios/criar'
+    | '/api/admin/usuarios/definir-senha'
     | '/w/$slug/chamados/$numero'
     | '/w/$slug/chamados/novo'
     | '/w/$slug/chamados/quadro'
@@ -310,28 +473,43 @@ export interface FileRouteTypes {
     | '/w/$slug/checklists/template'
     | '/w/$slug/membros/$usuarioId'
     | '/w/$slug/projetos/$projetoId'
+    | '/w/$slug/suporte/equipe'
+    | '/w/$slug/suporte/resolvidos'
     | '/w/$slug/chamados'
     | '/w/$slug/checklists'
     | '/w/$slug/projetos'
+    | '/w/$slug/suporte'
     | '/api/public/storage/$bucket/$'
   id:
     | '__root__'
     | '/'
     | '/login'
     | '/selecionar-empresa'
+    | '/api/health'
     | '/convite/$token'
     | '/w/$slug'
+    | '/api/auth/login'
+    | '/api/auth/logout'
+    | '/api/auth/session'
+    | '/api/auth/token'
+    | '/api/notificacoes/sinalizar'
+    | '/api/postgrest/$'
     | '/api/public/whatsapp-notify'
     | '/api/realtime/$canal'
+    | '/api/workspaces/me'
     | '/w/$slug/chamados'
     | '/w/$slug/checklists'
     | '/w/$slug/configuracoes'
     | '/w/$slug/inauguracoes'
     | '/w/$slug/inventario'
     | '/w/$slug/painel'
-    | '/w/$slug/suporte'
     | '/w/$slug/projetos'
+    | '/w/$slug/relatorios'
+    | '/w/$slug/suporte'
     | '/w/$slug/'
+    | '/api/admin/usuarios/atualizar-email'
+    | '/api/admin/usuarios/criar'
+    | '/api/admin/usuarios/definir-senha'
     | '/w/$slug/chamados/$numero'
     | '/w/$slug/chamados/novo'
     | '/w/$slug/chamados/quadro'
@@ -339,9 +517,12 @@ export interface FileRouteTypes {
     | '/w/$slug/checklists/template'
     | '/w/$slug/membros/$usuarioId'
     | '/w/$slug/projetos/$projetoId'
+    | '/w/$slug/suporte/equipe'
+    | '/w/$slug/suporte/resolvidos'
     | '/w/$slug/chamados/'
     | '/w/$slug/checklists/'
     | '/w/$slug/projetos/'
+    | '/w/$slug/suporte/'
     | '/api/public/storage/$bucket/$'
   fileRoutesById: FileRoutesById
 }
@@ -349,10 +530,21 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   SelecionarEmpresaRoute: typeof SelecionarEmpresaRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   ConviteTokenRoute: typeof ConviteTokenRoute
   WSlugRoute: typeof WSlugRouteWithChildren
+  ApiAuthLoginRoute: typeof ApiAuthLoginRoute
+  ApiAuthLogoutRoute: typeof ApiAuthLogoutRoute
+  ApiAuthSessionRoute: typeof ApiAuthSessionRoute
+  ApiAuthTokenRoute: typeof ApiAuthTokenRoute
+  ApiNotificacoesSinalizarRoute: typeof ApiNotificacoesSinalizarRoute
+  ApiPostgrestSplatRoute: typeof ApiPostgrestSplatRoute
   ApiPublicWhatsappNotifyRoute: typeof ApiPublicWhatsappNotifyRoute
   ApiRealtimeCanalRoute: typeof ApiRealtimeCanalRoute
+  ApiWorkspacesMeRoute: typeof ApiWorkspacesMeRoute
+  ApiAdminUsuariosAtualizarEmailRoute: typeof ApiAdminUsuariosAtualizarEmailRoute
+  ApiAdminUsuariosCriarRoute: typeof ApiAdminUsuariosCriarRoute
+  ApiAdminUsuariosDefinirSenhaRoute: typeof ApiAdminUsuariosDefinirSenhaRoute
   ApiPublicStorageBucketSplatRoute: typeof ApiPublicStorageBucketSplatRoute
 }
 
@@ -393,11 +585,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/w/$slug/': {
       id: '/w/$slug/'
       path: '/'
       fullPath: '/w/$slug/'
       preLoaderRoute: typeof WSlugIndexRouteImport
+      parentRoute: typeof WSlugRoute
+    }
+    '/w/$slug/suporte': {
+      id: '/w/$slug/suporte'
+      path: '/suporte'
+      fullPath: '/w/$slug/suporte'
+      preLoaderRoute: typeof WSlugSuporteRouteImport
+      parentRoute: typeof WSlugRoute
+    }
+    '/w/$slug/relatorios': {
+      id: '/w/$slug/relatorios'
+      path: '/relatorios'
+      fullPath: '/w/$slug/relatorios'
+      preLoaderRoute: typeof WSlugRelatoriosRouteImport
       parentRoute: typeof WSlugRoute
     }
     '/w/$slug/projetos': {
@@ -412,13 +625,6 @@ declare module '@tanstack/react-router' {
       path: '/painel'
       fullPath: '/w/$slug/painel'
       preLoaderRoute: typeof WSlugPainelRouteImport
-      parentRoute: typeof WSlugRoute
-    }
-    '/w/$slug/suporte': {
-      id: '/w/$slug/suporte'
-      path: '/suporte'
-      fullPath: '/w/$slug/suporte'
-      preLoaderRoute: typeof WSlugSuporteRouteImport
       parentRoute: typeof WSlugRoute
     }
     '/w/$slug/inventario': {
@@ -456,6 +662,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WSlugChamadosRouteImport
       parentRoute: typeof WSlugRoute
     }
+    '/api/workspaces/me': {
+      id: '/api/workspaces/me'
+      path: '/api/workspaces/me'
+      fullPath: '/api/workspaces/me'
+      preLoaderRoute: typeof ApiWorkspacesMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/realtime/$canal': {
       id: '/api/realtime/$canal'
       path: '/api/realtime/$canal'
@@ -469,6 +682,55 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/whatsapp-notify'
       preLoaderRoute: typeof ApiPublicWhatsappNotifyRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/postgrest/$': {
+      id: '/api/postgrest/$'
+      path: '/api/postgrest/$'
+      fullPath: '/api/postgrest/$'
+      preLoaderRoute: typeof ApiPostgrestSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/notificacoes/sinalizar': {
+      id: '/api/notificacoes/sinalizar'
+      path: '/api/notificacoes/sinalizar'
+      fullPath: '/api/notificacoes/sinalizar'
+      preLoaderRoute: typeof ApiNotificacoesSinalizarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/token': {
+      id: '/api/auth/token'
+      path: '/api/auth/token'
+      fullPath: '/api/auth/token'
+      preLoaderRoute: typeof ApiAuthTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/session': {
+      id: '/api/auth/session'
+      path: '/api/auth/session'
+      fullPath: '/api/auth/session'
+      preLoaderRoute: typeof ApiAuthSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/logout': {
+      id: '/api/auth/logout'
+      path: '/api/auth/logout'
+      fullPath: '/api/auth/logout'
+      preLoaderRoute: typeof ApiAuthLogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/login': {
+      id: '/api/auth/login'
+      path: '/api/auth/login'
+      fullPath: '/api/auth/login'
+      preLoaderRoute: typeof ApiAuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/w/$slug/suporte/': {
+      id: '/w/$slug/suporte/'
+      path: '/'
+      fullPath: '/w/$slug/suporte/'
+      preLoaderRoute: typeof WSlugSuporteIndexRouteImport
+      parentRoute: typeof WSlugSuporteRoute
     }
     '/w/$slug/projetos/': {
       id: '/w/$slug/projetos/'
@@ -490,6 +752,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/w/$slug/chamados/'
       preLoaderRoute: typeof WSlugChamadosIndexRouteImport
       parentRoute: typeof WSlugChamadosRoute
+    }
+    '/w/$slug/suporte/resolvidos': {
+      id: '/w/$slug/suporte/resolvidos'
+      path: '/resolvidos'
+      fullPath: '/w/$slug/suporte/resolvidos'
+      preLoaderRoute: typeof WSlugSuporteResolvidosRouteImport
+      parentRoute: typeof WSlugSuporteRoute
+    }
+    '/w/$slug/suporte/equipe': {
+      id: '/w/$slug/suporte/equipe'
+      path: '/equipe'
+      fullPath: '/w/$slug/suporte/equipe'
+      preLoaderRoute: typeof WSlugSuporteEquipeRouteImport
+      parentRoute: typeof WSlugSuporteRoute
     }
     '/w/$slug/projetos/$projetoId': {
       id: '/w/$slug/projetos/$projetoId'
@@ -539,6 +815,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/w/$slug/chamados/$numero'
       preLoaderRoute: typeof WSlugChamadosNumeroRouteImport
       parentRoute: typeof WSlugChamadosRoute
+    }
+    '/api/admin/usuarios/definir-senha': {
+      id: '/api/admin/usuarios/definir-senha'
+      path: '/api/admin/usuarios/definir-senha'
+      fullPath: '/api/admin/usuarios/definir-senha'
+      preLoaderRoute: typeof ApiAdminUsuariosDefinirSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/usuarios/criar': {
+      id: '/api/admin/usuarios/criar'
+      path: '/api/admin/usuarios/criar'
+      fullPath: '/api/admin/usuarios/criar'
+      preLoaderRoute: typeof ApiAdminUsuariosCriarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/usuarios/atualizar-email': {
+      id: '/api/admin/usuarios/atualizar-email'
+      path: '/api/admin/usuarios/atualizar-email'
+      fullPath: '/api/admin/usuarios/atualizar-email'
+      preLoaderRoute: typeof ApiAdminUsuariosAtualizarEmailRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/storage/$bucket/$': {
       id: '/api/public/storage/$bucket/$'
@@ -598,6 +895,22 @@ const WSlugProjetosRouteWithChildren = WSlugProjetosRoute._addFileChildren(
   WSlugProjetosRouteChildren,
 )
 
+interface WSlugSuporteRouteChildren {
+  WSlugSuporteEquipeRoute: typeof WSlugSuporteEquipeRoute
+  WSlugSuporteResolvidosRoute: typeof WSlugSuporteResolvidosRoute
+  WSlugSuporteIndexRoute: typeof WSlugSuporteIndexRoute
+}
+
+const WSlugSuporteRouteChildren: WSlugSuporteRouteChildren = {
+  WSlugSuporteEquipeRoute: WSlugSuporteEquipeRoute,
+  WSlugSuporteResolvidosRoute: WSlugSuporteResolvidosRoute,
+  WSlugSuporteIndexRoute: WSlugSuporteIndexRoute,
+}
+
+const WSlugSuporteRouteWithChildren = WSlugSuporteRoute._addFileChildren(
+  WSlugSuporteRouteChildren,
+)
+
 interface WSlugRouteChildren {
   WSlugChamadosRoute: typeof WSlugChamadosRouteWithChildren
   WSlugChecklistsRoute: typeof WSlugChecklistsRouteWithChildren
@@ -605,8 +918,9 @@ interface WSlugRouteChildren {
   WSlugInauguracoesRoute: typeof WSlugInauguracoesRoute
   WSlugInventarioRoute: typeof WSlugInventarioRoute
   WSlugPainelRoute: typeof WSlugPainelRoute
-  WSlugSuporteRoute: typeof WSlugSuporteRoute
   WSlugProjetosRoute: typeof WSlugProjetosRouteWithChildren
+  WSlugRelatoriosRoute: typeof WSlugRelatoriosRoute
+  WSlugSuporteRoute: typeof WSlugSuporteRouteWithChildren
   WSlugIndexRoute: typeof WSlugIndexRoute
   WSlugMembrosUsuarioIdRoute: typeof WSlugMembrosUsuarioIdRoute
 }
@@ -618,8 +932,9 @@ const WSlugRouteChildren: WSlugRouteChildren = {
   WSlugInauguracoesRoute: WSlugInauguracoesRoute,
   WSlugInventarioRoute: WSlugInventarioRoute,
   WSlugPainelRoute: WSlugPainelRoute,
-  WSlugSuporteRoute: WSlugSuporteRoute,
   WSlugProjetosRoute: WSlugProjetosRouteWithChildren,
+  WSlugRelatoriosRoute: WSlugRelatoriosRoute,
+  WSlugSuporteRoute: WSlugSuporteRouteWithChildren,
   WSlugIndexRoute: WSlugIndexRoute,
   WSlugMembrosUsuarioIdRoute: WSlugMembrosUsuarioIdRoute,
 }
@@ -630,22 +945,23 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   SelecionarEmpresaRoute: SelecionarEmpresaRoute,
+  ApiHealthRoute: ApiHealthRoute,
   ConviteTokenRoute: ConviteTokenRoute,
   WSlugRoute: WSlugRouteWithChildren,
+  ApiAuthLoginRoute: ApiAuthLoginRoute,
+  ApiAuthLogoutRoute: ApiAuthLogoutRoute,
+  ApiAuthSessionRoute: ApiAuthSessionRoute,
+  ApiAuthTokenRoute: ApiAuthTokenRoute,
+  ApiNotificacoesSinalizarRoute: ApiNotificacoesSinalizarRoute,
+  ApiPostgrestSplatRoute: ApiPostgrestSplatRoute,
   ApiPublicWhatsappNotifyRoute: ApiPublicWhatsappNotifyRoute,
   ApiRealtimeCanalRoute: ApiRealtimeCanalRoute,
+  ApiWorkspacesMeRoute: ApiWorkspacesMeRoute,
+  ApiAdminUsuariosAtualizarEmailRoute: ApiAdminUsuariosAtualizarEmailRoute,
+  ApiAdminUsuariosCriarRoute: ApiAdminUsuariosCriarRoute,
+  ApiAdminUsuariosDefinirSenhaRoute: ApiAdminUsuariosDefinirSenhaRoute,
   ApiPublicStorageBucketSplatRoute: ApiPublicStorageBucketSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
